@@ -3,20 +3,21 @@ anguage: node_js
 node_js: stable
 #  - 10 # use nodejs v10 LTS
 cache: 
-  yarn: true
-  directories:
-  - node_modules
-  - themes
+  npm
+#  yarn: true
+#  directories:
+#  - node_modules
+#  - themes
 
 branches:
   only:
     - master # build master branch only
 
-before_install:
+#before_install:
 #  - npm install hexo-cli -g
-  - npm install hexo
-install:
-  - npm install
+#  - npm install hexo
+#install:
+#  - npm install
 
 script:
  # - hexo clean
