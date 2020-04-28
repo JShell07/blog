@@ -23,14 +23,14 @@ __NUMA（Non-uniform memory access）__
 
 iscontiguous memory本质上是flat memory内存模型的扩展。在每一个成片的大块内存中node， 其内部模型是flat memory.
 
-![Discontinuous Memory Mode](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/base/Discontiguous%20Memory%20Model.gif)
+![Discontinuous Memory Mode](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/base/Discontiguous%20Memory%20Model.gif)
 
 ### 2.3. Sparse Memory Mode
 连续的地址空间按照SECTION（例如1G）被分成了一段一段的，其中每一section都是hotplug的。内存地址空间可以被切分的更细，支持更离散的Discontiguous memory。
 
 sparse memory多了一个section的概念，让转换变成了PFN<--->Section<--->page。 
 
-![Sparse Memory Mode](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/base/Sparse%20Memory%20Model.gif)
+![Sparse Memory Mode](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/base/Sparse%20Memory%20Model.gif)
 
 在include/asm-generic/memory_model.h 可见
 ```
@@ -104,7 +104,7 @@ sparse memory多了一个section的概念，让转换变成了PFN<--->Section<--
 - 内存不足时的处理（oom kill机制） 
 
 fixme
-![linux mem structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/base/mem_structure.gif)
+![linux mem structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/base/mem_structure.gif)
 
 __cpu 访问内存方式__  
 cpu <---> MMU <---> Memory

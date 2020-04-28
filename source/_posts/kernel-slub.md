@@ -5,7 +5,7 @@ tags: slub
 categories: memory
 ---
 
-![slab allocator](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slab.jpg)
+![slab allocator](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slab.jpg)
 
 <!--more-->
 ## 1. 前言
@@ -44,7 +44,7 @@ void *kmem_cache_alloc(struct kmem_cache *cachep, int flags);
 void kmem_cache_free(struct kmem_cache *cachep, void *objp);
 ```
 
-![slub data structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_data_structure.png)
+![slub data structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_data_structure.png)
 
 ```c
 /* Slab cache management. */
@@ -119,13 +119,13 @@ partial 指向仍有空闲object page， 当nr_partial 大于`struct kmem_cache`
 当内存申请的时候，优先从本地cpu缓存池申请。在分配初期，本地缓存池为空，自然从伙伴系统分配一定页数的内存。kmem_cacche_cpu中page就会指向正在使用的slab的页帧。freelist成员指向第一个可用内存object首地址。
 
 1. kmem_cache 初始阶段，没有对象可分配时，从伙伴系统获取一个slab
-![slub_allocate_from_buddy_system](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_allocate_from_buddy_system.png)
+![slub_allocate_from_buddy_system](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_allocate_from_buddy_system.png)
 
 2. 若kmem_cache_cpu 中无可用object时，尝试从kmem_cache_cpu 指向仍有可用object 的partial 获取
-![slub_allocate_from_kmem_cache_cpu_partial](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_allocate_from_kmem_cache_cpu_partial.png)
+![slub_allocate_from_kmem_cache_cpu_partial](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_allocate_from_kmem_cache_cpu_partial.png)
 
 3. 若kmem_cache_cpu 与 partial 中无可用object时，尝试从kmem_cache_node 获取
-![slub_allocate_from_kmem_cache_node](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_allocate_from_kmem_cache_node.png)
+![slub_allocate_from_kmem_cache_node](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_allocate_from_kmem_cache_node.png)
 
 ### 3.2. free
 我们再free 时，free 的对象可能来自：
@@ -141,16 +141,16 @@ partial 指向仍有空闲object page， 当nr_partial 大于`struct kmem_cache`
 
 1. free object in kmem_cache_cpu partial && kmem_cache_cpu && kmem_cache_node
 直接标记该object 为free 状态
-![free object in kmem_cahce_cpu](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/free_object_in_kmem_cache_cpu.png)
+![free object in kmem_cahce_cpu](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/free_object_in_kmem_cache_cpu.png)
 
 2. free object in full object page
-![free object in full object page](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/free_object_in_full_objects.png)
+![free object in full object page](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/free_object_in_full_objects.png)
 
 若kmem_cache_cpu partial 数目多于设定kmem_cache cpu_partial， 则将存储指仓库kmem_cache_node
-![kmem_cache_cpu_partial_great_than_cpu_partial](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/kmem_cache_cpu_partial_great_than_cpu_partial.png)
+![kmem_cache_cpu_partial_great_than_cpu_partial](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/kmem_cache_cpu_partial_great_than_cpu_partial.png)
 
 若仓库中堆满，kmem_cache_node partial 数目多于设定kmem_cache min_partial，则将规划至伙伴系统
-![kmem_cache_node_partial_great_than_min_partial](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/kmem_cache_node_partial_great_than_min_partial.png)
+![kmem_cache_node_partial_great_than_min_partial](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/kmem_cache_node_partial_great_than_min_partial.png)
 
 我们可以看看kmalloc 的实现, 其中返回`kmalloc_caches[index]`， 那他是在哪里被初始化呢？
 
@@ -251,7 +251,7 @@ SLUB DEBUG检测oob(out-of-bounds)问题原理:<font color=red>在分配出去�
 SLUB DEBUG 检测uaf(use-after-free)问题原理：<font color=red>free 后，将object 数据填充MAGIC NUM(0X6B)</font>
 
 slub 管理的object 对象的格式如下：
-![slub object format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_debug_object_structure.png)
+![slub object format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_debug_object_structure.png)
 
 free pointer是从object后移就是因为为了检测use-after-free问题,当free object时会在将object填充magic num(0x6b)。
 
@@ -261,7 +261,7 @@ free pointer是从object后移就是因为为了检测use-after-free问题,当fr
 `red left pad`
 可以检测向前的越界访问
 
-![red zone && red left pad](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/red_zone_red_left_pad.png)
+![red zone && red left pad](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/red_zone_red_left_pad.png)
 
 `padding`
 填充填充magic num，可以检测较大空间的overwritten
@@ -279,7 +279,7 @@ free pointer是从object后移就是因为为了检测use-after-free问题,当fr
 #define	POISON_END	0xa5	/* end-byte of poisoning */
 ```
 在slub alloc 一个object，经过init_object 填充magic num 后，会如下所示：
-![slub object after init object](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/slub_object_after_init_object.png)
+![slub object after init object](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/slub_object_after_init_object.png)
 - red_left_pad和Red zone填充了SLUB_RED_INACTIVE（0xbb）；
 - object填充了POISON_FREE（0x6b），但是最后一个byte填充POISON_END（<font color=red>0xa5</font>）；
 - padding在allocate_slab的时候就已经被填充POISON_INUSE（0x5a）
@@ -303,7 +303,7 @@ KASAN (kernel address sanitizer) runtime memory debugger， 是一个动态检�
 `原理`
 KASAN 利用额外的内存(shadow memory, 影子区)标记内存状态，使用magic num 填充shadow memory，每一次R/w mem时都会检测shadow memory 是否valid。每连续8 bytes 使用1 byte shadow memory 标记。
 
-![kasan shadow memory](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/kasan_shadow_mm.png)
+![kasan shadow memory](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/kasan_shadow_mm.png)
 
 ```c
 #define KASAN_FREE_PAGE         0xFF  /* page was freed */
@@ -326,7 +326,7 @@ KASAN 利用额外的内存(shadow memory, 影子区)标记内存状态，使用
 在高版本的gcc 中编译器编译时在mm access 插入__asan_load/__asan_store 函数。
 
 arm64, VA_BITS=48, kernel 的mem layout. (KERNEL是不是位于linear mapping区域，这里怎么变成了VMALLOC区域？这里是Ard Biesheuvel提交的修改。主要是为了迎接ARM64世界的KASLR（which allows the kernel image to be located anywhere in the vmalloc area）的到来。)
-![arm64, va_bits 48, mem layout](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/slab/arm64_va_bits48_mem_layout.png)
+![arm64, va_bits 48, mem layout](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/slab/arm64_va_bits48_mem_layout.png)
 
 <font color=red>shadow_addr = (kaddr >> 3)  + KASAN_SHADOW_OFFSE</font>,在kasan_init()之后KASAN 就能正常工作，kernel 与 linear mapping 区域建立与shadow memory映射。若是module，则在load 时建立映射关系。
 

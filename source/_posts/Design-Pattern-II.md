@@ -62,7 +62,7 @@ void main()
     delete shape2;
 }
 ```
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/CreationalPattern/Factory_Pattern.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/CreationalPattern/Factory_Pattern.png)
 
 <!--more-->
 
@@ -73,7 +73,7 @@ void main()
 **缺点**: 产品族扩展困难。既要在抽象的creator 里修改，又要实现具体的代码。
 
 虚基类的感觉。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/CreationalPattern/AbstractFactory_Pattern.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/CreationalPattern/AbstractFactory_Pattern.png)
 
 AbstrctFactory 与Factory 区别在于：AbstractFactory 模式是为了创建**一组**（有多类）相关或依赖的对象，Factory模式是为**一类**对象提供接口。
 
@@ -102,7 +102,7 @@ class Singleton
 }
 ```
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/CreationalPattern/Singleton_Pattern.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/CreationalPattern/Singleton_Pattern.png)
 
 注：Singleton 不可以被实例化（保证唯一一个），因此我们将它的构造函数声明为protected或private。
 
@@ -117,7 +117,7 @@ class Singleton
     - 产品必须有共同点，范围有限制
     - 如内部变化复杂，会有很多的建造类
 
-![Builder](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/CreationalPattern/Builder_Pattern.png)
+![Builder](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/CreationalPattern/Builder_Pattern.png)
 
 注：
 Builder 与AbstractFactory 在功能上相似，都用来创建复杂的对象。Builder 是通过的**相同的创建过程获取不同的结果**，而AbstractFactory 强调为多个相互依赖的对象提供一个统一的接口。另外，AbstractFactory 是立即返回，Builder是在一系列动作后返回对象。

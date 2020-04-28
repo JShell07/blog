@@ -84,13 +84,13 @@ CFI接口的的Nor Flash的针脚较多，芯片较大。之所有会有SPI接�
 [SSD技术扫盲之：什么是NVMe？ NVMe SSD有什么特点？](http://www.chinastor.com/baike/ssd/04103A942017.html)
 
 ## 3. Kernel MTD Source code
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/block%20device%20vs%20mtd%20device.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/block%20device%20vs%20mtd%20device.png)
 
 Kernel 中MTD 的源码如下图所示：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/mtd_source_code_tree.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/mtd_source_code_tree.png)
 
 MTD 组成的源代码框架如下：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/mtd_source_code_structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/mtd_source_code_structure.png)
 
 项目 | 说明 
 :-: | :-
@@ -110,10 +110,10 @@ ubi | unsorted block images, 基于raw flash 的卷管理系统
 
 ## 4. 源代码框架
 Kernel MTD 在Kernel 中的结构如下：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/mtd%20softeware%20structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/mtd%20softeware%20structure.png)
 
 在MTD Sub-system 中的结构如下：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/mtd_structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/mtd_structure.png)
 
 mtdchar.c 向flash tools 或者用户层提供IOCTL 操作。
 mtdblock.c 向kernel 提供block read/write sector访问。
@@ -151,7 +151,7 @@ int add_mtd_device(struct mtd_info *mtd)
 }
 ```
 大致流程如下图所示：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mtd/register%20partition.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_mtd/register%20partition.png)
 
 注册相关数据结构：
 ```c

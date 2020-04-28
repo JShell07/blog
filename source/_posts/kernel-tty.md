@@ -48,7 +48,7 @@ tty 设备有几个分类：
 
 ## 2. 软件架构
 
-![tty framework structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/linux_tty_framework_structure.png)
+![tty framework structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/linux_tty_framework_structure.png)
 
 ### TTY Line Disciplines
 line disciplines(线路规程), 可以把它看成设备驱动和应用接口之间的一个适配层, 按照一些定义的标准进行某些字符的转换。例如"\n", "\r" 之间的转换。在Linux 4.9.x中有这些：
@@ -150,7 +150,7 @@ struct tty_driver {
 ### 3.2. Serial Driver Data Structure
 相关数据结构， `struct uart_driver` 用来联系`struct tty_driver`, `uart_port` 则包含了uart 的一些callback(其中大部分参数都是使用struct uart_port) 和固有属性例如:irq, baudrate, fifosize等。 
 
-![serial data structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/serial_data_structure.png)
+![serial data structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_data_structure.png)
 
 ```c
 struct uart_state {
@@ -207,7 +207,7 @@ int uart_add_one_port(struct uart_driver *drv, struct uart_port *uport);
 
 之后调用`uart_add_one_port()` 将uart_port 绑定到uart_state上，并注册device_attribute,并最终调用`device_register()`,完成设备模型的注册，最终才会产生"/dev/ttyS0"等设备。
 
-![serial initial flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/serial_initial_flow.png)
+![serial initial flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_initial_flow.png)
 
 ### 4.1. serial Open Flow
 
@@ -224,7 +224,7 @@ static const struct file_operations tty_fops = {
 
 因此，从数据结构上观察`struct file_operation`-> `struct tty_operation` -> `struct tty_port_operation` -> `struct uart_ops`，如下图：
 
-![linux_tty_open](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/tty_open_flow.png)
+![linux_tty_open](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_open_flow.png)
 
 ### 4.2. serial Read Flow
 Read 流程可以分为两个部分， 用户空间与硬件的RX 中断函数。可以理解成消费者与生产者的关系。
@@ -232,7 +232,7 @@ Read 流程可以分为两个部分， 用户空间与硬件的RX 中断函数�
 #### 4.2.1. Consumer
 用户空间调用下来的read， 可以看作是消费者。
 
-![read flow consumer](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/tty_read_flow_consumer.png)
+![read flow consumer](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_consumer.png)
 
 #### 4.2.2. Provider
 在中断服务程序中将收到的ch，扮演生产者的角色，放置到tty_port.tty_buffer, 如果空间不够则调用`__tty_buffer_request_room()` 最小分配256 Bytes.
@@ -262,7 +262,7 @@ void tty_flip_buffer_push(struct tty_port *port)
 之后调用，`tty_flip_buffer_push()`唤醒work 即`tty_flip_buffer_push()`, 调用到`flush_to_ldisc()`工作队列函数，将tty_buf的数据拷贝到`struct n_tty_data.read_buf`，
 `kill_fasync()`负责唤醒用户空间的异步进程，`wake_up_interruptible_poll()`唤醒在discipline read 时的读等待队列。
 
-![read flow provider](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/tty_read_flow_provider.png)
+![read flow provider](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_provider.png)
 
 ### 4.3. serial Write Flow
 数据流向是userspace data -> `tty_struct.write_buf`-> `uart_state.xmit`。并且在n_tty.c 中的line routine（discipline）中做了回显的操作。
@@ -272,7 +272,7 @@ void tty_flip_buffer_push(struct tty_port *port)
 - uart_state.xmit (circ_buf)
 - HW 的TX-FIFO
 
-![tty write flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_tty/tty_write_flow.png)
+![tty write flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_write_flow.png)
 
 ## Reference
 [Linux TTY framework(1)_基本概念](http://www.wowotech.net/tty_framework/tty_concept.html)

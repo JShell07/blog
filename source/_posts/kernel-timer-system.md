@@ -8,7 +8,7 @@ categories:
 ---
 ## 1. Kernel Timer 软件架构
 
-![Kernel timer structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_timer_system/kernel_timer_structure.png)
+![Kernel timer structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_timer_structure.png)
 
 <!--more-->
 
@@ -31,7 +31,7 @@ tick device 工作模式：
 
 当系统处于高精度timer的时候（tick device处于one shot mode），系统会setup一个特别的高精度timer（可以称之sched timer），该高精度timer会周期性的触发，从而模拟的传统的periodic tick，从而推动了传统低精度timer的运转。因此，一些传统的内核模块仍然可以调用经典的低精度timer模块的接口。 
 
-![Tick Device Layer structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_timer_system/kernel_tick_device_structure.png)
+![Tick Device Layer structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_tick_device_structure.png)
 
 ## 2. file structure
 

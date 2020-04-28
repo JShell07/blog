@@ -28,11 +28,11 @@ int munmap(void *addr, size_t length);
 >copy_from_user()
 copy_to_user()
 
-![normal read/write image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_zero_copy/normal%20read%20write.png)
+![normal read/write image](https://raw.githubusercontent.com/JShell07/images/master/kernel_zero_copy/normal%20read%20write.png)
 
 mmap() 能减少read 的copy 动作，直接映射kernel空间到用户空间，但是在write时， 还是需要将write_data_buffer 拷贝到kernel space.
 
-![mmap read/write image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_zero_copy/mmap%20read%20write.png)
+![mmap read/write image](https://raw.githubusercontent.com/JShell07/images/master/kernel_zero_copy/mmap%20read%20write.png)
 
 在拷贝文件时，我们可以这样减少copy 的次数。
 ```c
@@ -52,7 +52,7 @@ memcpy(target, source, filesize);
 
 splice用于在两个文件间移动数据，而无需内核态和用户态的内存拷贝，但需要借助管道（pipe）实现。<font color=red>大概原理就是通过pipe buffer实现一组内核内存页（pages of kernel memory）的引用计数指针（reference-counted pointers），数据拷贝过程中并不真正拷贝数据，而是创建一个新的指向内存页的指针。也就是说拷贝过程实质是指针的拷贝.</font>
 
-![zero copy image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_zero_copy/splice%20read%20write.png)
+![zero copy image](https://raw.githubusercontent.com/JShell07/images/master/kernel_zero_copy/splice%20read%20write.png)
 
 ```c
 #include <sys/sendfile.h>

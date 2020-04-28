@@ -27,14 +27,14 @@ make && make install
 <!-- more -->
 # 3. Run
 Use "siege -C ' command to see current configuration.   
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/siege/siege_config.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/siege/siege_config.png)
 
 Modify /etc/url.txt file to test accessing url.  
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/siege/siege_test_url.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/siege/siege_test_url.png)
 
 Then we use siege command to test, and press "Ctrl + C" to stop.  
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/siege/siege_run.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/siege/siege_run.png)
 
 # 4. Result
 After we stop Siege with "Ctrl + C", we will get result:  
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/siege/siege_result.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/siege/siege_result.png)

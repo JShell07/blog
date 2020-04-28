@@ -13,7 +13,7 @@ bootchart 主要用于量度user-space processess 启动顺序及时间， 但�
 ### 1.1. 平台支持bootchartd 命令
 配置busybox，使其支持bootchartd 命令，用于抓取log。
 
-![busybox_config_bootchartd](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/busybox_config_bootchartd.png)
+![busybox_config_bootchartd](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/busybox_config_bootchartd.png)
 
 ### 1.2. 启动参数设定
 
@@ -32,7 +32,7 @@ make install
 ## 2. Usage
 在platform 正常启动后，我们可以在<font color=red>/var/log/bootlog.tgz</font> 找到bootchartd抓取到的LOG。
 
-![bootchartd_log](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/bootchartd_log.png)
+![bootchartd_log](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/bootchartd_log.png)
 
 将抓取到LOG 用host 上tools 运行， 并在当前路径下生成图片：
 
@@ -43,7 +43,7 @@ make install
 ## 3. Example
 [bootlog.tgz](https://github.com/JShell07/jshell07.github.io/blob/master/images/tools/boot_time/bootlog.tgz)
 
-![boot_chart_example](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/boot_chart_example.png)
+![boot_chart_example](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/boot_chart_example.png)
 
 ## Reference
 [bootchart](https://elinux.org/Bootchart)

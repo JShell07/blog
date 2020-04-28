@@ -73,11 +73,11 @@ out1:
 
 ## 进程
 我们通常可以使用top 命令查看到某一个进程占用了较高的CPU Loading。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/cpu_high_loading/top_process.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/cpu_high_loading/top_process.png)
 
 ## 线程
 可以通过`top -H -p <pid>` 命令具体查看`<pid>` 进程的子线程占用CPU Loading的情况。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/cpu_high_loading/top_thread.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/cpu_high_loading/top_thread.png)
 
 这里是单独一个进程，是以这里只是单单出现一个。
 
@@ -85,7 +85,7 @@ out1:
 在定位到某一个线程之后，我们需要继续定位到某一个函数或者命令导致了CPU 占用过高。
 `strace -p <pid>` 命令能帮助查找到具体的函数。
 `pstack <pid>`, `trace -p <tid>`等命令也能给予我们一些启示。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/cpu_high_loading/strace_process.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/cpu_high_loading/strace_process.png)
 
 ## 参考资源
 [Linux下某个进程CPU占用率高分析方法](http://www.linuxeye.com/Linux/1843.html)

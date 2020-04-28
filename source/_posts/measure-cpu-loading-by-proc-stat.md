@@ -17,13 +17,13 @@ categories: tools
 我们参看busybox 中src code，可以发现top，iostat, mpstat 都是使用到/proc/stat, 或者/proc/<pid>stat 文件并进行解析呈现。
 
 `iostat`
-![iostat](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/iostat.png)
+![iostat](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/iostat.png)
 
 `mpstat`
-![mpstat](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/mpstat.png)
+![mpstat](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/mpstat.png)
 
 `cat /proc/1/stat`
-![proc_pid_stat](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/proc_pid_stat.png)
+![proc_pid_stat](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_pid_stat.png)
 
 ## 1. /proc/stat
 
@@ -40,7 +40,7 @@ categories: tools
 | softirq time | 软中断处理时间                      |
 |  steal time  | 类似于guest os 切换等未统计到的时间 |
 
-![proc_stat](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/proc_stat.png)
+![proc_stat](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat.png)
 
 ### 1.1. 原理
 
@@ -258,7 +258,7 @@ void account_system_time(struct task_struct *p, int hardirq_offset,
 
 如下图所示， 在前一个Timer 周期内，Process A, Process B 在调度，那么在中断时，我们只统计到了process B， 我们就漏了Process A 占用时间。
 
-![proc_stat_precision](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/proc_stat_precision.png)
+![proc_stat_precision](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat_precision.png)
 
 引起进程调度的常见原因有：
 - 进程调用sleep(), exit() 等函数
@@ -267,7 +267,7 @@ void account_system_time(struct task_struct *p, int hardirq_offset,
 - 从中断等异常，系统调用返回用户态
 
 我们可以通过如下方式得到当前OS 调度程度 `watch -d -n 1 'cat /proc/sched_debug | grep nr_switches'` 
-![cpu_process_switch](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/proc_stat/cpu_process_switch.png)
+![cpu_process_switch](https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/cpu_process_switch.png)
 
 ## 2. 总结
 - Linux CPU占用率是根据/proc/stat文件中的数据计算而来；

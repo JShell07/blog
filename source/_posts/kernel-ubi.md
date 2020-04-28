@@ -22,7 +22,7 @@ Flash 设备存在如下缺点
 
 Kernel 引入UBI (Unsorted Block Images)来解决这些问题。<font color=red>UBI 本身就是针对RAW Flash的一个卷管理系统，并且提供基于磨损均衡的逻辑到物理的映射</font>。它类似于LVM（Logical Volume Manager)
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/mtd%20partition%20vs%20ubi%20volume.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/mtd%20partition%20vs%20ubi%20volume.png)
 
 因此UBI 具有如下特点：
 - UBI provides volumes which may be dynamically created, removed, or re-sized
@@ -34,10 +34,10 @@ Kernel 引入UBI (Unsorted Block Images)来解决这些问题。<font color=red>
 
 ## 2. 框架
 在kernel MTD 模块看来， UBI 子系统的框架如下图：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/ubi%20structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20structure.png)
 
 UBI 子模块的文件组织结构如下图：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/ubi%20software%20structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20software%20structure.png)
 
 文件名 | 说明
 :-: | :-
@@ -103,7 +103,7 @@ EC header 存储offset 为0， 而VID header 存储offset 为next min I/O Unit, 
 - NOR Flash, min I/O 为 1 byte, VID header offset 为64
 - Nand Flash, sub-page or page
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/UBI%20headers.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/UBI%20headers.png)
 
 #### 3.1.2. volume table 
 数据是存储在flash 设备上， volume table 是ubit_vtbl_record 的数组，每一个记录它包含了如下meta-data:  
@@ -151,7 +151,7 @@ EBA, EC table 可以做到存储在flash 上，但是它需要journaling, journa
 本质是扫描(scan_all or scan_fast(fastmap))MTD 设备上的EC、VID header 信息生成volume 等结构体。
 
 相关的数据接口如下：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/ubi_data_structure.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_data_structure.png)
 
 ubi_ainf_peb -> ubi_ainf_volume.rb -> ubi_attach_info.volume。
 ```c
@@ -205,7 +205,7 @@ struct ubi_ainf_peb {
 	} u;
 };
 ```
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/ubi_attach.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_attach.png)
 scan_all() 扫描每一个peb 并读取其中的ec_hdr, vid_hdr。 这里分层了三层结构体：
 - ubi_attach_info  
 - ubi_ainf_volume  
@@ -263,7 +263,7 @@ torturing 主要是两方面
 #### 3.2.3. wear-leveling
 磨损均衡是UBI的核心功能之一，负责管理PEB的分配、回收、擦除、scrub、磨损均衡等, 在这些操作时都会触发磨损均衡检查。其中scrub、擦除, 磨损均衡功能由UBI后台线程进行异步调度管理。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubi/ubi_wl.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_wl.png)
 ```c
 struct ubi_wl_entry {
 	union {

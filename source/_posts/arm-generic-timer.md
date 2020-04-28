@@ -16,7 +16,7 @@ categories:
 
 <!--more-->
 ## 1. Base  
-![generic timer example](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/arm-generic-timer/generic_timer.png)
+![generic timer example](https://raw.githubusercontent.com/JShell07/images/master/arm-generic-timer/generic_timer.png)
 
 The Generic Timer 提供如下几种counter与Timer：
 - __system counter__, measures the passing of time in real-time. 
@@ -82,7 +82,7 @@ Each timer is implemented as three registers:
 - A 32-bit __TimerValue register__, that provides a 32-bit signed down counter.  
 - A 32-bit __Control register__.
 
-![timer registers summary](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/arm-generic-timer/timer_registers_summary.png)
+![timer registers summary](https://raw.githubusercontent.com/JShell07/images/master/arm-generic-timer/timer_registers_summary.png)
 
 Accessing timer registers
 
@@ -120,7 +120,7 @@ TimerValue 的操作可以看作是signed 32-bit down counter.
 TimerValue 值来源于CNTP_TVAL, CNTHP_TVAL, or CNTV_TVAL.
 
 ## 7. Generic Timer registers
-![generic timer registers](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/arm-generic-timer/generic_timer_registers.png)
+![generic timer registers](https://raw.githubusercontent.com/JShell07/images/master/arm-generic-timer/generic_timer_registers.png)
 
 
 ## Reference

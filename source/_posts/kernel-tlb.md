@@ -9,7 +9,7 @@ TLB(Translation lookaside buffer) 本质上也是一种cache， 物理特性与D
 
 <!--more-->
 
-![arm cortex-a7 structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/arm_cortex-a7_mpcore_cpu_structure.png)
+![arm cortex-a7 structure](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/arm_cortex-a7_mpcore_cpu_structure.png)
 
 TLB 一般还分为两大类：
 - main tlb (常规的tlb)
@@ -25,7 +25,7 @@ Armv7 ARM(architecture reference manual)中并没有规定TLB 具体的数据结
 
 当需要转换VA到PA的时候，首先在TLB中找是否有匹配的条目，如果有，那么TLB hit，这时候不需要再去访问页表来完成地址翻译。不过TLB始终是全部页表的一个子集，因此也有可能在TLB中找不到。如果没有在TLB中找到对应的item，那么称之TLB miss，那么就需要去访问memory中的page table来完成地址翻译，同时将翻译结果放入TLB。
 
-![tlb work flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/tlb_work_flow.gif)
+![tlb work flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/tlb_work_flow.gif)
 
 ## 2. TLB Match
 整个地址翻译过程并非简单的VA到PA的映射那么简单，系统中虚拟地址空间很多，每个地址空间都是独立的。可以考虑如下情况：
@@ -93,13 +93,13 @@ Page tables.
 A second-level table requires 1KByte of memory.
 
 #### 3.1.1. general view of address translation using short-descriptor
-![general view of address translation using short-descriptor](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/general_view_using_short_descriptor.png)
+![general view of address translation using short-descriptor](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/general_view_using_short_descriptor.png)
 
 #### 3.1.2. short descriptor 1st level format
-![short descriptor 1st level format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/short_descriptor_first_level.png)
+![short descriptor 1st level format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/short_descriptor_first_level.png)
 
 #### 3.1.3. short descriptor 2nd level format
-![short descriptor 2nd level format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/short_descriptor_2nd_level.png)
+![short descriptor 2nd level format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/short_descriptor_2nd_level.png)
 
 
 |   Attribute    | Remarks                                                                     |
@@ -117,13 +117,13 @@ A second-level table requires 1KByte of memory.
 - N>0, 若VA[31:32-N] bit 为0， 使用TTBR0, 其他使用TTBR1
 
 TTBCR format when using short descriptor with security extension- 
-![TTBCR format when using short descriptor with security extension](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/TTBCR%20format%20when%20using%20short%20descriptor%20with%20security%20extension.png)
+![TTBCR format when using short descriptor with security extension](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/TTBCR%20format%20when%20using%20short%20descriptor%20with%20security%20extension.png)
 
 TTBCR.N effect on address translation, short descriptor format
-![TTBCR.N effect on address translation, short descriptor format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/TTBCR.N%20effect%20on%20address%20translation%2C%20short%20descriptor%20format.png)
+![TTBCR.N effect on address translation, short descriptor format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/TTBCR.N%20effect%20on%20address%20translation%2C%20short%20descriptor%20format.png)
 
 Example TTBCR.N effect on address translation, short descriptor format
-![Example TTBCR.N effect on address translation, short descriptor format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/example%20TTBCR.N%20effect%20on%20address%20translation%2C%20short%20descriptor%20format.png)
+![Example TTBCR.N effect on address translation, short descriptor format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/example%20TTBCR.N%20effect%20on%20address%20translation%2C%20short%20descriptor%20format.png)
 
 ### 3.2. long-descriptor translation table
 long-descriptor 在有virtualization extension的ARM 时，支持：
@@ -132,27 +132,27 @@ long-descriptor 在有virtualization extension的ARM 时，支持：
 3. can be used for the Secure and Non-secure PL1&0 stage 1 translations
 
 #### 3.2.1. general view of stage 1 address translation using long-descriptor
-![general view of stage 1 address translation using long-descriptor](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/general_view_stage1_using_long_descriptor.png)
+![general view of stage 1 address translation using long-descriptor](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/general_view_stage1_using_long_descriptor.png)
 
 #### 3.2.2. general view of stage 2 address translation using long-descriptor
-![general view of stage 2 address translation using long-descriptor](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/general_view_stage2_using_long_descriptor.png)
+![general view of stage 2 address translation using long-descriptor](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/general_view_stage2_using_long_descriptor.png)
 
 #### 3.2.3. long descriptor 1st, 2nd level format
-![long descriptor 1st level format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/long_descriptor_1st_2nd_level.png)
+![long descriptor 1st level format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/long_descriptor_1st_2nd_level.png)
 
 #### 3.2.4. long descriptor 3rd level format
-![long descriptor 3rd level format](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/long_descriptor_3nd_level.png)
+![long descriptor 3rd level format](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/long_descriptor_3nd_level.png)
 
 
 #### 3.2.5. TTBR0,1 之间的选择
 与short descriptor 相似，但是查看TTBCR.T0SZ
 TTBCR format when using long descriptor
-![TTBCR format when using long descriptor](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/TTBCR%20format%20when%20using%20long%20descriptor.png)
+![TTBCR format when using long descriptor](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/TTBCR%20format%20when%20using%20long%20descriptor.png)
 
 ## 4. TLB Maintenance
 TLB 相关的操作可以参看如下图， 可以依照MVA(modified virtual address) 也可以依照ASID(Application space identifiler) 去维护TLB。
 tlb maintenance operations
-![tlb maintenance operations](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_mm/tlb/tlb_maintenance_operations.png)
+![tlb maintenance operations](https://raw.githubusercontent.com/JShell07/images/master/kernel_mm/tlb/tlb_maintenance_operations.png)
 
 注：  
 - MVA(modified virtual address)

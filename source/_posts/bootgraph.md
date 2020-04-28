@@ -11,9 +11,9 @@ bootgraph 主要用于量度kernel init function 的占用时间。
 ## 1. Prepare
 ### 1.1. 配置Kernel
 Enabel kernel 如下配置： CONFIG_PRINTK_TIME & CONFIG_KALLSYMS
-![CONFIG_PRINTK_TIME](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/CONFIG_PRINTK_TIME.png)
+![CONFIG_PRINTK_TIME](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/CONFIG_PRINTK_TIME.png)
 
-![CONFIG_KALLSYMS](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/CONFIG_KALLSYMS.png)
+![CONFIG_KALLSYMS](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/CONFIG_KALLSYMS.png)
 
 ### 1.2. 启动参数设定
 ```bash
@@ -38,7 +38,7 @@ linux/scripts/bootgraph.pl boot.log > boot.svg
 [boot_log](https://github.com/JShell07/jshell07.github.io/blob/master/images/tools/boot_time/boot.log)
 [bootgraph_boot_svg](https://github.com/JShell07/jshell07.github.io/blob/master/images/tools/boot_time/boot.svg)
 
-![bootgraph_example](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/tools/boot_time/bootgraph_example.png)
+![bootgraph_example](https://raw.githubusercontent.com/JShell07/images/master/tools/boot_time/bootgraph_example.png)
 
 ## Reference
 [A Pragmatic Guide to Boot-Time Optimization - Chris Simmonds, Consultant](https://www.bilibili.com/video/BV1y4411X7e2)

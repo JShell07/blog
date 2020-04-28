@@ -35,13 +35,13 @@ SE 常见使用如下形式加解密：
 - CFB   
 
 例如ECB 模式： 
-![ecb](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/ecb.png)
+![ecb](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/ecb.png)
 
 residue ecb_clr：
-![residue](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/residue_ecb.png)
+![residue](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/residue_ecb.png)
 
 shortmessage ecb_clr:
-![shortmessage](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/short_message_for%20ecb_with_clr.png)
+![shortmessage](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/short_message_for%20ecb_with_clr.png)
 
 cipher chain | CLR (short message) | XOR(IV1)(short message) | XOR(IV2)(short message) | CLR(residue) | RBT(residue) | CTS(residue) 
 :- | :- | :- | :- | :- | :- | :- 
@@ -69,12 +69,12 @@ __注__：
 #### 1.2. key(密钥)
 硬件模块支持set key。有些还提供了CPU cannot access 的internal key 进一步保证安全性。因此，我们在加密时需要选择何种key。
 
-![key selection](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/key_selection.png)
+![key selection](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/key_selection.png)
 
 当然，internal key 是可以重新生成的，重新产生流程如下：
-![internal key generate](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/internal_key_generate.png)
+![internal key generate](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/internal_key_generate.png)
 
-![internal key generate flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/internal_key_generate_flow.png)
+![internal key generate flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/internal_key_generate_flow.png)
 
 #### 1.3. R/W 方式
 cryptographic 一般支持三种方式的encryption or decrytion:
@@ -88,10 +88,10 @@ __List Mode__
 - dma size  
 - dma r/w addr  
   
-![list entry](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/link_list.png)
+![list entry](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/link_list.png)
 
 __PIO Mode__
-![pio encrypto flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/pio_encrypttion_flow.png)
+![pio encrypto flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/pio_encrypttion_flow.png)
 
 
 ### 2. Kernel Crypto
@@ -105,11 +105,11 @@ crypto 在kernel 中可以分为如下几类（）：
 5. hash (CAC, HMAC, XCBC, VMAC 等)
 
 #### 2.1. kernel menuconfig
-![menuconfig_core](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/menconfig_core.png)
+![menuconfig_core](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/menconfig_core.png)
 
-![menuconfig_associate_data](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/menconfig_associated_data.png)
+![menuconfig_associate_data](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/menconfig_associated_data.png)
 
-![menuconfig_cipher](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/menuconfig_cipher.png)
+![menuconfig_cipher](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/menuconfig_cipher.png)
 
 kernel 的crypto 子系统采用了分层的思想。作者使用crypto_alg 代表算法例如（AES_CBC, DES_CBC等）， crypto_tfm 代表用户实例化的对象，它包含了算法与处理逻辑。
 

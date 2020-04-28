@@ -15,7 +15,7 @@ The C++ class has three visibility.
 - protected, using '#'  
 
 See the base class examole:  
-![Base Class](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/C%2B%2B/C%2B%2B_BaseClass.png)
+![Base Class](https://raw.githubusercontent.com/JShell07/images/master/C%2B%2B/C%2B%2B_BaseClass.png)
 
 <!-- more -->
 ### 1.2. Class members
@@ -32,7 +32,7 @@ The C++ has these relationship:
 - Inheritance
 - Class template  
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/C%2B%2B/C%2B%2B_ClassRelationship.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/C%2B%2B/C%2B%2B_ClassRelationship.png)
 
 ### 2.1. Dependency
 可以简单的理解，就是一个类A使用到了另一个类B，而这种使用关系是具有偶然性的、、临时性的、非常弱的，但是B类的变化会影响到A；比如某人要过河，需要借用一条船，此时人与船之间的关系就是依赖。

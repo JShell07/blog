@@ -13,7 +13,7 @@ WebRTC is a free, open project that enables web browsers with Real-Time Communic
 The WebRTC initiative is a project supported by Google, Mozilla and Opera, amongst others. This page is maintained by the Google Chrome team.
 
 And it's source code structure like this:  
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/webRTC/webRTC_Structure.png)  
+![](https://raw.githubusercontent.com/JShell07/images/master/webRTC/webRTC_Structure.png)  
 More detail see <https://webrtc.org>  
 
 <!-- more -->

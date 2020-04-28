@@ -34,19 +34,19 @@ J2EE 模式 | 这些设计模式特别**关注表示层**。这些模式是由 S
 
 **创建模式（Creational Patterns）**
 
-![Creational Patterns](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/CreationalPattern.png)
+![Creational Patterns](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/CreationalPattern.png)
 
 **结构型模式(Structural Patterns)**
 
-![Structural Patterns](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/StructuralPattern.png)
+![Structural Patterns](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/StructuralPattern.png)
 
 **行为型模式（Behavioral Patterns)**
 
-![Behavioral Patterns](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPatternpng.png)
+![Behavioral Patterns](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPatternpng.png)
 
 **J2EE设计模式**
 
-![J2EE设计模式](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/J2EEPattern.png)
+![J2EE设计模式](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/J2EEPattern.png)
 
 ## Ref.
 http://www.runoob.com/design-pattern/design-pattern-tutorial.html

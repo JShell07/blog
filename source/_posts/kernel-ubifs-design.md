@@ -36,14 +36,14 @@ block device 与flash device最大的不同在于"in placed updates". Flash 设�
 ubifs 使用log-structured design 记录这些更新。另一方面，这样也可以减少flash的erase cycles。
 
 问题：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/indexing_problem.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/indexing_problem.png)
 
 A 引用了B, A引用了C, B，C 引用了D， 现在D 使用了"out-of-place updates" 更新到了D1, 怎么保证B, C 是引用的最新的D1。
 
 #### 1.2. wandering tree
 wandering tree 可以解决如上问题。
 
-![截图 wandering tree](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/wandering_tree.png)
+![截图 wandering tree](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/wandering_tree.png)
 假设需更新H1， 涉及到的F, A也需更新。
 
 any tree may be called ”wandering tree” if any update in the tree requires updating parent nodes up
@@ -53,9 +53,9 @@ to the root. For example, it makes sense to talk about wandering Red-Black trees
 ubifs 采用B+ tree 多路平衡搜索二叉树。__只有叶子节点包含data，非叶子节点只包含keys 和links__。 B+ tree 广泛用于
 block devices上。
 
-![B+ tree 截图](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/B%2B_tree.png)
+![B+ tree 截图](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree.png)
 
-![B+ non-leaf node 截图](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/B%2B_tree_non_leaf_node.png)
+![B+ non-leaf node 截图](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_non_leaf_node.png)
 non-leaf node 包含如下：
 - 增序的keys
 - 指向leaf node 或non-leaf node 的 links
@@ -69,7 +69,7 @@ UBIFS 参考了Reiser4 file system. 所有的 fs objects（inodes, files, direct
 - directory entry key: {parent directory inode number, direntry name hash};
 - extended attribute key: {target inode number, xattr name hash} and the like
 
-![B+ tree indexing nodes and leaf nodes](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/B%2B_tree_indexing_nodes_leaf_nodes.png)
+![B+ tree indexing nodes and leaf nodes](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_indexing_nodes_leaf_nodes.png)
 
 non-leaf node 被称为indexing nodes, 只包含indexing 信息。
 leaf node 有flexible size, 他对应与flash 的sector size， 例如 512, 2K 等（与Flash 的硬件特性有关）。
@@ -79,7 +79,7 @@ leaf node 包含：
 
 __leaf nodes 与indexing nodes 是分开存储在不同的Eraseblock上。__
 
-![B+ tree store of indexing nodes and leaf nodes](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/B%2B_tree_store_indexing_nodes_leaf_nodes.png)
+![B+ tree store of indexing nodes and leaf nodes](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_store_indexing_nodes_leaf_nodes.png)
 
 ubifs indexing approach 优点：
 - The leaf nodes may be compressed
@@ -101,9 +101,9 @@ __Write__
 __read__
 首先查询是否在journal tree, 存在则从该树read，否则执行常规tree lookup.
 
-![journal tree in RAM](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/journal_tree_in_ram.png)
+![journal tree in RAM](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_in_ram.png)
 
-![journal tree read flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/journal_tree_read_flow.png)
+![journal tree read flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_read_flow.png)
 
 __update__
 journal tree 在full 或者在适当的时机是会checkpointed。在journal tree 中记录的信息与相应的indexing nodes 将会被写入到Flash 中。
@@ -129,7 +129,7 @@ ubifs 前3个good eraseblock 如下安排：
 
 anchor area 与 dynamic superblock 结构如下：
 
-![superblock management scheme](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_ubifs_design/superblock%20management%20scheme.png)
+![superblock management scheme](https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/superblock%20management%20scheme.png)
 
 为了使superblock 使用上wear-leveling。superblock 的管理方法如下：
 1. 在super eraseblock 上更新数据， 如果写满了则使用wear-leveling 选出新的eraseblock， 同时更新chain eraseblock2 中sector

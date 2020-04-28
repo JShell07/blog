@@ -42,9 +42,9 @@ config NO_HZ_FULL
          the task mostly runs in userspace and has few kernel activity.
 ```
 
-![config_tickless](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_timer_system/tickless_idle/config_tickless_idle.png)
+![config_tickless](https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/tickless_idle/config_tickless_idle.png)
 
-![config_tickless_help](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_timer_system/tickless_idle/config_tickless_idle_help.png)
+![config_tickless_help](https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/tickless_idle/config_tickless_idle_help.png)
 
 Tick，即周期性产生的 timer 中断事件，可用于系统时间管理、进程信息统计、低精度 timer 处理等等。
 `低分辨率定时器`

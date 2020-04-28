@@ -132,7 +132,7 @@ static int __init algif_skcipher_init(void)
 }
 ```
 
-![kernel af_alg system call image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/af_alg%20kernel%20flow.png)
+![kernel af_alg system call image](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/af_alg%20kernel%20flow.png)
 
 #### 2.3. usage flow
 我们使用如下流程进行使用：

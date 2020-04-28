@@ -9,7 +9,7 @@ categories: WebRTC
 
 ## 1. Prepare
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Sort_Itself.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Sort_Itself.png)
 
 <!--more-->
 
@@ -34,7 +34,7 @@ Local 端与remote 连接前，local 端会收取本地的SDP、Candidate。Cand
 
 ## 2. Connection
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Get_Candidate.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Get_Candidate.png)
 
 在收到remote端的candidate后，会进行如下动作：
 
@@ -48,7 +48,7 @@ Local 端与remote 连接前，local 端会收取本地的SDP、Candidate。Cand
 
 ## 3. Selection
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Get_Ping_Response.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/webRTC/RelayNetworkSelection/WebRTC_Best_Relay_Network_Get_Ping_Response.png)
 
 在收到stun ping的响应之后，我们可以理解为，这条线路是通的。
 

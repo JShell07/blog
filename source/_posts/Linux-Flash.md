@@ -11,7 +11,7 @@ categories:
 ## 1. Flash
 闪存（Flash Memory）是非易失性长寿命存储器，是电子可擦除只读存储器（EEPROM）的变种，而闪存的大部分芯片需要块擦除。
 
-![MOS管插图](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/MOS%E7%AE%A1.png)
+![MOS管插图](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MOS%E7%AE%A1.png)
 
 <!--more-->
 
@@ -37,7 +37,7 @@ P型半导体即空穴浓度远大于自由电子浓度的杂质半导体。在�
 两者更详细的比较可以通过Flash 厂商的datasheet 查看。
 
 `Large Page Nand Flash`
-![Large Page Nand](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/Large_Page_Nand.png)
+![Large Page Nand](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Large_Page_Nand.png)
 
 注：Spare Area 常常可以存储BBT(Bad Block Table), ECC, 逻辑映射表等信息。
 
@@ -49,17 +49,17 @@ Nand Flash 硬件特性：
 
 ## 2. Linux MTD
 
-![MTD Structure](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/Linux_MTD_Structure.png)
+![MTD Structure](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Linux_MTD_Structure.png)
 
 常见MTD 分区为：
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/MTD_Common_Partitions.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Common_Partitions.png)
 
 ## 3. Operation
 Flash 常见的操作有Read, Erase, Write, WP(Write Protect)
 
 `MTD Read Flow`
-![MTD_Read_Flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/MTD_Read_Flow.png)
+![MTD_Read_Flow](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Read_Flow.png)
 
 使用多并口时， SPI 会用到WP#， HOLD# 等管脚。
 Standard SPI: SCLK, CS#, SI, SO
@@ -82,20 +82,20 @@ SPI Nand Read 时序一般为：
 3. 03H/OBH (read from cache), 3BH/6BH(read from cache x2/x4), BBH/EBH(Read from cache dual/quad IO)
 
 spi_nand_read_from_cache
-![spi_nand_read_from_cache](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/spi_nand_read_from_cache.png)
+![spi_nand_read_from_cache](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache.png)
 
 spi_nand_read_to_cache
-![spi_nand_read_to_cache](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/spi_nand_read_to_cache.png)
+![spi_nand_read_to_cache](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_to_cache.png)
 
 spi_nand_read_from_cache_x4
-![spi_nand_read_from_cache_x4](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/spi_nand_read_from_cache_x4.png)
+![spi_nand_read_from_cache_x4](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_x4.png)
 
 spi_nand_read_from_cache_quad_io
-![spi_nand_read_from_cache_quad_io](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/spi_nand_read_from_cache_quad_io.png)
+![spi_nand_read_from_cache_quad_io](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_quad_io.png)
 <br>
 
 `MTD Write Flow`
-![MTD_Write_Flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/MTD_Write_Flow.png)
+![MTD_Write_Flow](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Write_Flow.png)
 
 在SPI Nand Flash 上的时序图流程一般为：
 1. 02H (PROGRAM LOAD)/32H (PROGRAM LOAD x4)
@@ -116,7 +116,7 @@ program load 是设定addr， 并将write data 加载到cache register（一般�
 | lock status | 查看状态                             |
 
 可能每个Flash 芯片厂商有所不同, 例如Giga SPI Nand Flash block, 通过SET Features，来控制block
-![giga_spi_nand_block](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/giga_spi_nand_block.png)
+![giga_spi_nand_block](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/giga_spi_nand_block.png)
 
 `Erase`
 Nand Flash 的erase 只能是Block(常见为64/128K) Erase。而Nor Flash 可以是Sector（一般4K） 或Block（32/64K） Erase。
@@ -138,7 +138,7 @@ Page Program与Block Erase操作失败，会反映到Status Register。
 `避免坏块策略`
 
 **Wear-Leveling(损益均衡)技术**
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/Wear_Leveling.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Wear_Leveling.png)
 
 **Buffer Cache**
 类似于UBIFS 都会带有buffer cache，以及压缩，以此来尽量降低对I/O的操作。
@@ -146,7 +146,7 @@ Page Program与Block Erase操作失败，会反映到Status Register。
 `应对坏块`
 
 为了保证数据正确性的R/W，我们使用BBT（Bad Block Table）。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/Linux_Flash/BBT.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/BBT.png)
 
 ## Reference
 [gd5f1gq4xfxxh_v1.2_20190510](https://www.gigadevice.com/datasheet/gd5f1gq4xfxxh/)

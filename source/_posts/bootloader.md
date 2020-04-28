@@ -14,7 +14,7 @@ categories:
 
 [bootloader -- wiki](https://en.wikipedia.org/wiki/Booting#BOOT-LOADER)
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootloader.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootloader.jpg)
 
 <!--more-->
 
@@ -40,7 +40,7 @@ U-Boot的主要作用是：
 BootLoader的启动过程可以使单阶段(single stage)与多阶段(multi-stage)
 一般选择多阶段启动提供更复杂的功能，以及更好的可移植性。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/Bootup%20Stages.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/Bootup%20Stages.jpg)
 
 ### 2.1.1. Stage1
 常用汇编代码编写此段代码。例如`u-boot/arch/arm/xxx/start.S`。
@@ -51,7 +51,7 @@ Stage1 的主要作用：
 - 拷贝Rom或者Flash 等上的程序到Ram中（u-boot运行代码）
 - 初始化堆栈
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_flow_1.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_flow_1.jpg)
 
 ### 2.1.2. Stage2
 主要是C语言代码，ARM体系一般是在lib_arm/board.c中start_armboot()。Stage2 主要完成：
@@ -61,10 +61,10 @@ Stage1 的主要作用：
 - 设定启动参数
 - 启动OS
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_flow_2.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_flow_2.jpg)
 
 ### 2.2. U-Boot Directory
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/directory.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/directory.jpg)
 
 | 目录 | 特性 | 备注 |
 | :- | :- | :- |
@@ -81,7 +81,7 @@ Stage1 的主要作用：
 
 ### 2.3. U-Boot Memory Map
 U-Boot 的内存主要分布图如下图：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/uboot_mem_map.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/uboot_mem_map.jpg)
 
 
 ### 2.4. U-Boot Parameters
@@ -188,7 +188,7 @@ typedef struct bd_info {
 
 在启动之后一般使用RAM 临时存放启动参数，在使用`saveenv` 命令后将会将之写到类似于Flash 存储介质上。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_parameters_store.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_parameters_store.jpg)
 
 **Parameters Structure**
 ARM 采用了自己体系定义的参数结构。它的定义可以参见`arch/arm/include/asm/setup.h`。
@@ -245,7 +245,7 @@ struct tag_core {
 ```
 
 U-Boot就是将各种启动参数串联成类似下图结构给OS。
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_parameters_structure.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_parameters_structure.jpg)
 
 注：**必须以ATAG_CORE, ATAG_NONE开头与结尾，Kernel启动时会依据此检测参数的有效性。**
 
@@ -259,13 +259,13 @@ U-Boot就是将各种启动参数串联成类似下图结构给OS。
 
 注：SVC 模式为Supervisor Control 模式，操作系统使用的保护模式，此模式下CPU能访问的数据权限更大，局限小。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_os.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_os.jpg)
 
 `Setting`
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_os_need_setting.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_os_need_setting.jpg)
 
 `Parameters`
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/bootloader/bootup_os_parameters.jpg)
+![](https://raw.githubusercontent.com/JShell07/images/master/bootloader/bootup_os_parameters.jpg)
 
 ## Reference
 [BootLoader -- wiki](https://en.wikipedia.org/wiki/Booting#BOOT-LOADER)

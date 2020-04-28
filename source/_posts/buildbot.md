@@ -31,11 +31,11 @@ BuildBot的常用架构是一个Master和一堆Slave，Master负责对接VCS，�
 - Phase 1: [target/subtargets](https://phase1.builds.lede-project.org/builders)  
 - Phase 2: [packages](https://phase2.builds.lede-project.org/builders)  
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/buildbot/waterfall.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/buildbot/waterfall.png)
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/buildbot/grid.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/buildbot/grid.png)
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/buildbot/console%20view.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/buildbot/console%20view.png)
 
 ### 3. 其他常见持续集成工具  
 常见的持续集成工具有：  

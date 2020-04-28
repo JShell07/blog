@@ -142,11 +142,11 @@ PTE - Page Table Entry。
 
 在ARM32 Linux采用两层映射，省略了PMD，除非在定义了CONFIG_ARM_LPAE才会使用3级映射。
 
-![页表转换过程](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_virtual_addr_map/page_to_addr.png)
+![页表转换过程](https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/page_to_addr.png)
 
-![1 level page table](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_virtual_addr_map/1level_page_table.png)
+![1 level page table](https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/1level_page_table.png)
 
-![2 level page table](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_virtual_addr_map/2level_page_table.png)
+![2 level page table](https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/2level_page_table.png)
 
 更多可以参看<<ARM ® Architecture Reference Manual -- ARMv7-A and ARMv7-R edition>> (ARM DDI 0406C.c (ID051414)) B3 Virtual Memory System Architecture (VMSA)
 
@@ -291,7 +291,7 @@ struct vm_area_struct {
 
 另外，我们可以访问 /proc/<pid>/maps 得到某一进程的内存区域。（/proc/self 始终指向正在运行的进程）
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_virtual_addr_map/proc_self_maps.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/proc_self_maps.png)
 
 字段 | 含义
 :-: | :-

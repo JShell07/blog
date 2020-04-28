@@ -7,7 +7,7 @@ categories: WebRTC
 ---
 
 # 1. Structure
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/webRTC/webrtc_call_flow.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/webRTC/webrtc_call_flow.png)
 
 <!-- more -->
 # 2. Directory Analyze

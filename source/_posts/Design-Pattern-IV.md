@@ -64,7 +64,7 @@ void main()
 
 Strategy 与Template 模式类似，但是Strategy 是将逻辑（算法）封装到一个类中，并采取组合的方式解决。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Strategy_Pattern.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Strategy_Pattern.png)
 
 **面向对象的设计中有一条很重要的原则就是：优先使用（对象）组合，而非类继承（favorComposition Over Inheritance)。**
 
@@ -73,7 +73,7 @@ Strategy 与Template 模式类似，但是Strategy 是将逻辑（算法）封�
 
 state 与 strategy 比较类似，但是两者的关注点不同， state 在于状态的改变， strategy 在于算法逻辑的解藕。
 
-![FixMe state pattern image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/State_Pattern.png)
+![FixMe state pattern image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/State_Pattern.png)
 
 ### 1.4.观察者模式（Observer)
 **观察者模式可以说是应用最多。影响最广的模式之一**。当一个对象被修改时，则会自动通知它的依赖对象。 
@@ -90,7 +90,7 @@ state 与 strategy 比较类似，但是两者的关注点不同， state 在于
 
 我们通过在Context 中的list 或者Vector 维持一组观察者（observer），在Context 更新时，调用Notify()函数，再使用C++的多态，调用到子类的Update（）函数。
 
-![FixMe Add Observer Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Observer_Pattern.png)
+![FixMe Add Observer Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Observer_Pattern.png)
 
 ### 1.5.备忘录模式（Memento）
 备忘录模式（Memento Pattern）保存一个对象的某个状态，以便在适当的时候恢复对象。 
@@ -106,24 +106,24 @@ state 与 strategy 比较类似，但是两者的关注点不同， state 在于
 
 注： 申明Originator 为Memento类的友元类，以便可以访问Memento 的私有成员。Originator 通过Memento 类来备份还原。
 
-![FixMe Add Memento Pattern Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Memento_Pattern.png)
+![FixMe Add Memento Pattern Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Memento_Pattern.png)
 
 ### 1.6.中介者模式（Mediator）
 中介者模式是一种**很有用并且很常用的类**，用来降低多个对象和类之间的通信复杂性。将多对多的通信转化为一对多的通信。
 
 Mediator 可以有解藕特性，通过Mediator，各个Colleague 就不必维护各自通信的对象和协议。
 
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Mediator_Pattern.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Mediator_Pattern.png)
 
 ### 1.7. 命令模式（Command）
 请求以命令的形式包裹在对象中，并传给调用对象。调用对象寻找可以处理该命令的合适的对象，并把该命令传给相应的对象，该对象执行命令。 
 
-![FixMe Add Command Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Command_Pattern.png)
+![FixMe Add Command Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Command_Pattern.png)
 
 ### 1.8. 访问者模式(Visitor)
 我们使用了一个访问者类，它改变了元素类的执行算法。通过这种方式，元素的执行算法可以随着访问者改变而改变。
 
-![FixMe Add Visitor Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Visitor_Pattern.png)
+![FixMe Add Visitor Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Visitor_Pattern.png)
 
 
 ### 1.9. 责任链模式(Chain of Responsibility)
@@ -139,7 +139,7 @@ Mediator 可以有解藕特性，通过Mediator，各个Colleague 就不必维�
     - 不能保证请求一定被接收    
     - 系统性能将受到一定影响，而且在进行代码调试时不太方便，可能会造成循环调用  
 
-![FixMe add Chain of resbonsibility Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Chain_of_Responsibility_Pattern.png)
+![FixMe add Chain of resbonsibility Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Chain_of_Responsibility_Pattern.png)
 
 每个记录器消息的级别是否属于自己的级别，如果是则相应地打印出来，否则将不打印并把消息传给下一个记录器。通过SetNextLogger（）设定下一个记录器。
 
@@ -161,5 +161,5 @@ Mediator 可以有解藕特性，通过Mediator，各个Colleague 就不必维�
     - 解释器模式采用递归调用方法。
 
 
-![FixMe add Interpreter Pattern Image](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/DesignPattern/BehavioralPattern/Interpreter_Pattern.png)
+![FixMe add Interpreter Pattern Image](https://raw.githubusercontent.com/JShell07/images/master/DesignPattern/BehavioralPattern/Interpreter_Pattern.png)
 

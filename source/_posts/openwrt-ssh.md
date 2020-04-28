@@ -14,7 +14,7 @@ openwrt 一般采用dropbear 作为ssh 客户端/服务端。 但一般都是使
 ``` bash
 dropbearkey  -y -f /etc/dropbear/dropbear_rsa_host_key
 ```
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/openwrt-ssh/public_key.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/openwrt-ssh/public_key.png)
 将图中pulibc key 复制到服务端。
 <!-- more -->
 # 2. 服务端
@@ -25,7 +25,7 @@ dropbear 与openssh 有点区别在于，**authorized_keys 文件并不在~/.ssh
 /etc/init.d/dropbear restart
 ```
 dropbear 的配置如下：
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/openwrt-ssh/dropbear_config.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/openwrt-ssh/dropbear_config.png)
 
 # 3. 使用
 在客服端使用如下命令登陆服务端
@@ -33,8 +33,8 @@ dropbear 的配置如下：
 ssh -i /etc/dropbear/dropbear_rsa_host_key root@172.28.52.151 -p 6350
 ```
 需要使用 "-i"选项指明identify 文件， "-p 6350" 是指明端口号
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/openwrt-ssh/ssh_help.png)
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/openwrt-ssh/login_ssh_without_password.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/openwrt-ssh/ssh_help.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/openwrt-ssh/login_ssh_without_password.png)
 当然我们可以不指明**-i** option 指定文件，直接登录。
 
 作如下步骤：
@@ -46,5 +46,5 @@ cp /etc/dropbear/dropbear_rsa_host_key ~/.ssh/id_dropbear
 ``` bash
 ssh 172.28.52.151 -l root -p 6350 
 ```
-![](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/openwrt-ssh/simple_ssh_login.png)
+![](https://raw.githubusercontent.com/JShell07/images/master/openwrt-ssh/simple_ssh_login.png)
 

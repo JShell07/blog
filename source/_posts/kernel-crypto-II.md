@@ -21,7 +21,7 @@ categories: drivers
 
 ### 2. cipher alg register
 atmel aes 驱动初始流程可见下图：
-![driver init flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/aes-init-flow.png)
+![driver init flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-init-flow.png)
 
 ```c
 static struct crypto_alg aes_algs[] = {
@@ -73,7 +73,7 @@ static struct crypto_alg aes_algs[] = {
 每当encryp 时， 我们将使用ablkcipher_enqueue_request() 
 把`ablkcipher_request *req` 添加到队列上。在判断HW engine 是空闲可用时，再从queue 上取出并进行HW 的加解密操作。decrypt 的流程如此类似，区别在于设定HW 的mode 设定。
 
-![hw encrypt flow](https://raw.githubusercontent.com/JShell07/jshell07.github.io/master/images/kernel_crypto/aes-hw-encrypt-flow.png)
+![hw encrypt flow](https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-hw-encrypt-flow.png)
 
 ### 2.1. data structure
 ```c
