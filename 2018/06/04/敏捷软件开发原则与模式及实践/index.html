@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="敏捷开发(Agile Development) 是一种面临迅速变化的需求快速开发软件的能力。我们需要：  纪律和反馈的时间  保持软件灵活、可维护的设计原则  平衡这些原则的设计模式">
+<meta name="keywords" content="bookmarks">
+<meta property="og:type" content="article">
+<meta property="og:title" content="敏捷软件开发原则与模式及实践">
+<meta property="og:url" content="https://jshell07.github.io/2018/06/04/敏捷软件开发原则与模式及实践/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="敏捷开发(Agile Development) 是一种面临迅速变化的需求快速开发软件的能力。我们需要：  纪律和反馈的时间  保持软件灵活、可维护的设计原则  平衡这些原则的设计模式">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=bc5f38dbd343ad4bb2234e92e36b31ca/359b033b5bb5c9ea70a2c69dd739b6003af3b37f.jpg">
+<meta property="og:updated_time" content="2020-04-26T02:48:27.795Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="敏捷软件开发原则与模式及实践">
+<meta name="twitter:description" content="敏捷开发(Agile Development) 是一种面临迅速变化的需求快速开发软件的能力。我们需要：  纪律和反馈的时间  保持软件灵活、可维护的设计原则  平衡这些原则的设计模式">
+<meta name="twitter:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=bc5f38dbd343ad4bb2234e92e36b31ca/359b033b5bb5c9ea70a2c69dd739b6003af3b37f.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2018/06/04/敏捷软件开发原则与模式及实践/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>敏捷软件开发原则与模式及实践 | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2018/06/04/敏捷软件开发原则与模式及实践/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">敏捷软件开发原则与模式及实践
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2018-06-04 19:59:25" itemprop="dateCreated datePublished" datetime="2018-06-04T19:59:25+08:00">2018-06-04</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-26 10:48:27" itemprop="dateModified" datetime="2020-04-26T10:48:27+08:00">2020-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/bookmarks/" itemprop="url" rel="index"><span itemprop="name">bookmarks</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a href="https://baike.baidu.com/item/%E6%95%8F%E6%8D%B7%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91/7108658?fr=aladdin" target="_blank" rel="noopener">敏捷开发</a>(Agile Development) 是一种面临迅速变化的需求快速开发软件的能力。我们需要：</p>
+<ol>
+<li><p>纪律和反馈的时间</p>
+</li>
+<li><p>保持软件灵活、可维护的设计原则</p>
+</li>
+<li><p>平衡这些原则的<strong>设计模式</strong></p>
+</li>
+</ol>
+<p><img src="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=bc5f38dbd343ad4bb2234e92e36b31ca/359b033b5bb5c9ea70a2c69dd739b6003af3b37f.jpg" alt=""></p>
+<a id="more"></a>
+<h2 id="1-敏捷开发"><a href="#1-敏捷开发" class="headerlink" title="1. 敏捷开发"></a>1. 敏捷开发</h2><blockquote>
+<p>人与人之间的交互是复杂的，并且其效果从来都难以预期，但确实工作中最为重要的方面。 –《人件》</p>
+</blockquote>
+<p><a href="https://baike.baidu.com/item/%E4%BA%BA%E4%BB%B6/4119178?fr=aladdin" target="_blank" rel="noopener">人件-百度百科</a></p>
+<p>原则(principle)、模式（parttern）、实践（practice）是重要的，但是人更重要。<em>如果想要项目取得成功，就必须构建起具有合作精神的、自组织的团队。</em></p>
+<h3 id="1-1-敏捷实践"><a href="#1-1-敏捷实践" class="headerlink" title="1.1. 敏捷实践"></a>1.1. 敏捷实践</h3><p>缺乏有效的实践会导致不可预测、重复的错误。</p>
+<h4 id="1-1-1-敏捷联盟"><a href="#1-1-1-敏捷联盟" class="headerlink" title="1.1.1. 敏捷联盟"></a>1.1.1. 敏捷联盟</h4><p>以下观点不是认为后面的不重要，而是前者重要性更高。</p>
+<p><strong>个体和交互     &gt;  过程和工具</strong> （先构建团队，再让团队基于需求配置环境。）</p>
+<p><strong>可工作的软件   &gt;  面面俱到的文档</strong></p>
+<p><strong>客户合作      &gt;  合同谈判</strong></p>
+<p><strong>响应变化      &gt;  遵循计划</strong></p>
+<p>当我们构建计划时，应该确保计划是灵活的并且易于适应商务和技术方面的变化。<br>较好的策略：为下两周做详细的计划，为下三个月做粗率的计划，再以后就做极为粗糙的计划。</p>
+<h4 id="1-1-2-原则"><a href="#1-1-2-原则" class="headerlink" title="1.1.2. 原则"></a>1.1.2. 原则</h4><ul>
+<li>围绕被激励起来的人构建项目，提供需要的环境和支持</li>
+<li>工作的软件是首要的进度度量标准</li>
+<li>最优先的是通过尽早的、持续的交互有价值的软件来是客户满意，间隔时间可以是几周到几个月</li>
+<li>即使在开发后期，也欢迎改变需求。敏捷过程利用变化来为客户创造竞争优势</li>
+<li>开发周期，业务人员和开发人员天天在一起工作</li>
+<li>面对面的交谈是最有效的传递信息方法</li>
+<li>最后的构架、需求和设计出自于自组织的团队</li>
+<li>不断关注优秀的技能和好的设计增强敏捷能力</li>
+<li>周期性的在提高效率上反思，并做出调整</li>
+</ul>
+<h3 id="1-2-极限编程概述"><a href="#1-2-极限编程概述" class="headerlink" title="1.2. 极限编程概述"></a>1.2. 极限编程概述</h3><p>极限编程（eXtreme Programming, 简称XP）</p>
+<h4 id="1-2-1-客户成为团队成员"><a href="#1-2-1-客户成为团队成员" class="headerlink" title="1.2.1. 客户成为团队成员"></a>1.2.1. 客户成为团队成员</h4><p>以便知晓对方面临的问题，并共同去解决这些问题。</p>
+<h4 id="1-2-2-用户素材"><a href="#1-2-2-用户素材" class="headerlink" title="1.2.2. 用户素材"></a>1.2.2. 用户素材</h4><p>做计划只需要了解到能估算它的程度就可以了，需求的特定细节会随时间而改变，在新版本之后是关注新需求的好时机。<br>在XP 中，重要的是对需求细节的理解，而不是捕获细节。</p>
+<h4 id="1-2-3-短交互周期"><a href="#1-2-3-短交互周期" class="headerlink" title="1.2.3. 短交互周期"></a>1.2.3. 短交互周期</h4><p><strong>用户素材</strong><br>用户会一直编写新的真正重要的用户元素到项目中</p>
+<p><strong>迭代计划</strong></p>
+<p><code>客户</code>：选择不超过开发人员本次迭代周期的用户素材，并在迭代开始后，不在修改当次迭代用户素材的定义和优先级别。</p>
+<p><code>开发人员</code>：根据之前的迭代工作量预算本次迭代，在迭代期间自由分解用户素材为任务，并根据最具技术和商务意义的顺序开发任务。</p>
+<p><strong>发布计划</strong></p>
+<p>XP 团队通常会创建一个计划来规划随后大约6次迭代的内容。</p>
+<p><strong>验收测试</strong></p>
+<p>验收测试使用能够让他们自动并且反复运行的某种脚本语言编写，这些测试共同来验证系统是否按照用户指定行为运行。</p>
+<p><strong>集体所有权</strong></p>
+<p>如果你是专业领域有关GUI的，那么你最有可能去从事GUI 方面的任务，但是你将会被邀请去和别人结对从事有关中间件和数据库方面的任务。如果你决定学习另一们专业知识，你可以承担相关任务，并和能传授你这方面知识的专家一起工作，不会被限制在自己的专业领域。（个人认为有点偏重于理想化。）</p>
+<p><strong>持续集成</strong></p>
+<p>每个模块都可以在完成单元测试之后，合并到主线中。因而，XP 团队每天会进行多次系统构建。</p>
+<p><strong>可持续的开发速度</strong></p>
+<p>软件项目是马拉松长跑，而不是全速的短跑。团队必须要以一种可持续的速度前进，有意识的保持稳定、始终的速度。<br>团队位于开放的空间，充满交谈的环境下。每个人都可以获知Partner 遇到的麻烦，工作状态。</p>
+<p><strong>简单的设计</strong></p>
+<ul>
+<li><p>考虑能够工作的最简单的事情（如选择平面文件而不是数据库，选择简单的socket 而不是ORB（对象请求代理），RMI（远程方法调用）），只有在有证据情况下，才去引入这些。</p>
+</li>
+<li><p>代码的重构，消除退化腐朽的代码</p>
+</li>
+<li><p>使用简单的比喻，来说明指导整个脉络流程</p>
+</li>
+</ul>
+<h2 id="2-敏捷设计"><a href="#2-敏捷设计" class="headerlink" title="2. 敏捷设计"></a>2. 敏捷设计</h2><p>敏捷团队，全局视图与软件一起演化。每次迭代中，系统设计都尽可能适用于当前系统，不会过多的预测未来的需求，更加关注于当前的系统结构。</p>
+<p>较好的原则设计：</p>
+<ul>
+<li>单一职责原则（The Single Responsibility Principle, 简称SRP）</li>
+<li>开放-封闭原则（The Open-Close Principle, 简称OCP）</li>
+<li>Liskov 替换原则( The Liskov Substitution Principle, 简称LSP)</li>
+<li>依赖倒置原则( The Dependency Inversion Principle， 简称DIP)</li>
+<li>接口隔离原则（The Interface Segregation Principle 简称ISP）</li>
+</ul>
+<h3 id="2-1-什么是敏捷设计"><a href="#2-1-什么是敏捷设计" class="headerlink" title="2.1. 什么是敏捷设计"></a>2.1. 什么是敏捷设计</h3><p>敏捷设计师一个过程，是一个持续应用原则、模式以及实践来改进软件的结构和可读性的过程。保证系统设计在任何时间都尽可能简单、干净，杜绝代码的腐化。</p>
+<ul>
+<li>遵循敏捷实践去发现问题</li>
+<li>应用设计原则去诊断问题</li>
+<li>应用适当的设计模式解决问题</li>
+</ul>
+<h3 id="2-2-单一职责原则（SRP）"><a href="#2-2-单一职责原则（SRP）" class="headerlink" title="2.2. 单一职责原则（SRP）"></a>2.2. 单一职责原则（SRP）</h3><p>就一个类而言，应该仅有一个引起他变化的原因。<br>如果一个类承担的职责太多，就等于把这些职责耦合在一起，进而导致脆弱的设计。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Modem</span> </span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dial</span><span class="params">(string pno)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hanguo</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">send</span><span class="params">(<span class="keyword">char</span> c)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recv</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接口中有两个职责：连接， 数据通信。如果应用程序的变化会影响连接函数的签名，那么这个设计就具有僵化性的臭味。在这情况下，我们分离两个职责。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Data_Channel</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">send</span><span class="params">(<span class="keyword">char</span> c)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recv</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Connection</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dial</span><span class="params">(stirng pno)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hangup</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Modem_middle</span> <span class="keyword">extends</span> <span class="title">Data_Channel</span>, <span class="title">Connection</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是，如果程序的变化总是导致这两个职责同事变化，就不必分离他们。</p>
+<h3 id="2-3-开放-封闭原则（OCP）"><a href="#2-3-开放-封闭原则（OCP）" class="headerlink" title="2.3. 开放-封闭原则（OCP）"></a>2.3. 开放-封闭原则（OCP）</h3><p>主要特征：</p>
+<ol>
+<li>“对于扩展是开放的（Open for extension ）”: 对模块进行扩张，使其满足新行为。</li>
+<li>“对于更改是封闭的（Closed for modification)”： 对模块行为扩张时，不必改动模块的源代码，模块的二进制执行版本（库、DLL，.jar文件）都无需改变。</li>
+</ol>
+<p>这两点看似是矛盾的，请看如下解释。</p>
+<p><strong>抽象</strong></p>
+<p>模块依赖于某一抽象体，所以对它的更改是关闭的，通过这个抽象体的派生，扩展此模块的行为。</p>
+<p>遵循OCP 代价是昂贵的，增加设计的复杂性，开发人员处理抽象数量有限。我们希望OCP 的应用限定在可能发生变化的上。</p>
+<p><strong>吊钩(hook)</strong></p>
+<p>在认为可能发生变化的地方放置吊钩（hook），会使软件更灵活些。</p>
+<p>OCP 主要机制是抽象（abstraction） 和多态 (polymorphism)。</p>
+<h3 id="2-4-Liskov-替换原则-LSP"><a href="#2-4-Liskov-替换原则-LSP" class="headerlink" title="2.4. Liskov 替换原则(LSP)"></a>2.4. Liskov 替换原则(LSP)</h3><p>LSP 提供了继承层次保持OCP 的指导， 只有保持了OCP 才会保证我们软件的灵活性，可重用性。</p>
+<p>LSP： 子类型（subtype）必须能够替换掉他们的基类型（base type）。<br>Barbara Liskov 在1988年写下这个原则：</p>
+<blockquote>
+<p>若对每隔类型S 的对象s, 都存在一个类型T 的对象t ,使得在所有针对T 编写的程序P 中，用s 替换t 后，程序P 的行为功能保持不变，则S 是T 的子类型。</p>
+</blockquote>
+<h3 id="2-5-依赖倒置原则-DIP"><a href="#2-5-依赖倒置原则-DIP" class="headerlink" title="2.5. 依赖倒置原则 (DIP)"></a>2.5. 依赖倒置原则 (DIP)</h3><p>依赖倒置原则：</p>
+<ul>
+<li><strong>高层模块不应该依赖于低层模块，二者都应该依赖于抽象</strong></li>
+<li>抽象不应该依赖于细节，细节应该依赖于抽象</li>
+</ul>
+<p>如果高层模块依赖于低层模块，那么低层模块的修改将会影响并作用于高层模块。</p>
+<h3 id="2-6-接口隔离原则（ISP）"><a href="#2-6-接口隔离原则（ISP）" class="headerlink" title="2.6. 接口隔离原则（ISP）"></a>2.6. 接口隔离原则（ISP）</h3><blockquote>
+<p>不应该强迫客户依赖于他们不用的方法。</p>
+</blockquote>
+<p>如果强迫客户程序依赖于他们不使用的方法，那么这些客户程序就面临着由于这些未使用的方法的改变所带来的变更。</p>
+<p>更多的策略是： <strong>使用多重继承分离接口</strong></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/bookmarks/" rel="tag"># bookmarks</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2018/06/03/WebRTC 如何避免拥塞/" rel="next" title="WebRTC 如何避免拥塞？">
+                <i class="fa fa-chevron-left"></i> WebRTC 如何避免拥塞？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2018/06/13/TED-Notes/" rel="prev" title="TED_Notes">
+                TED_Notes <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-敏捷开发"><span class="nav-text">1. 敏捷开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-敏捷实践"><span class="nav-text">1.1. 敏捷实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-1-敏捷联盟"><span class="nav-text">1.1.1. 敏捷联盟</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-2-原则"><span class="nav-text">1.1.2. 原则</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-极限编程概述"><span class="nav-text">1.2. 极限编程概述</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-1-客户成为团队成员"><span class="nav-text">1.2.1. 客户成为团队成员</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-2-用户素材"><span class="nav-text">1.2.2. 用户素材</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-3-短交互周期"><span class="nav-text">1.2.3. 短交互周期</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-敏捷设计"><span class="nav-text">2. 敏捷设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-什么是敏捷设计"><span class="nav-text">2.1. 什么是敏捷设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-单一职责原则（SRP）"><span class="nav-text">2.2. 单一职责原则（SRP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-开放-封闭原则（OCP）"><span class="nav-text">2.3. 开放-封闭原则（OCP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Liskov-替换原则-LSP"><span class="nav-text">2.4. Liskov 替换原则(LSP)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-依赖倒置原则-DIP"><span class="nav-text">2.5. 依赖倒置原则 (DIP)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-接口隔离原则（ISP）"><span class="nav-text">2.6. 接口隔离原则（ISP）</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

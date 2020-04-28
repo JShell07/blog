@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="任务的调度可以分为两步：  使用某种算法选出下一个将要运行的任务 swtich 到该任务并执行  本篇文章主要讲任务是怎样切换。">
+<meta name="keywords" content="process">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_process_switch">
+<meta property="og:url" content="https://jshell07.github.io/2020/04/23/kernel-process-switch/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="任务的调度可以分为两步：  使用某种算法选出下一个将要运行的任务 swtich 到该任务并执行  本篇文章主要讲任务是怎样切换。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/schedule_flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/context_switch_flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/process_thread_mm.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/Context_ID_Register.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:52.658Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_process_switch">
+<meta name="twitter:description" content="任务的调度可以分为两步：  使用某种算法选出下一个将要运行的任务 swtich 到该任务并执行  本篇文章主要讲任务是怎样切换。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/schedule_flow.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2020/04/23/kernel-process-switch/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_process_switch | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2020/04/23/kernel-process-switch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_process_switch
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-04-23 15:21:29" itemprop="dateCreated datePublished" datetime="2020-04-23T15:21:29+08:00">2020-04-23</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:52" itemprop="dateModified" datetime="2020-04-28T11:16:52+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/schedule/" itemprop="url" rel="index"><span itemprop="name">schedule</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>任务的调度可以分为两步：</p>
+<ol>
+<li>使用某种算法选出下一个将要运行的任务</li>
+<li>swtich 到该任务并执行</li>
+</ol>
+<p>本篇文章主要讲任务是怎样切换。</p>
+<a id="more"></a>
+<h2 id="1-调度时机"><a href="#1-调度时机" class="headerlink" title="1. 调度时机"></a>1. 调度时机</h2><p>调度可以分为主动或者被动。 主动态的有：</p>
+<ul>
+<li>IO R/W 时发生的阻塞</li>
+<li>user space 进程主动使用sleep()或exit() , 或者kernel space 驱动等使用schedule() 进行状态切换</li>
+<li>进程在等待signal, mutex 资源时</li>
+</ul>
+<p>被动态触发调度的有：</p>
+<ul>
+<li>tick clock, 进程运行时间片用完</li>
+<li>fork() 新进程时，可能引起被动调度</li>
+<li>从中断、异常及系统调用状态结束返回时，ret_from_sys_call() 判断调度标志是否需要转换，这样考虑是为了效率，在内核态就将需要状态转换</li>
+<li>若支持preempt，则从抢占模式退出时</li>
+</ul>
+<h2 id="2-flow"><a href="#2-flow" class="headerlink" title="2. flow"></a>2. flow</h2><p>入口都是从<code>schedule()</code>。 在前期判断当前运行的task 是否需要将block data 进行flush 操作。关闭抢占，进行调度。<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/schedule_flow.png" alt="schedule_flow"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux-4.9.198 src */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">sched_submit_work</span><span class="params">(struct task_struct *tsk)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!tsk-&gt;state || tsk_is_pi_blocked(tsk))</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * If we are going to sleep and we have plugged IO queued,</span></span><br><span class="line"><span class="comment">	 * make sure to submit it to avoid deadlocks.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (blk_needs_flush_plug(tsk))</span><br><span class="line">		blk_schedule_flush_plug(tsk);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">asmlinkage __visible <span class="keyword">void</span> __<span class="function">sched <span class="title">schedule</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> *<span class="title">tsk</span> = <span class="title">current</span>;</span></span><br><span class="line"></span><br><span class="line">	sched_submit_work(tsk);</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		preempt_disable();</span><br><span class="line">		__schedule(<span class="literal">false</span>);</span><br><span class="line">		sched_preempt_enable_no_resched();</span><br><span class="line">	&#125; <span class="keyword">while</span> (need_resched());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>linux 使用<code>struct rq</code> 保存local runqueue，使用<code>smp_processor_id()</code> 读取当前运行CPU ID， 并进一步得到local rq。<br>之后<font color="red">关闭local cpu irq </font> 避免local 中断影响，将当前task 从rq 队列中remove， 通过合适的算法从rq 中pick next task， 最后使用context_switch 切换到next task 上运行。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> __sched notrace __schedule(<span class="keyword">bool</span> preempt)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> *<span class="title">prev</span>, *<span class="title">next</span>;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> *switch_count;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">pin_cookie</span> <span class="title">cookie</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rq</span> *<span class="title">rq</span>;</span></span><br><span class="line">	<span class="keyword">int</span> cpu;</span><br><span class="line"></span><br><span class="line">	cpu = smp_processor_id();</span><br><span class="line">	rq = cpu_rq(cpu);</span><br><span class="line">	prev = rq-&gt;curr;</span><br><span class="line"></span><br><span class="line">	local_irq_disable();</span><br><span class="line">	rcu_note_context_switch();</span><br><span class="line"></span><br><span class="line">	switch_count = &amp;prev-&gt;nivcsw;</span><br><span class="line">	<span class="keyword">if</span> (!preempt &amp;&amp; prev-&gt;state) &#123;</span><br><span class="line">        deactivate_task(rq, prev, DEQUEUE_SLEEP);</span><br><span class="line">        prev-&gt;on_rq = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">		switch_count = &amp;prev-&gt;nvcsw;</span><br><span class="line">	&#125;</span><br><span class="line">    </span><br><span class="line">	next = pick_next_task(rq, prev, cookie);</span><br><span class="line">	clear_tsk_need_resched(prev);</span><br><span class="line">	clear_preempt_need_resched();</span><br><span class="line">	rq-&gt;clock_skip_update = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (likely(prev != next)) &#123;</span><br><span class="line">		rq-&gt;nr_switches++;</span><br><span class="line">		rq-&gt;curr = next;</span><br><span class="line">		++*switch_count;</span><br><span class="line"></span><br><span class="line">		rq = context_switch(rq, prev, next, cookie); <span class="comment">/* unlocks the rq */</span></span><br><span class="line">	&#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-1-pick-next-task"><a href="#2-1-pick-next-task" class="headerlink" title="2.1. pick next task"></a>2.1. pick next task</h3><p>在另一篇中讲解进程调度算法。</p>
+<p>FixMe<br><a href="">kernel_process_management</a></p>
+<h3 id="2-2-context-switch"><a href="#2-2-context-switch" class="headerlink" title="2.2. context_switch"></a>2.2. context_switch</h3><p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/context_switch_flow.png" alt="context_switch flow"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> __always_inline <span class="class"><span class="keyword">struct</span> <span class="title">rq</span> *</span></span><br><span class="line"><span class="class"><span class="title">context_switch</span>(<span class="title">struct</span> <span class="title">rq</span> *<span class="title">rq</span>, <span class="title">struct</span> <span class="title">task_struct</span> *<span class="title">prev</span>,</span></span><br><span class="line"><span class="class">	       <span class="title">struct</span> <span class="title">task_struct</span> *<span class="title">next</span>, <span class="title">struct</span> <span class="title">pin_cookie</span> <span class="title">cookie</span>)</span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span>, *<span class="title">oldmm</span>;</span></span><br><span class="line">	mm = next-&gt;mm;</span><br><span class="line">	oldmm = prev-&gt;active_mm;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!mm) &#123;</span><br><span class="line">		next-&gt;active_mm = oldmm;</span><br><span class="line">		atomic_inc(&amp;oldmm-&gt;mm_count);</span><br><span class="line">		enter_lazy_tlb(oldmm, next);</span><br><span class="line">	&#125; <span class="keyword">else</span></span><br><span class="line">		switch_mm_irqs_off(oldmm, mm, next);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!prev-&gt;mm) &#123;</span><br><span class="line">		prev-&gt;active_mm = <span class="literal">NULL</span>;</span><br><span class="line">		rq-&gt;prev_mm = oldmm;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	switch_to(prev, next, prev);</span><br><span class="line">	barrier();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> finish_task_switch(prev);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在此之前，我们需要有一个认知，进程切换的情况可能是：</p>
+<ul>
+<li>普通进程 -&gt; 普通进程</li>
+<li>普通进程 -&gt; 内核进程/thread</li>
+<li>内核进程 -&gt; 普通进程</li>
+<li>内核进程 -&gt; 内核进程</li>
+</ul>
+<p>ps: 普通进程 指user space 进程。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/process_thread_mm.png" alt="process_thread_mm.png"></p>
+<p>以32 bit ARM 为例， 普通进程之间0~3G 独立虚拟空间, 3~4G 共享内核地址空间。因此，当next 为内核进程时，我们可以使用pre 的<code>active_mm</code> 空间，内核进程100% 不会使用到0~3G 的虚拟空间，他只需要的是3~4G 的内核空间的地址转换表。</p>
+<p>那主要分为两大类：next 是否为kernel thread。若是，next 借助pre-&gt;active_mm（减少分配mm, 映射上等时间的浪费）， 反之，则需要进行switch_mm。 当然，kernel 也考虑到了如果上次也为kernel thread 情况如下， context_switch 中就有了：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!prev-&gt;mm) &#123;</span><br><span class="line">	prev-&gt;active_mm = <span class="literal">NULL</span>;</span><br><span class="line">	rq-&gt;prev_mm = oldmm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>那pre 应该将active_mm 的引用数减少，以便回收。在之后的<code>finish_task_switch()</code> 就有<code>mmdrop()</code>的尝试回收：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> struct rq *<span class="title">finish_task_switch</span><span class="params">(struct task_struct *prev)</span></span></span><br><span class="line"><span class="function">	__<span class="title">releases</span><span class="params">(rq-&gt;lock)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">   	<span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span> = <span class="title">rq</span>-&gt;<span class="title">prev_mm</span>;</span></span><br><span class="line">    rq-&gt;prev_mm = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span> (mm)</span><br><span class="line">		mmdrop(mm);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">mmdrop</span><span class="params">(struct mm_struct *mm)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (unlikely(atomic_dec_and_test(&amp;mm-&gt;mm_count)))</span><br><span class="line">		__mmdrop(mm);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="2-2-1-switch-mm-switch-mm-irqs-off"><a href="#2-2-1-switch-mm-switch-mm-irqs-off" class="headerlink" title="2.2.1. switch_mm/switch_mm_irqs_off"></a>2.2.1. switch_mm/switch_mm_irqs_off</h4><p><code>switch_mm</code> 把虚拟内存从一个进程映射切换到新进程中， </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span></span><br><span class="line">switch_mm(struct mm_struct *prev, struct mm_struct *next,</span><br><span class="line">	  struct task_struct *tsk)</span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MMU</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> cpu = smp_processor_id();</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * __sync_icache_dcache doesn't broadcast the I-cache invalidation,</span></span><br><span class="line"><span class="comment">	 * so check for possible thread migration and invalidate the I-cache</span></span><br><span class="line"><span class="comment">	 * if we're new to this CPU.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (cache_ops_need_broadcast() &amp;&amp;</span><br><span class="line">	    !cpumask_empty(mm_cpumask(next)) &amp;&amp;</span><br><span class="line">	    !cpumask_test_cpu(cpu, mm_cpumask(next)))</span><br><span class="line">		__flush_icache_all();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next)) || prev != next) &#123;</span><br><span class="line">		check_and_switch_context(next, tsk);</span><br><span class="line">		<span class="keyword">if</span> (cache_is_vivt())</span><br><span class="line">			cpumask_clear_cpu(cpu, mm_cpumask(prev));</span><br><span class="line">	&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>check_and_switch_context()</code> 函数中有考虑是否CPU 是否支持TLB ASID (address space ID)。CPU中往往设计了TLB和Cache。Cache为了更快的访问main memory中的数据和指令，而TLB是为了更快的进行地址翻译而将部分的页表内容缓存到了Translation lookasid buffer中，避免了从main memory访问页表的过程。 进程A，B 在kernel space 可以共享，但是各自的虚拟空间user space 则不同，TLB 势必要进行更新，那怎么才能既保证正确性有保证效率呢？ARM 中引入了TLB，ASID， VMID 来支持区别application, virtual machine 的情况。switch_mm 时flush 掉pre-&gt;active_mm, 通过global 标志来区别kernel space or user space, 若为global entry 则无需flush。</p>
+<p>但是ASID 能记录的ID 数目是要受限于HW 的bits。在arm32 上是8 bit, 意味着能记录256 个ID。当系统中各个cpu的TLB中的asid合起来不大于256个的时候，系统正常运行，一旦超过256的上限后，我们将全部TLB flush掉，并重新分配ASID，每达到256上限，都需要flush tlb并重新分配HW ASID。具体分配ASID代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux-4.9.198/arch/arm/mm/context.c */</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * On ARMv6, we have the following structure in the Context ID:</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 31                         7          0</span></span><br><span class="line"><span class="comment"> * +-------------------------+-----------+</span></span><br><span class="line"><span class="comment"> * |      process ID         |   ASID    |</span></span><br><span class="line"><span class="comment"> * +-------------------------+-----------+</span></span><br><span class="line"><span class="comment"> * |              context ID             |</span></span><br><span class="line"><span class="comment"> * +-------------------------------------+</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * The ASID is used to tag entries in the CPU caches and TLBs.</span></span><br><span class="line"><span class="comment"> * The context ID is used by debuggers and trace logic, and</span></span><br><span class="line"><span class="comment"> * should be unique within all running processes.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * In big endian operation, the two 32 bit words are swapped if accessed</span></span><br><span class="line"><span class="comment"> * by non-64-bit operations.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ASID_BITS	8</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ASID_MASK	((~0ULL) &lt;&lt; ASID_BITS)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ASID(mm)	((unsigned int)((mm)-&gt;context.id.counter &amp; ~ASID_MASK))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ASID_FIRST_VERSION	(1ULL &lt;&lt; ASID_BITS)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NUM_USER_ASIDS		ASID_FIRST_VERSION</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">atomic64_t</span> asid_generation = ATOMIC64_INIT(ASID_FIRST_VERSION);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> u64 <span class="title">new_context</span><span class="params">(struct mm_struct *mm, <span class="keyword">unsigned</span> <span class="keyword">int</span> cpu)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">static</span> u32 cur_idx = <span class="number">1</span>;</span><br><span class="line">	u64 asid = atomic64_read(&amp;mm-&gt;context.id);</span><br><span class="line">	u64 generation = atomic64_read(&amp;asid_generation);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (asid != <span class="number">0</span>) &#123;</span><br><span class="line">		u64 newasid = generation | (asid &amp; ~ASID_MASK);</span><br><span class="line"></span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 * If our current ASID was active during a rollover, we</span></span><br><span class="line"><span class="comment">		 * can continue to use it and this was just a false alarm.</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		<span class="keyword">if</span> (check_update_reserved_asid(asid, newasid))</span><br><span class="line">			<span class="keyword">return</span> newasid;</span><br><span class="line"></span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 * We had a valid ASID in a previous life, so try to re-use</span></span><br><span class="line"><span class="comment">		 * it if possible.,</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		asid &amp;= ~ASID_MASK;</span><br><span class="line">		<span class="keyword">if</span> (!__test_and_set_bit(asid, asid_map))</span><br><span class="line">			<span class="keyword">return</span> newasid;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Allocate a free ASID. If we can't find one, take a note of the</span></span><br><span class="line"><span class="comment">	 * currently active ASIDs and mark the TLBs as requiring flushes.</span></span><br><span class="line"><span class="comment">	 * We always count from ASID #1, as we reserve ASID #0 to switch</span></span><br><span class="line"><span class="comment">	 * via TTBR0 and to avoid speculative page table walks from hitting</span></span><br><span class="line"><span class="comment">	 * in any partial walk caches, which could be populated from</span></span><br><span class="line"><span class="comment">	 * overlapping level-1 descriptors used to map both the module</span></span><br><span class="line"><span class="comment">	 * area and the userspace stack.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	asid = find_next_zero_bit(asid_map, NUM_USER_ASIDS, cur_idx);</span><br><span class="line">	<span class="keyword">if</span> (asid == NUM_USER_ASIDS) &#123;</span><br><span class="line">		generation = atomic64_add_return(ASID_FIRST_VERSION,</span><br><span class="line">						 &amp;asid_generation);</span><br><span class="line">		flush_context(cpu);</span><br><span class="line">		asid = find_next_zero_bit(asid_map, NUM_USER_ASIDS, <span class="number">1</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	__set_bit(asid, asid_map);</span><br><span class="line">	cur_idx = asid;</span><br><span class="line">	cpumask_clear(mm_cpumask(mm));</span><br><span class="line">	<span class="keyword">return</span> asid | generation;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面函数考虑了如下几种情况：</p>
+<ol>
+<li>若(asid = atomic64_read(&amp;mm-&gt;context.id)) != 0，说明此mm 已经分配过software asid（generation＋hw asid）了，因初始值为0。那么new context不过就是将software asid中的旧的generation更新为当前的generation而已。 </li>
+<li>若asid == 0， 则需要分配一个新的HW ID<ul>
+<li>若能找到空闲HW ID则返回software asid(当前generation + 新分配hw asid)</li>
+<li>若不能找到，多个CPU 上的old generation 需要被flush 掉, 标记tlb_flush_pending。</li>
+</ul>
+</li>
+</ol>
+<p>有了上面的认知后，在看下面的代码就比较明了。最终，会调用到<code>cpu_switch_mm()</code><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">check_and_switch_context</span><span class="params">(struct mm_struct *mm, struct task_struct *tsk)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> cpu = smp_processor_id();</span><br><span class="line">	u64 asid;</span><br><span class="line"></span><br><span class="line">	asid = atomic64_read(&amp;mm-&gt;context.id);</span><br><span class="line">	<span class="keyword">if</span> (!((asid ^ atomic64_read(&amp;asid_generation)) &gt;&gt; ASID_BITS)</span><br><span class="line">	    &amp;&amp; atomic64_xchg(&amp;per_cpu(active_asids, cpu), asid))</span><br><span class="line">		<span class="keyword">goto</span> switch_mm_fastpath;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Check that our ASID belongs to the current generation. */</span></span><br><span class="line">	asid = atomic64_read(&amp;mm-&gt;context.id);</span><br><span class="line">	<span class="keyword">if</span> ((asid ^ atomic64_read(&amp;asid_generation)) &gt;&gt; ASID_BITS) &#123;</span><br><span class="line">		asid = new_context(mm, cpu);</span><br><span class="line">		atomic64_set(&amp;mm-&gt;context.id, asid);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (cpumask_test_and_clear_cpu(cpu, &amp;tlb_flush_pending)) &#123;</span><br><span class="line">		local_flush_bp_all();</span><br><span class="line">		local_flush_tlb_all();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	atomic64_set(&amp;per_cpu(active_asids, cpu), asid);</span><br><span class="line">	cpumask_set_cpu(cpu, mm_cpumask(mm));</span><br><span class="line"></span><br><span class="line">switch_mm_fastpath:</span><br><span class="line">	cpu_switch_mm(mm-&gt;pgd, mm);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>汇编级的代码主要做了设置context ID register， translation table base0 register.<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *	cpu_v7_switch_mm(pgd_phys, tsk)</span></span><br><span class="line"><span class="comment"> *	Set the translation table base pointer to be pgd_phys</span></span><br><span class="line"><span class="comment"> *	- pgd_phys - physical address of new TTB</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *	It is assumed that:</span></span><br><span class="line"><span class="comment"> *	- we are not using split page tables</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *	Note that we always need to flush BTAC/BTB if IBE is set</span></span><br><span class="line"><span class="comment"> *	even on Cortex-A8 revisions not affected by 430973.</span></span><br><span class="line"><span class="comment"> *	If IBE is not set, the flush BTAC/BTB won't do anything.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">ENTRY(cpu_v7_switch_mm)</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MMU</span></span><br><span class="line">	mmid	r1, r1				@ get mm-&gt;context.id</span><br><span class="line">	ALT_SMP(orr	r0, r0, #TTB_FLAGS_SMP)</span><br><span class="line">	ALT_UP(orr	r0, r0, #TTB_FLAGS_UP)</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_PID_IN_CONTEXTIDR</span></span><br><span class="line">	mrc	p15, <span class="number">0</span>, r2, c13, c0, <span class="number">1</span>		@ read current context ID</span><br><span class="line">	lsr	r2, r2, #<span class="number">8</span>			@ extract the PID</span><br><span class="line">	bfi	r1, r2, #<span class="number">8</span>, #<span class="number">24</span>			@ insert into <span class="keyword">new</span> context ID</span><br><span class="line">#endif</span><br><span class="line">	mcr	p15, <span class="number">0</span>, r1, c13, c0, <span class="number">1</span>		@ <span class="built_in">set</span> context ID</span><br><span class="line">	isb</span><br><span class="line">	mcr	p15, <span class="number">0</span>, r0, c2, c0, <span class="number">0</span>		@ <span class="built_in">set</span> TTB <span class="number">0</span></span><br><span class="line">	isb</span><br><span class="line">#endif</span><br><span class="line">	bx	lr</span><br><span class="line">ENDPROC(cpu_v7_switch_mm)</span><br></pre></td></tr></table></figure></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_process/Context_ID_Register.png" alt="context_id_register"></p>
+<h4 id="2-2-2-switch-to"><a href="#2-2-2-switch-to" class="headerlink" title="2.2.2. switch_to"></a>2.2.2. switch_to</h4><p>保存prev 通用寄存器和堆栈等， 恢复next 以便切换后运行。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> switch_to(prev,next,last)					\</span></span><br><span class="line"><span class="keyword">do</span> &#123;									\</span><br><span class="line">	last = __switch_to(prev,task_thread_info(prev), task_thread_info(next));	\</span><br><span class="line">&#125; <span class="keyword">while</span> (<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ENTRY(__switch_to)</span><br><span class="line"> UNWIND(.fnstart	)</span><br><span class="line"> UNWIND(.cantunwind	)</span><br><span class="line">	add	ip, r1, #TI_CPU_SAVE</span><br><span class="line"> ARM(	stmia	ip!, &#123;r4 - sl, fp, sp, lr&#125; )	@ Store most regs on <span class="built_in">stack</span></span><br><span class="line"> THUMB(	stmia	ip!, &#123;r4 - sl, fp&#125;	   )	@ Store most regs on <span class="built_in">stack</span></span><br><span class="line"> THUMB(	str	sp, [ip], #<span class="number">4</span>		   )</span><br><span class="line"> THUMB(	str	lr, [ip], #<span class="number">4</span>		   )</span><br><span class="line">	ldr	r4, [r2, #TI_TP_VALUE]</span><br><span class="line">	ldr	r5, [r2, #TI_TP_VALUE + <span class="number">4</span>]</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_CPU_USE_DOMAINS</span></span><br><span class="line">	mrc	p15, <span class="number">0</span>, r6, c3, c0, <span class="number">0</span>		@ Get domain <span class="keyword">register</span></span><br><span class="line">	str	r6, [r1, #TI_CPU_DOMAIN]	@ Save old domain <span class="keyword">register</span></span><br><span class="line">	ldr	r6, [r2, #TI_CPU_DOMAIN]</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_CPU_USE_DOMAINS</span></span><br><span class="line">	mcr	p15, <span class="number">0</span>, r6, c3, c0, <span class="number">0</span>		@ Set domain <span class="keyword">register</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	add	r4, r2, #TI_CPU_SAVE</span><br><span class="line"> THUMB(	mov	ip, r4			   )</span><br><span class="line"> ARM(	ldmia	r4, &#123;r4 - sl, fp, sp, pc&#125;  )	@ Load all regs saved previously</span><br><span class="line"> THUMB(	ldmia	ip!, &#123;r4 - sl, fp&#125;	   )	@ Load all regs saved previously</span><br><span class="line"> THUMB(	ldr	sp, [ip], #<span class="number">4</span>		   )</span><br><span class="line"> THUMB(	ldr	pc, [ip]		   )</span><br><span class="line"> UNWIND(.fnend		)</span><br><span class="line">ENDPROC(__switch_to)</span><br></pre></td></tr></table></figure>
+<p>先从prev <code>thread_info offset #TI_CPU_SAVE</code> 的 <code>struct cpu_context_save</code>， 并将当前r4 ~ r10, r12 ~ r15 进行保存。接着从next 同样的offset <code>struct cpu_context_save</code> 恢复寄存器。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">thread_info</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>		flags;		<span class="comment">/* low level flags */</span></span><br><span class="line">	<span class="keyword">int</span>			preempt_count;	<span class="comment">/* 0 =&gt; preemptable, &lt;0 =&gt; bug */</span></span><br><span class="line">	<span class="keyword">mm_segment_t</span>		addr_limit;	<span class="comment">/* address limit */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span>	*<span class="title">task</span>;</span>		<span class="comment">/* main task structure */</span></span><br><span class="line">	__u32			cpu;		<span class="comment">/* cpu */</span></span><br><span class="line">	__u32			cpu_domain;	<span class="comment">/* cpu domain */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">cpu_context_save</span>	<span class="title">cpu_context</span>;</span>	<span class="comment">/* cpu context */</span></span><br><span class="line">	__u32			syscall;	<span class="comment">/* syscall number */</span></span><br><span class="line">	__u8			used_cp[<span class="number">16</span>];	<span class="comment">/* thread used copro */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>		tp_value[<span class="number">2</span>];	<span class="comment">/* TLS registers */</span></span><br><span class="line">	<span class="keyword">union</span> fp_state		fpstate __attribute__((aligned(<span class="number">8</span>)));</span><br><span class="line">	<span class="keyword">union</span> vfp_state		vfpstate;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">DEFINE(TI_CPU_SAVE,		offsetof(struct thread_info, cpu_context));</span><br><span class="line">DEFINE(TI_TP_VALUE,		offsetof(struct thread_info, tp_value));</span><br><span class="line">DEFINE(TI_CPU_DOMAIN,		offsetof(struct thread_info, cpu_domain));</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cpu_context_save</span> &#123;</span></span><br><span class="line">	__u32	r4;</span><br><span class="line">	__u32	r5;</span><br><span class="line">	__u32	r6;</span><br><span class="line">	__u32	r7;</span><br><span class="line">	__u32	r8;</span><br><span class="line">	__u32	r9;</span><br><span class="line">	__u32	sl; <span class="comment">/* r10, stack limit register, r11, ip - intra-procedure-call scratch register */</span></span><br><span class="line">	__u32	fp; <span class="comment">/* r12, frame pointer register */</span></span><br><span class="line">	__u32	sp; <span class="comment">/* stack pointer register */</span></span><br><span class="line">	__u32	pc;</span><br><span class="line">	__u32	extra[<span class="number">2</span>];		<span class="comment">/* Xscale 'acc' register, etc */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="http://www.wowotech.net/process_management/context-switch-arch.html" target="_blank" rel="noopener">进程切换分析(1)：基本框架</a><br><a href="http://www.wowotech.net/process_management/context-switch-tlb.html" target="_blank" rel="noopener">进程切换分析（2）：TLB处理</a><br><a href="http://www.wowotech.net/process_management/scheudle-sync.html" target="_blank" rel="noopener">进程切换分析（3）：同步处理</a><br><a href="https://zhuanlan.zhihu.com/p/75760406?from_voters_page=true" target="_blank" rel="noopener">Linux内核浅析-进程调度时机和过程</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/process/" rel="tag"># process</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/04/23/kernel-process-management/" rel="next" title="kernel_process_management">
+                <i class="fa fa-chevron-left"></i> kernel_process_management
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2020/04/26/arm-backtrace/" rel="prev" title="arm_backtrace">
+                arm_backtrace <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-调度时机"><span class="nav-text">1. 调度时机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-flow"><span class="nav-text">2. flow</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-pick-next-task"><span class="nav-text">2.1. pick next task</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-context-switch"><span class="nav-text">2.2. context_switch</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-switch-mm-switch-mm-irqs-off"><span class="nav-text">2.2.1. switch_mm/switch_mm_irqs_off</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-switch-to"><span class="nav-text">2.2.2. switch_to</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="arm backtrace 的实现主要有两种方式：  APCS (逐步被淘汰) 向gcc 传递选项-mapcs-frame or -mapcs unwind 向gcc 传递选项-funwind-tables">
+<meta name="keywords" content="backtrace">
+<meta property="og:type" content="article">
+<meta property="og:title" content="arm_backtrace">
+<meta property="og:url" content="https://jshell07.github.io/2020/04/26/arm-backtrace/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="arm backtrace 的实现主要有两种方式：  APCS (逐步被淘汰) 向gcc 传递选项-mapcs-frame or -mapcs unwind 向gcc 传递选项-funwind-tables">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/backtrace/apcs.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/backtrace/unwind_flow.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:46.746Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="arm_backtrace">
+<meta name="twitter:description" content="arm backtrace 的实现主要有两种方式：  APCS (逐步被淘汰) 向gcc 传递选项-mapcs-frame or -mapcs unwind 向gcc 传递选项-funwind-tables">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/backtrace/apcs.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2020/04/26/arm-backtrace/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>arm_backtrace | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2020/04/26/arm-backtrace/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">arm_backtrace
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-04-26 10:48:41" itemprop="dateCreated datePublished" datetime="2020-04-26T10:48:41+08:00">2020-04-26</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:46" itemprop="dateModified" datetime="2020-04-28T11:16:46+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/tools/" itemprop="url" rel="index"><span itemprop="name">tools</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>arm backtrace 的实现主要有两种方式：</p>
+<ol>
+<li>APCS (逐步被淘汰) 向gcc 传递选项<code>-mapcs-frame</code> or <code>-mapcs</code></li>
+<li>unwind 向gcc 传递选项<code>-funwind-tables</code></li>
+</ol>
+<a id="more"></a>
+<h2 id="1-APCS"><a href="#1-APCS" class="headerlink" title="1. APCS"></a>1. APCS</h2><p>APCS (ARM Procedure Call Standard) ARM过程调用标准规范了arm寄存器的使用、过程调用时 出栈和入栈的约定。每次函数调用都需要准从这一套规范，入栈规定的寄存器。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">register</th>
+<th style="text-align:left">alias</th>
+<th style="text-align:left">remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">r11</td>
+<td style="text-align:left">FP</td>
+<td style="text-align:left">frame pointer</td>
+</tr>
+<tr>
+<td style="text-align:center">r12</td>
+<td style="text-align:left">IP</td>
+<td style="text-align:left">The Intra-Procedure-call scratch register. （可简单的认为暂存SP）</td>
+</tr>
+<tr>
+<td style="text-align:center">r13</td>
+<td style="text-align:left">SP</td>
+<td style="text-align:left">The Stack Pointer.</td>
+</tr>
+<tr>
+<td style="text-align:center">r14</td>
+<td style="text-align:left">LR</td>
+<td style="text-align:left">The Link Register.</td>
+</tr>
+<tr>
+<td style="text-align:center">r15</td>
+<td style="text-align:left">PC</td>
+<td style="text-align:left">The Program Counter.</td>
+</tr>
+</tbody>
+</table>
+<p>注：thumb2 模式下有所不同，FP 为R7。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/backtrace/apcs.png" alt="apcs"></p>
+<p>每个函数都有自己的栈空间，这一部分我们称为栈帧，在函数被调用的时候创建，在函数返回后销毁。stack frame的两个边界分别由FP和SP来限定，其中SP指向栈顶，FP指向栈基址， PC。 在被调用函数callee中Stack 保存了调用函数caller 的{FP, SP, LR, PC}，通过pop 操作就可以知道caller 函数对应的寄存器值。这样递归操作就能知道整个调用栈。</p>
+<h2 id="2-UNWIND"><a href="#2-UNWIND" class="headerlink" title="2. UNWIND"></a>2. UNWIND</h2><p>相较于APCS，消耗更大的栈空间，占用更多寄存器，对性能有影响，unwind 占用额外的段，但不影响性能。在GCC &gt; 4.5 增加新特性。它的原理是<code>记录每个函数的 入栈指令(一般比APCS的入栈要少的多)到特殊的段.ARM.unwind_idx .ARM.unwind_tab</code>。那他是怎么产生的呢？GCC 编译时如果有<code>-funwind-tables</code> 选项则会生成。</p>
+<p>在ld 链接脚本里，有如下定义：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*linux/arch/arm/kernel/vmlinux.lds */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_ARM_UNWIND</span></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Stack unwinding tables</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	. = ALIGN(<span class="number">8</span>);</span><br><span class="line">	.ARM.unwind_idx : &#123;</span><br><span class="line">		__start_unwind_idx = .;</span><br><span class="line">		*(.ARM.exidx*)</span><br><span class="line">		__stop_unwind_idx = .;</span><br><span class="line">	&#125;</span><br><span class="line">	.ARM.unwind_tab : &#123;</span><br><span class="line">		__start_unwind_tab = .;</span><br><span class="line">		*(.ARM.extab*)</span><br><span class="line">		__stop_unwind_tab = .;</span><br><span class="line">	&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<p>我们使用<code>arm-none-linux-readelf -u vmlinux</code> 命令读取vmlinux 中unwind 段，使用<code>arm-none-linux-objdump -D vmlinux</code> 命令反汇编vmlinux 中函数。<br>下面是截取对应某个函数分析：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/* vmlinux unwind 部分段 */</span><br><span class="line">0x81244d44 &lt;proc_sys_write&gt;: 0x80028400</span><br><span class="line">  Compact model index: 0</span><br><span class="line">  0x02      vsp = vsp + 12</span><br><span class="line">  0x84 0x00 pop &#123;r14&#125;</span><br></pre></td></tr></table></figure></p>
+<p>0x81244d44 为函数虚拟地址。0x80028400 为编码，编码对应的函数栈操作的逆过程出栈的伪指令，这样编码的目的是为减少段空间的浪费。</p>
+<p>它的结构类似于：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">unwind_idx</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> addr_offset;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> insn;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/* vmlnux 反汇编部分段 */</span><br><span class="line">81244d44 &lt;proc_sys_write&gt;:</span><br><span class="line">81244d44:	e52de004 	push	&#123;lr&#125;		; (str lr, [sp, #-4]!)</span><br><span class="line">81244d48:	e24dd00c 	sub	sp, sp, #12</span><br><span class="line">81244d4c:	e3a0c001 	mov	ip, #1</span><br><span class="line">81244d50:	e58dc000 	str	ip, [sp]</span><br><span class="line">81244d54:	ebffffc2 	bl	81244c64 &lt;proc_sys_call_handler&gt;</span><br><span class="line">81244d58:	e28dd00c 	add	sp, sp, #12</span><br><span class="line">81244d5c:	e49df004 	pop	&#123;pc&#125;		; (ldr pc, [sp], #4)</span><br></pre></td></tr></table></figure>
+<p>回溯时，根据PC 值在uwind 段中查询到函数栈操作的反向操作即出栈，进而知道上一次调用函数的地址。以此方法递归则可以知道整个函数调用栈。</p>
+<p><strong>With the -funwind-tables flag:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Idx Name Size VMA LMA File off Algn</span><br><span class="line"><span class="number">0</span> .text <span class="number">0005</span>a600 <span class="number">08000000</span> <span class="number">08000000</span> <span class="number">00004000</span> <span class="number">2</span>**<span class="number">14</span></span><br><span class="line">CONTENTS, ALLOC, LOAD, CODE  </span><br><span class="line"><span class="number">1</span> .ARM.exidx <span class="number">00003f</span>d8 <span class="number">0805</span>a600 <span class="number">0805</span>a600 <span class="number">0005e600</span> <span class="number">2</span>**<span class="number">2</span></span><br><span class="line">CONTENTS, ALLOC, LOAD, READONLY, DATA  </span><br><span class="line"><span class="number">2</span> .ARM.extab <span class="number">000049</span>d0 <span class="number">0805e5</span>d8 <span class="number">0805e5</span>d8 <span class="number">000625</span>d8 <span class="number">2</span>**<span class="number">2</span></span><br><span class="line">CONTENTS, ALLOC, LOAD, READONLY, DATA  </span><br><span class="line"><span class="number">3</span> .rodata <span class="number">0003e380</span> <span class="number">08062f</span>c0 <span class="number">08062f</span>c0 <span class="number">00066f</span>c0 <span class="number">2</span>**<span class="number">5</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>No flag:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Sections:</span><br><span class="line">Idx Name Size VMA LMA File off Algn</span><br><span class="line"><span class="number">0</span> .text <span class="number">00058b</span>1c <span class="number">08000000</span> <span class="number">08000000</span> <span class="number">00004000</span> <span class="number">2</span>**<span class="number">14</span></span><br><span class="line">CONTENTS, ALLOC, LOAD, CODE</span><br><span class="line"><span class="number">1</span> .ARM.exidx <span class="number">00000008</span> <span class="number">08058b</span>1c <span class="number">08058b</span>1c <span class="number">0005</span>cb1c <span class="number">2</span>**<span class="number">2</span></span><br><span class="line">CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line"><span class="number">2</span> .rodata <span class="number">0003e380</span> <span class="number">08058b</span>40 <span class="number">08058b</span>40 <span class="number">0005</span>cb40 <span class="number">2</span>**<span class="number">5</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="3-实现"><a href="#3-实现" class="headerlink" title="3. 实现"></a>3. 实现</h2><h3 id="3-1-在用户空间实现backtrace"><a href="#3-1-在用户空间实现backtrace" class="headerlink" title="3.1. 在用户空间实现backtrace"></a>3.1. 在用户空间实现backtrace</h3><p>通过下面参看链接 <a href="https://stackoverflow.com/questions/5397041/getting-the-saved-instruction-pointer-address-from-a-signal-handler" target="_blank" rel="noopener">Getting the saved instruction pointer address from a signal handler</a> 我们知道在用户空间实现backtrace的方法主要通过:</p>
+<ol>
+<li>sigaction 获取到ucontext</li>
+<li>dladdr 获取到符号表的信息</li>
+</ol>
+<p>当<code>sigaction()</code> sa_flags == <font color="red">SA_SIGINFO</font>时，sa_sigaction() handler 第三个参数为<code>struct ucontext *</code>，从ucontext 可以得到fp, sp, lr, pc 等寄存器值，我们再借助dladdr() 得到函数函数名。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sigaction</span><span class="params">(<span class="keyword">int</span> signum, <span class="keyword">const</span> struct sigaction *act, struct sigaction *oldact)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> &#123;</span></span><br><span class="line">    <span class="keyword">void</span>     (*sa_handler)(<span class="keyword">int</span>);</span><br><span class="line">    <span class="keyword">void</span>     (*sa_sigaction)(<span class="keyword">int</span>, <span class="keyword">siginfo_t</span> *, <span class="keyword">void</span> *);</span><br><span class="line">    <span class="keyword">sigset_t</span>   sa_mask;</span><br><span class="line">    <span class="keyword">int</span>        sa_flags;</span><br><span class="line">    <span class="keyword">void</span>     (*sa_restorer)(<span class="keyword">void</span>);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ucontext</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>	  uc_flags;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ucontext</span>  *<span class="title">uc_link</span>;</span></span><br><span class="line">	<span class="keyword">stack_t</span>		  uc_stack;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">sigcontext</span> <span class="title">uc_mcontext</span>;</span></span><br><span class="line">	<span class="keyword">sigset_t</span>	  uc_sigmask;</span><br><span class="line">	<span class="comment">/* Allow for uc_sigmask growth.  Glibc uses a 1024-bit sigset_t.  */</span></span><br><span class="line">	<span class="keyword">int</span>		  __unused[<span class="number">32</span> - (<span class="keyword">sizeof</span> (<span class="keyword">sigset_t</span>) / <span class="keyword">sizeof</span> (<span class="keyword">int</span>))];</span><br><span class="line">	<span class="comment">/* Last for extensibility.  Eight byte aligned because some</span></span><br><span class="line"><span class="comment">	   coprocessors require eight byte alignment.  */</span></span><br><span class="line"> 	<span class="keyword">unsigned</span> <span class="keyword">long</span>	  uc_regspace[<span class="number">128</span>] __attribute__((__aligned__(<span class="number">8</span>)));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sigcontext</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> trap_no;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> error_code;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> oldmask;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r0;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r1;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r2;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r3;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r4;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r5;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r6;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r7;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r8;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r9;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_r10;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_fp;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_ip;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_sp;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_lr;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_pc;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arm_cpsr;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> fault_address;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>实现arm architecture 的user space 用例。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;ucontext.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> sigsegv_outp(x, ...) 	fprintf(stderr, x<span class="meta-string">"\n"</span>, ##__VA_ARGS__)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> REGFORMAT   <span class="meta-string">"%lx"</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Structure containing information about object searched using</span></span><br><span class="line"><span class="comment">   `dladdr'.  */</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  __const <span class="keyword">char</span> *dli_fname;  <span class="comment">/* File name of defining object.  */</span></span><br><span class="line">  <span class="keyword">void</span> *dli_fbase;      <span class="comment">/* Load address of that object.  */</span></span><br><span class="line">  __const <span class="keyword">char</span> *dli_sname;  <span class="comment">/* Name of nearest symbol.  */</span></span><br><span class="line">  <span class="keyword">void</span> *dli_saddr;      <span class="comment">/* Exact value of nearest symbol.  */</span></span><br><span class="line">&#125; Dl_info;</span><br><span class="line">extern int dladdr (__const void *__address, Dl_info *__info) __THROW __nonnull ((2));</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print_reg</span><span class="params">(<span class="keyword">const</span> <span class="keyword">ucontext_t</span> *uc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">0</span>, uc-&gt;uc_mcontext.arm_r0);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">1</span>, uc-&gt;uc_mcontext.arm_r1);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">2</span>, uc-&gt;uc_mcontext.arm_r2);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">3</span>, uc-&gt;uc_mcontext.arm_r3);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">4</span>, uc-&gt;uc_mcontext.arm_r4);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">5</span>, uc-&gt;uc_mcontext.arm_r5);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">6</span>, uc-&gt;uc_mcontext.arm_r6);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">7</span>, uc-&gt;uc_mcontext.arm_r7);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">8</span>, uc-&gt;uc_mcontext.arm_r8);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">9</span>, uc-&gt;uc_mcontext.arm_r9);</span><br><span class="line">    sigsegv_outp(<span class="string">"reg[%02d]     = 0x"</span>REGFORMAT, <span class="number">10</span>, uc-&gt;uc_mcontext.arm_r10);</span><br><span class="line">    sigsegv_outp(<span class="string">"FP        = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_fp);</span><br><span class="line">    sigsegv_outp(<span class="string">"IP        = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_ip);</span><br><span class="line">    sigsegv_outp(<span class="string">"SP        = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_sp);</span><br><span class="line">    sigsegv_outp(<span class="string">"LR        = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_lr);</span><br><span class="line">    sigsegv_outp(<span class="string">"PC        = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_pc);</span><br><span class="line">    sigsegv_outp(<span class="string">"CPSR      = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.arm_cpsr);</span><br><span class="line">    sigsegv_outp(<span class="string">"Fault Address = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.fault_address);</span><br><span class="line">    sigsegv_outp(<span class="string">"Trap no       = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.trap_no);</span><br><span class="line">    sigsegv_outp(<span class="string">"Err Code  = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.error_code);</span><br><span class="line">    sigsegv_outp(<span class="string">"Old Mask  = 0x"</span>REGFORMAT, uc-&gt;uc_mcontext.oldmask);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print_call_link</span><span class="params">(<span class="keyword">const</span> <span class="keyword">ucontext_t</span> *uc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">	Dl_info	dl_info;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">void</span> **frame_pointer = (<span class="keyword">const</span> <span class="keyword">void</span> **)uc-&gt;uc_mcontext.arm_fp;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">void</span> *return_address = (<span class="keyword">const</span> <span class="keyword">void</span> *)uc-&gt;uc_mcontext.arm_pc;</span><br><span class="line"></span><br><span class="line">	sigsegv_outp(<span class="string">"\nStack trace:"</span>);</span><br><span class="line">	<span class="keyword">while</span> (return_address) &#123;</span><br><span class="line">		<span class="built_in">memset</span>(&amp;dl_info, <span class="number">0</span>, <span class="keyword">sizeof</span>(Dl_info));</span><br><span class="line">		<span class="keyword">if</span> (!dladdr((<span class="keyword">void</span> *)return_address, &amp;dl_info))	<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">const</span> <span class="keyword">char</span> *sname = dl_info.dli_sname;</span><br><span class="line">		sigsegv_outp(<span class="string">"%02d: %p &lt;%s + %lu&gt; (%s)"</span>, ++i, return_address, sname,</span><br><span class="line">			(<span class="keyword">unsigned</span> <span class="keyword">long</span>)return_address - (<span class="keyword">unsigned</span> <span class="keyword">long</span>)dl_info.dli_saddr,</span><br><span class="line">													dl_info.dli_fname);</span><br><span class="line">		<span class="keyword">if</span> (dl_info.dli_sname &amp;&amp; !<span class="built_in">strcmp</span>(dl_info.dli_sname, <span class="string">"main"</span>)) <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (!frame_pointer)	<span class="keyword">break</span>;</span><br><span class="line">		return_address = frame_pointer[<span class="number">-1</span>];</span><br><span class="line">		frame_pointer = (<span class="keyword">const</span> <span class="keyword">void</span> **)frame_pointer[<span class="number">-3</span>];</span><br><span class="line">	&#125;</span><br><span class="line">	sigsegv_outp(<span class="string">"Stack trace end."</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">segv_handler</span><span class="params">(<span class="keyword">int</span> signal_number, <span class="keyword">siginfo_t</span> *info, <span class="keyword">void</span> *context)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	sigsegv_outp(<span class="string">"Segmentation Fault!"</span>);</span><br><span class="line">	sigsegv_outp(<span class="string">"info.si_signo = %d"</span>, signal_number);</span><br><span class="line">	<span class="keyword">if</span> (info) &#123;</span><br><span class="line">		sigsegv_outp(<span class="string">"info.si_errno = %d"</span>, info-&gt;si_errno);</span><br><span class="line">		sigsegv_outp(<span class="string">"info.si_code  = %d (%s)"</span>, info-&gt;si_code,</span><br><span class="line">			(info-&gt;si_code == SEGV_MAPERR) ? <span class="string">"SEGV_MAPERR"</span> : <span class="string">"SEGV_ACCERR"</span>);</span><br><span class="line">		sigsegv_outp(<span class="string">"info.si_addr  = %p\n"</span>, info-&gt;si_addr);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (context) &#123;</span><br><span class="line">		<span class="keyword">const</span> <span class="keyword">ucontext_t</span> *uc = (<span class="keyword">const</span> <span class="keyword">ucontext_t</span> *)context;</span><br><span class="line"></span><br><span class="line">		print_reg(uc);</span><br><span class="line">		print_call_link(uc);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	_exit(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setup_sigsegv</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> <span class="title">sa</span>;</span></span><br><span class="line">	<span class="built_in">memset</span>(&amp;sa, <span class="number">0</span>, <span class="keyword">sizeof</span>(sa));</span><br><span class="line">	sa.sa_sigaction = segv_handler;</span><br><span class="line">    sa.sa_flags = SA_SIGINFO;</span><br><span class="line">	sigaction(SIGSEGV, &amp;sa, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-2-kernel-space-的backtrace"><a href="#3-2-kernel-space-的backtrace" class="headerlink" title="3.2. kernel space 的backtrace"></a>3.2. kernel space 的backtrace</h3><p>在内核中<code>dump_stack()</code> 函数对应于不同的arch 实现了backtrace 的功能。下面我们来简单分析一下。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux-4.9.198, linux/lib/dump_stack.c */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> __dump_stack(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br><span class="line">	dump_stack_print_info(KERN_DEFAULT);</span><br><span class="line">	show_stack(<span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dump_stack_print_info</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *log_lvl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	printk(<span class="string">"%sCPU: %d PID: %d Comm: %.20s %s %s %.*s\n"</span>,</span><br><span class="line">	       log_lvl, raw_smp_processor_id(), current-&gt;pid, current-&gt;comm,</span><br><span class="line">	       print_tainted(), init_utsname()-&gt;release,</span><br><span class="line">	       (<span class="keyword">int</span>)<span class="built_in">strcspn</span>(init_utsname()-&gt;version, <span class="string">" "</span>),</span><br><span class="line">	       init_utsname()-&gt;version);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (dump_stack_arch_desc_str[<span class="number">0</span>] != <span class="string">'\0'</span>)</span><br><span class="line">		printk(<span class="string">"%sHardware name: %s\n"</span>,</span><br><span class="line">		       log_lvl, dump_stack_arch_desc_str);</span><br><span class="line"></span><br><span class="line">	print_worker_info(log_lvl, current);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>dump_stack_print_info()</code> 主要dump 当前进程pid，name 等。我们主要分析<code>show_stack()</code></p>
+<p>整体flow 参见下面调用图：</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/backtrace/unwind_flow.png" alt="dump_stack flow"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux/arch/arm/kernel/traps.c */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">show_stack</span><span class="params">(struct task_struct *tsk, <span class="keyword">unsigned</span> <span class="keyword">long</span> *sp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	dump_backtrace(<span class="literal">NULL</span>, tsk);</span><br><span class="line">	barrier();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_ARM_UNWIND</span></span><br><span class="line"><span class="comment">/* UNWIND MODE*/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">dump_backtrace</span><span class="params">(struct pt_regs *regs, struct task_struct *tsk)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	unwind_backtrace(regs, tsk);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="comment">/* APCS MODE */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dump_backtrace</span><span class="params">(struct pt_regs *regs, struct task_struct *tsk)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> fp, mode;</span><br><span class="line">	<span class="keyword">int</span> ok = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">	printk(<span class="string">"Backtrace: "</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!tsk)</span><br><span class="line">		tsk = current;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (regs) &#123;</span><br><span class="line">		fp = frame_pointer(regs);</span><br><span class="line">		mode = processor_mode(regs);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (tsk != current) &#123;</span><br><span class="line">		fp = thread_saved_fp(tsk);</span><br><span class="line">		mode = <span class="number">0x10</span>;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">asm</span>(<span class="string">"mov %0, fp"</span> : <span class="string">"=r"</span> (fp) : : <span class="string">"cc"</span>);</span><br><span class="line">		mode = <span class="number">0x10</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!fp) &#123;</span><br><span class="line">		pr_cont(<span class="string">"no frame pointer"</span>);</span><br><span class="line">		ok = <span class="number">0</span>;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (verify_stack(fp)) &#123;</span><br><span class="line">		pr_cont(<span class="string">"invalid frame pointer 0x%08x"</span>, fp);</span><br><span class="line">		ok = <span class="number">0</span>;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (fp &lt; (<span class="keyword">unsigned</span> <span class="keyword">long</span>)end_of_stack(tsk))</span><br><span class="line">		pr_cont(<span class="string">"frame pointer underflow"</span>);</span><br><span class="line">	pr_cont(<span class="string">"\n"</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (ok)</span><br><span class="line">		c_backtrace(fp, mode);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>ok， 我们接下来分析unwind_backtrace(), 在该函数中借助于gcc 的build_in 参数得到FP, LR 等，PC 就设定为当前unwind_backtrace()。得到我们想要的struct stackframe frame 数据后，在while (1) 中进行回溯打印整个调用栈。</p>
+<p><strong>builtin_frame_address(0), </strong>builtin_return_address(0)等为gcc 内建函数。可以参看如下文章：<br><a href="https://zhuanlan.zhihu.com/p/55771717" target="_blank" rel="noopener">gcc 内建函数</a></p>
+<p><a href="https://www.ibm.com/support/knowledgecenter/SSGH2K_12.1.0/com.ibm.xlc121.aix.doc/compiler_ref/bif_builtin_frame_address_builtin_return_address.html" target="_blank" rel="noopener"><strong>builtin_frame_address, </strong>builtin_return_address</a></p>
+<p><a href="https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html" target="_blank" rel="noopener">Getting the Return or Frame Address of a Function</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">register</span> <span class="keyword">unsigned</span> <span class="keyword">long</span> current_stack_pointer <span class="title">asm</span> <span class="params">(<span class="string">"sp"</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">stackframe</span> &#123;</span></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * FP member should hold R7 when CONFIG_THUMB2_KERNEL is enabled</span></span><br><span class="line"><span class="comment">	 * and R11 otherwise.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> fp;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> sp;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> lr;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> pc;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">unwind_backtrace</span><span class="params">(struct pt_regs *regs, struct task_struct *tsk)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">stackframe</span> <span class="title">frame</span>;</span></span><br><span class="line"></span><br><span class="line">	pr_debug(<span class="string">"%s(regs = %p tsk = %p)\n"</span>, __func__, regs, tsk);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!tsk)</span><br><span class="line">		tsk = current;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (regs) &#123;</span><br><span class="line">		arm_get_current_stackframe(regs, &amp;frame);</span><br><span class="line">		<span class="comment">/* PC might be corrupted, use LR in that case. */</span></span><br><span class="line">		<span class="keyword">if</span> (!kernel_text_address(regs-&gt;ARM_pc))</span><br><span class="line">			frame.pc = regs-&gt;ARM_lr;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (tsk == current) &#123;</span><br><span class="line">		frame.fp = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)__builtin_frame_address(<span class="number">0</span>);</span><br><span class="line">		frame.sp = current_stack_pointer;</span><br><span class="line">		frame.lr = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)__builtin_return_address(<span class="number">0</span>);</span><br><span class="line">		frame.pc = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)unwind_backtrace;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">/* task blocked in __switch_to */</span></span><br><span class="line">		frame.fp = thread_saved_fp(tsk);</span><br><span class="line">		frame.sp = thread_saved_sp(tsk);</span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 * The function calling __switch_to cannot be a leaf function</span></span><br><span class="line"><span class="comment">		 * so LR is recovered from the stack.</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		frame.lr = <span class="number">0</span>;</span><br><span class="line">		frame.pc = thread_saved_pc(tsk);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">		<span class="keyword">int</span> urc;</span><br><span class="line">		<span class="keyword">unsigned</span> <span class="keyword">long</span> where = frame.pc;</span><br><span class="line"></span><br><span class="line">		urc = unwind_frame(&amp;frame);</span><br><span class="line">		<span class="keyword">if</span> (urc &lt; <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		dump_backtrace_entry(where, frame.pc, frame.sp - <span class="number">4</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>unwind_frame() 主要的作用是利用<code>unwind_find_idx()</code> 函数在<code>.ARM.unwind_idx</code> 段中找到当前PC 对应的idx。借此也找到了<code>.ARM.unwind_tab</code> 对应的出栈操作，并用<code>unwind_exec_insn()</code>函数进行出栈操作， 出栈完成后，FP, SP, LR, PC 寄存器已经更新，在最后更新<code>struct stackframe frame</code> 以便下一次的递归回溯。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unwind_frame</span><span class="params">(struct stackframe *frame)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> low;</span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">unwind_idx</span> *<span class="title">idx</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">unwind_ctrl_block</span> <span class="title">ctrl</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* store the highest address on the stack to avoid crossing it*/</span></span><br><span class="line">	low = frame-&gt;sp;</span><br><span class="line">	ctrl.sp_high = ALIGN(low, THREAD_SIZE);</span><br><span class="line"></span><br><span class="line">	pr_debug(<span class="string">"%s(pc = %08lx lr = %08lx sp = %08lx)\n"</span>, __func__,</span><br><span class="line">		 frame-&gt;pc, frame-&gt;lr, frame-&gt;sp);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!kernel_text_address(frame-&gt;pc))</span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line"></span><br><span class="line">	idx = unwind_find_idx(frame-&gt;pc);</span><br><span class="line">	<span class="keyword">if</span> (!idx) &#123;</span><br><span class="line">		pr_warn(<span class="string">"unwind: Index not found %08lx\n"</span>, frame-&gt;pc);</span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ctrl.vrs[FP] = frame-&gt;fp;</span><br><span class="line">	ctrl.vrs[SP] = frame-&gt;sp;</span><br><span class="line">	ctrl.vrs[LR] = frame-&gt;lr;</span><br><span class="line">	ctrl.vrs[PC] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (idx-&gt;insn == <span class="number">1</span>)</span><br><span class="line">		<span class="comment">/* can't unwind */</span></span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> ((idx-&gt;insn &amp; <span class="number">0x80000000</span>) == <span class="number">0</span>)</span><br><span class="line">		<span class="comment">/* prel31 to the unwind table */</span></span><br><span class="line">		ctrl.insn = (<span class="keyword">unsigned</span> <span class="keyword">long</span> *)prel31_to_addr(&amp;idx-&gt;insn);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> ((idx-&gt;insn &amp; <span class="number">0xff000000</span>) == <span class="number">0x80000000</span>)</span><br><span class="line">		<span class="comment">/* only personality routine 0 supported in the index */</span></span><br><span class="line">		ctrl.insn = &amp;idx-&gt;insn;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		pr_warn(<span class="string">"unwind: Unsupported personality routine %08lx in the index at %p\n"</span>,</span><br><span class="line">			idx-&gt;insn, idx);</span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* check the personality routine */</span></span><br><span class="line">	<span class="keyword">if</span> ((*ctrl.insn &amp; <span class="number">0xff000000</span>) == <span class="number">0x80000000</span>) &#123;</span><br><span class="line">		ctrl.byte = <span class="number">2</span>;</span><br><span class="line">		ctrl.entries = <span class="number">1</span>;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> ((*ctrl.insn &amp; <span class="number">0xff000000</span>) == <span class="number">0x81000000</span>) &#123;</span><br><span class="line">		ctrl.byte = <span class="number">1</span>;</span><br><span class="line">		ctrl.entries = <span class="number">1</span> + ((*ctrl.insn &amp; <span class="number">0x00ff0000</span>) &gt;&gt; <span class="number">16</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		pr_warn(<span class="string">"unwind: Unsupported personality routine %08lx at %p\n"</span>,</span><br><span class="line">			*ctrl.insn, ctrl.insn);</span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ctrl.check_each_pop = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (ctrl.entries &gt; <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">int</span> urc;</span><br><span class="line">		<span class="keyword">if</span> ((ctrl.sp_high - ctrl.vrs[SP]) &lt; <span class="keyword">sizeof</span>(ctrl.vrs))</span><br><span class="line">			ctrl.check_each_pop = <span class="number">1</span>;</span><br><span class="line">		urc = unwind_exec_insn(&amp;ctrl);</span><br><span class="line">		<span class="keyword">if</span> (urc &lt; <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> urc;</span><br><span class="line">		<span class="keyword">if</span> (ctrl.vrs[SP] &lt; low || ctrl.vrs[SP] &gt;= ctrl.sp_high)</span><br><span class="line">			<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (ctrl.vrs[PC] == <span class="number">0</span>)</span><br><span class="line">		ctrl.vrs[PC] = ctrl.vrs[LR];</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* check for infinite loop */</span></span><br><span class="line">	<span class="keyword">if</span> (frame-&gt;pc == ctrl.vrs[PC])</span><br><span class="line">		<span class="keyword">return</span> -URC_FAILURE;</span><br><span class="line"></span><br><span class="line">	frame-&gt;fp = ctrl.vrs[FP];</span><br><span class="line">	frame-&gt;sp = ctrl.vrs[SP];</span><br><span class="line">	frame-&gt;lr = ctrl.vrs[LR];</span><br><span class="line">	frame-&gt;pc = ctrl.vrs[PC];</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> URC_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="https://sudonull.com/post/10719-How-stack-trace-works-on-ARM" target="_blank" rel="noopener">How stack trace works on ARM</a></p>
+<p><a href="http://www.alivepea.me/prog/how-backtrace-work/" target="_blank" rel="noopener">Stack backtrace 的实现</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1599605" target="_blank" rel="noopener">arm上backtrace的分析与实现原理</a></p>
+<p><a href="https://blog.csdn.net/cosmoslhf/article/details/38143505" target="_blank" rel="noopener">ARM FP寄存器及frame pointer介绍</a></p>
+<p><a href="https://blog.csdn.net/Callon_H/article/details/104012933" target="_blank" rel="noopener">ARM平台(海思)unwind栈回溯的实现</a></p>
+<p><a href="https://www.sohu.com/a/256793414_467784" target="_blank" rel="noopener">谈谈Linux的栈回溯与妙用</a></p>
+<p>在用户空间实现backtrace<br><a href="https://stackoverflow.com/questions/5397041/getting-the-saved-instruction-pointer-address-from-a-signal-handler" target="_blank" rel="noopener">Getting the saved instruction pointer address from a signal handler</a></p>
+<p><a href="https://stackoverflow.com/questions/6254058/how-to-get-fullstacktrace-using-unwind-backtrace-on-sigsegv" target="_blank" rel="noopener">How to get fullstacktrace using _Unwind_Backtrace on SIGSEGV</a></p>
+<p>kernel dump_stack分析<br><a href="https://www.veryarm.com/35743.html" target="_blank" rel="noopener">ARM 架构 dump_stack 实现分析(2.0 调用时序)</a><br><a href="http://www.alivepea.me/kernel/kernel-trace/" target="_blank" rel="noopener">内核性能调试–ftrace</a><br><a href="https://blog.csdn.net/jasonchen_gbd/article/details/45585133" target="_blank" rel="noopener">linux内核中打印栈回溯信息 - dump_stack()函数分析</a><br><a href="https://blog.csdn.net/jasonchen_gbd/article/details/44025681" target="_blank" rel="noopener">内核符号表的生成和查找过程</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/backtrace/" rel="tag"># backtrace</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/04/23/kernel-process-switch/" rel="next" title="kernel_process_switch">
+                <i class="fa fa-chevron-left"></i> kernel_process_switch
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-APCS"><span class="nav-text">1. APCS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-UNWIND"><span class="nav-text">2. UNWIND</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-实现"><span class="nav-text">3. 实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-在用户空间实现backtrace"><span class="nav-text">3.1. 在用户空间实现backtrace</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-kernel-space-的backtrace"><span class="nav-text">3.2. kernel space 的backtrace</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

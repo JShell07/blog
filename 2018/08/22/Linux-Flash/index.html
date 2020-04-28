@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. Flash闪存（Flash Memory）是非易失性长寿命存储器，是电子可擦除只读存储器（EEPROM）的变种，而闪存的大部分芯片需要块擦除。">
+<meta name="keywords" content="flash,kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux_Flash">
+<meta property="og:url" content="https://jshell07.github.io/2018/08/22/Linux-Flash/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. Flash闪存（Flash Memory）是非易失性长寿命存储器，是电子可擦除只读存储器（EEPROM）的变种，而闪存的大部分芯片需要块擦除。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MOS%E7%AE%A1.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Large_Page_Nand.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Linux_MTD_Structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Common_Partitions.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Read_Flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_to_cache.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_x4.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_quad_io.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Write_Flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/giga_spi_nand_block.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Wear_Leveling.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/BBT.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:58.212Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux_Flash">
+<meta name="twitter:description" content="1. Flash闪存（Flash Memory）是非易失性长寿命存储器，是电子可擦除只读存储器（EEPROM）的变种，而闪存的大部分芯片需要块擦除。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MOS%E7%AE%A1.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2018/08/22/Linux-Flash/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Linux_Flash | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2018/08/22/Linux-Flash/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux_Flash
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2018-08-22 22:20:13" itemprop="dateCreated datePublished" datetime="2018-08-22T22:20:13+08:00">2018-08-22</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:58" itemprop="dateModified" datetime="2020-04-28T11:16:58+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-Flash"><a href="#1-Flash" class="headerlink" title="1. Flash"></a>1. Flash</h2><p>闪存（Flash Memory）是非易失性长寿命存储器，是电子可擦除只读存储器（EEPROM）的变种，而闪存的大部分芯片需要块擦除。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MOS%E7%AE%A1.png" alt="MOS管插图"></p>
+<a id="more"></a>
+<p>注：</p>
+<blockquote>
+<p>N型半导体即自由电子浓度远大于空穴浓度的杂质半导体。(对于锗、硅类半导体材料，掺杂Ⅴ族元素(磷、砷等)<br>P型半导体即空穴浓度远大于自由电子浓度的杂质半导体。在纯净的硅晶体中掺入三价元素（如硼）</p>
+</blockquote>
+<p>常见的Flash有:  </p>
+<ul>
+<li>NOR Flash</li>
+<li>NAND Flash</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:left">NOR Flash</th>
+<th style="text-align:left">NAND Flash</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">读速度</td>
+<td style="text-align:left">快</td>
+<td style="text-align:left">较快</td>
+</tr>
+<tr>
+<td style="text-align:center">单字节编程时间</td>
+<td style="text-align:left">快</td>
+<td style="text-align:left">慢</td>
+</tr>
+<tr>
+<td style="text-align:center">多字节编程时间</td>
+<td style="text-align:left">慢</td>
+<td style="text-align:left">快</td>
+</tr>
+<tr>
+<td style="text-align:center">寿命</td>
+<td style="text-align:left">十万次</td>
+<td style="text-align:left">百万次</td>
+</tr>
+<tr>
+<td style="text-align:center">I/O 端口</td>
+<td style="text-align:left">SRAM 接口，有足够地址引脚寻址</td>
+<td style="text-align:left">8个复用PIN 脚传送控制、地址、数据</td>
+</tr>
+<tr>
+<td style="text-align:center">功耗</td>
+<td style="text-align:left">高</td>
+<td style="text-align:left">低，需要额外RAM</td>
+</tr>
+<tr>
+<td style="text-align:center">应用市场</td>
+<td style="text-align:left">1~16MB</td>
+<td style="text-align:left">大容量</td>
+</tr>
+<tr>
+<td style="text-align:center">特点</td>
+<td style="text-align:left">程序可在芯片内运行</td>
+<td style="text-align:left">成本低，高存储密度，较快的写入和擦除速度</td>
+</tr>
+</tbody>
+</table>
+<p>两者更详细的比较可以通过Flash 厂商的datasheet 查看。</p>
+<p><code>Large Page Nand Flash</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Large_Page_Nand.png" alt="Large Page Nand"></p>
+<p>注：Spare Area 常常可以存储BBT(Bad Block Table), ECC, 逻辑映射表等信息。</p>
+<p>Nand Flash 硬件特性：</p>
+<ul>
+<li>R/W 最小单位，Page</li>
+<li>擦除最小单位，Block</li>
+<li>擦除的含义是将整块都擦除为0xFF</li>
+<li>写操作前，必须先擦除，然后再写</li>
+</ul>
+<h2 id="2-Linux-MTD"><a href="#2-Linux-MTD" class="headerlink" title="2. Linux MTD"></a>2. Linux MTD</h2><p><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Linux_MTD_Structure.png" alt="MTD Structure"></p>
+<p>常见MTD 分区为：</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Common_Partitions.png" alt=""></p>
+<h2 id="3-Operation"><a href="#3-Operation" class="headerlink" title="3. Operation"></a>3. Operation</h2><p>Flash 常见的操作有Read, Erase, Write, WP(Write Protect)</p>
+<p><code>MTD Read Flow</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Read_Flow.png" alt="MTD_Read_Flow"></p>
+<p>使用多并口时， SPI 会用到WP#， HOLD# 等管脚。<br>Standard SPI: SCLK, CS#, SI, SO<br>Dual SPI: SCLK, CS#, IO0(SI), IO1(SO)<br>Quad SPI: SCLK, CS#, IO0(SI), IO1(SO), IO2(WP#), IO3(HOLD#)</p>
+<p>在SPI 接口上可能会有如下形式的Read：</p>
+<ul>
+<li>Page Read</li>
+<li>Page Read to cache</li>
+<li>page from cache</li>
+<li>fast read from cache</li>
+<li>read from cache X2</li>
+<li>read from cache X4</li>
+<li>read from cache dual IO</li>
+<li>read from cache quad IO</li>
+</ul>
+<p>SPI Nand Read 时序一般为：</p>
+<ol>
+<li>13H(page read to cache)</li>
+<li>0FH(get features coomand to read the status)</li>
+<li>03H/OBH (read from cache), 3BH/6BH(read from cache x2/x4), BBH/EBH(Read from cache dual/quad IO)</li>
+</ol>
+<p>spi_nand_read_from_cache<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache.png" alt="spi_nand_read_from_cache"></p>
+<p>spi_nand_read_to_cache<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_to_cache.png" alt="spi_nand_read_to_cache"></p>
+<p>spi_nand_read_from_cache_x4<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_x4.png" alt="spi_nand_read_from_cache_x4"></p>
+<p>spi_nand_read_from_cache_quad_io<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/spi_nand_read_from_cache_quad_io.png" alt="spi_nand_read_from_cache_quad_io"><br><br></p>
+<p><code>MTD Write Flow</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/MTD_Write_Flow.png" alt="MTD_Write_Flow"></p>
+<p>在SPI Nand Flash 上的时序图流程一般为：</p>
+<ol>
+<li>02H (PROGRAM LOAD)/32H (PROGRAM LOAD x4)</li>
+<li>06H (WRITE ENABLE)</li>
+<li>10H (PROGRAM EXECUTE)</li>
+<li>0FH (GET FEATURE command to read the status)</li>
+</ol>
+<p>program load 是设定addr， 并将write data 加载到cache register（一般超过PAGE SIZE 如2K+oob 的数据会被ignore），打开WE#，在program execute 命令才执行。</p>
+<p><code>WP(Write Protect)</code><br>一般Flash 还具备block 相关指令。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">指令</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">block</td>
+<td style="text-align:left">对某一区域Flash 进行写保护，不能写入</td>
+</tr>
+<tr>
+<td style="text-align:center">un-block</td>
+<td style="text-align:left">解除block 限制</td>
+</tr>
+<tr>
+<td style="text-align:center">block down</td>
+</tr>
+<tr>
+<td style="text-align:center">lock status</td>
+<td style="text-align:left">查看状态</td>
+</tr>
+</tbody>
+</table>
+<p>可能每个Flash 芯片厂商有所不同, 例如Giga SPI Nand Flash block, 通过SET Features，来控制block<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/giga_spi_nand_block.png" alt="giga_spi_nand_block"></p>
+<p><code>Erase</code><br>Nand Flash 的erase 只能是Block(常见为64/128K) Erase。而Nor Flash 可以是Sector（一般4K） 或Block（32/64K） Erase。</p>
+<h2 id="4-Bad-Block"><a href="#4-Bad-Block" class="headerlink" title="4. Bad Block"></a>4. Bad Block</h2><p>Nand Flash 工艺不能保证Memory Cell在其生命周期中保持性能的可靠性，使用寿命一般100万次。</p>
+<p>坏块一般分为：</p>
+<ul>
+<li>固有坏块：生产中就有（芯片原厂将每个坏块第一个Page的spare area某个字节标记为非0xFF）</li>
+<li>使用坏块：存储寿命（program/erase 错误，将block标记为坏块）</li>
+</ul>
+<p>当然，也有伪坏块。芯片在才做过程中可能由于电压不稳定等因素导致Program、Erase错误，标记的坏块也可能是好的。解决办法是，retry 一次，然后查看状态。</p>
+<p><code>坏块的特性</code></p>
+<p>Page Program与Block Erase操作失败，会反映到Status Register。</p>
+<p><code>避免坏块策略</code></p>
+<p><strong>Wear-Leveling(损益均衡)技术</strong><br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/Wear_Leveling.png" alt=""></p>
+<p><strong>Buffer Cache</strong><br>类似于UBIFS 都会带有buffer cache，以及压缩，以此来尽量降低对I/O的操作。</p>
+<p><code>应对坏块</code></p>
+<p>为了保证数据正确性的R/W，我们使用BBT（Bad Block Table）。<br><img src="https://raw.githubusercontent.com/JShell07/images/master/Linux_Flash/BBT.png" alt=""></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="https://www.gigadevice.com/datasheet/gd5f1gq4xfxxh/" target="_blank" rel="noopener">gd5f1gq4xfxxh_v1.2_20190510</a><br><a href="https://www.gigadevice.com/datasheet/gd25b127d/" target="_blank" rel="noopener">gd25b127d_v1.4_20180725</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/flash/" rel="tag"># flash</a>
+          
+            <a href="/blog/tags/kernel/" rel="tag"># kernel</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2018/08/01/Better-Man/" rel="next" title="Better_Man">
+                <i class="fa fa-chevron-left"></i> Better_Man
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2018/08/25/bootloader/" rel="prev" title="bootloader">
+                bootloader <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Flash"><span class="nav-text">1. Flash</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Linux-MTD"><span class="nav-text">2. Linux MTD</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Operation"><span class="nav-text">3. Operation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Bad-Block"><span class="nav-text">4. Bad Block</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

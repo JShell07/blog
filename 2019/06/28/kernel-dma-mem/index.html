@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="在Kernel 中对于DMA 的一致性主要在驱动中会有需求，因为提供给硬件的地址，必须是总线地址即硬件地址且是连续的。为此，kernel提供了两种方式的DMA 映射：  一致性DMA 映射（Coherent DMA Map）   流式DMA 映射（Streaming DMA Map）">
+<meta name="keywords" content="kernel,memory">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_dma_mem">
+<meta property="og:url" content="https://jshell07.github.io/2019/06/28/kernel-dma-mem/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="在Kernel 中对于DMA 的一致性主要在驱动中会有需求，因为提供给硬件的地址，必须是总线地址即硬件地址且是连续的。为此，kernel提供了两种方式的DMA 映射：  一致性DMA 映射（Coherent DMA Map）   流式DMA 映射（Streaming DMA Map）">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-04-26T02:48:27.019Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_dma_mem">
+<meta name="twitter:description" content="在Kernel 中对于DMA 的一致性主要在驱动中会有需求，因为提供给硬件的地址，必须是总线地址即硬件地址且是连续的。为此，kernel提供了两种方式的DMA 映射：  一致性DMA 映射（Coherent DMA Map）   流式DMA 映射（Streaming DMA Map）">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/06/28/kernel-dma-mem/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_dma_mem | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/06/28/kernel-dma-mem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_dma_mem
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-06-28 13:55:44" itemprop="dateCreated datePublished" datetime="2019-06-28T13:55:44+08:00">2019-06-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-26 10:48:27" itemprop="dateModified" datetime="2020-04-26T10:48:27+08:00">2020-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在Kernel 中对于DMA 的一致性主要在驱动中会有需求，因为提供给硬件的地址，必须是总线地址即硬件地址且是连续的。为此，kernel提供了两种方式的DMA 映射：</p>
+<ul>
+<li>一致性DMA 映射（Coherent DMA Map）  </li>
+<li>流式DMA 映射（Streaming DMA Map） </li>
+</ul>
+<a id="more"></a>
+<h2 id="1-一致性DMA-映射"><a href="#1-一致性DMA-映射" class="headerlink" title="1. 一致性DMA 映射"></a>1. 一致性DMA 映射</h2><h3 id="1-1-一致性DMA"><a href="#1-1-一致性DMA" class="headerlink" title="1.1. 一致性DMA"></a>1.1. 一致性DMA</h3><p>kernel 提供了如下函数：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">dma_alloc_coherent</span><span class="params">(struct device *dev, <span class="keyword">size_t</span> size,</span></span></span><br><span class="line"><span class="function"><span class="params">				       <span class="keyword">dma_addr_t</span> *dma_handle, <span class="keyword">gfp_t</span> flag,</span></span></span><br><span class="line"><span class="function"><span class="params">				       struct dma_attrs *attrs)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> dma_free_coherent(d, s, c, h) dma_free_attrs(d, s, c, h, NULL)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dma_free_coherent</span><span class="params">(struct device *dev, <span class="keyword">size_t</span> size,</span></span></span><br><span class="line"><span class="function"><span class="params">				     <span class="keyword">void</span> *cpu_addr, <span class="keyword">dma_addr_t</span> dma_handle,</span></span></span><br><span class="line"><span class="function"><span class="params">				     struct dma_attrs *attrs)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>dma_alloc_coherent（）-&gt; arm_dma_alloc()<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">arm_dma_alloc</span><span class="params">(struct device *dev, <span class="keyword">size_t</span> size, <span class="keyword">dma_addr_t</span> *handle,</span></span></span><br><span class="line"><span class="function"><span class="params">		    <span class="keyword">gfp_t</span> gfp, struct dma_attrs *attrs)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">pgprot_t</span> prot = __get_dma_pgprot(attrs, PAGE_KERNEL);</span><br><span class="line">	<span class="keyword">void</span> *memory;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (dma_alloc_from_coherent(dev, size, handle, &amp;memory))</span><br><span class="line">		<span class="keyword">return</span> memory;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> __dma_alloc(dev, size, handle, gfp, prot, <span class="literal">false</span>,</span><br><span class="line">			   __builtin_return_address(<span class="number">0</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *__dma_alloc(struct device *dev, <span class="keyword">size_t</span> size, <span class="keyword">dma_addr_t</span> *handle,</span><br><span class="line">			 <span class="keyword">gfp_t</span> gfp, <span class="keyword">pgprot_t</span> prot, <span class="keyword">bool</span> is_coherent, <span class="keyword">const</span> <span class="keyword">void</span> *caller)</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (is_coherent || nommu())</span><br><span class="line">		addr = __alloc_simple_buffer(dev, size, gfp, &amp;page);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (!(gfp &amp; __GFP_WAIT))</span><br><span class="line">		addr = __alloc_from_pool(size, &amp;page);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (!dev_get_cma_area(dev))</span><br><span class="line">		addr = __alloc_remap_buffer(dev, size, gfp, prot, &amp;page, caller);</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		addr = __alloc_from_contiguous(dev, size, prot, &amp;page, caller);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据配置，我们选择__alloc_remap_buffer（） 函数进行alloc， CMA 的方式了解请看下面的参看资料中的连接。<a href="http://www.wowotech.net/memory_management/cma.html" target="_blank" rel="noopener">CMA模块学习笔记</a></p>
+<p>在<strong>alloc_remap_buffer（） 会进行alloc_pages 操作，并在</strong>dma_alloc_remap（）函数中进行page 属性的重新设定，标示为<strong>nocache</strong>, 这样就保证了CPU 与MEM 之间数据的一致性。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *__alloc_remap_buffer(struct device *dev, <span class="keyword">size_t</span> size, <span class="keyword">gfp_t</span> gfp,</span><br><span class="line">				 <span class="keyword">pgprot_t</span> prot, struct page **ret_page,</span><br><span class="line">				 <span class="keyword">const</span> <span class="keyword">void</span> *caller)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">page</span> *<span class="title">page</span>;</span></span><br><span class="line">	<span class="keyword">void</span> *ptr;</span><br><span class="line">	page = __dma_alloc_buffer(dev, size, gfp);</span><br><span class="line">	<span class="keyword">if</span> (!page)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	ptr = __dma_alloc_remap(page, size, gfp, prot, caller);</span><br><span class="line">	<span class="keyword">if</span> (!ptr) &#123;</span><br><span class="line">		__dma_free_buffer(page, size);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	*ret_page = page;</span><br><span class="line">	<span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *</span><br><span class="line">__dma_alloc_remap(struct page *page, <span class="keyword">size_t</span> size, <span class="keyword">gfp_t</span> gfp, <span class="keyword">pgprot_t</span> prot,</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">void</span> *caller)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * DMA allocation can be mapped to user space, so lets</span></span><br><span class="line"><span class="comment">	 * set VM_USERMAP flags too.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">return</span> dma_common_contiguous_remap(page, size,</span><br><span class="line">			VM_ARM_DMA_CONSISTENT | VM_USERMAP,</span><br><span class="line">			prot, caller);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="1-2-DMA-池"><a href="#1-2-DMA-池" class="headerlink" title="1.2 DMA 池"></a>1.2 DMA 池</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">dma_pool_create(name, dev, size, align, alloc);</span><br><span class="line">dma_pool_destroy(pool) pci_pool_destroy(pool);</span><br><span class="line">dma_pool_alloc(pool, flags, handle) pci_pool_alloc(pool, flags, handle);</span><br><span class="line">dma_pool_free(pool, vaddr, addr) pci_pool_free(pool, vaddr, addr);</span><br></pre></td></tr></table></figure>
+<h2 id="2-流式DMA-映射"><a href="#2-流式DMA-映射" class="headerlink" title="2. 流式DMA 映射"></a>2. 流式DMA 映射</h2><p>流式映射，kernel 还分为了两种形式：</p>
+<ul>
+<li>多page </li>
+<li>单个page </li>
+</ul>
+<h3 id="2-1-多个page-流式映射"><a href="#2-1-多个page-流式映射" class="headerlink" title="2.1. 多个page 流式映射"></a>2.1. 多个page 流式映射</h3><p>LDD3 上也叫做分散/聚集映射，原理大致与单个page 映射相同， 不同点在于多个循环映射 <strong>struct scatterlist *sg</strong> 里面聚集的pages </p>
+<p>dma_data_direction分为如下几种：</p>
+<blockquote>
+<ul>
+<li>DMA_BIDIRECTIONAL （双向）</li>
+<li>DMA_FROM_DEVICE  </li>
+<li>DMA_TO_DEVICE  </li>
+<li>DMA_NONE </li>
+</ul>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> dma_data_direction &#123;</span><br><span class="line">	DMA_BIDIRECTIONAL = <span class="number">0</span>,</span><br><span class="line">	DMA_TO_DEVICE = <span class="number">1</span>,</span><br><span class="line">	DMA_FROM_DEVICE = <span class="number">2</span>,</span><br><span class="line">	DMA_NONE = <span class="number">3</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">dma_map_sg</span><span class="params">(struct device *dev, struct scatterlist *sg,</span></span></span><br><span class="line"><span class="function"><span class="params">				   <span class="keyword">int</span> nents, <span class="keyword">enum</span> dma_data_direction dir,</span></span></span><br><span class="line"><span class="function"><span class="params">				   struct dma_attrs *attrs)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dma_unmap_sg</span><span class="params">(struct device *dev, struct scatterlist *sg,</span></span></span><br><span class="line"><span class="function"><span class="params">				      <span class="keyword">int</span> nents, <span class="keyword">enum</span> dma_data_direction dir,</span></span></span><br><span class="line"><span class="function"><span class="params">				      struct dma_attrs *attrs)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>注意：在dma_unmap_sg 之前，CPU 是不能操作page的， 原因在于这些addr 都是cached 地址，只有在保证地址被flush 到主存中才能让CPU 操作</strong></p>
+<p>Kernel 封装了如下函数，帮助我们显示的刷新cache 的数据，保证数据cache, memory 之间的一致性。</p>
+<p>使用dma_sync_sg_for_cpu（）函数，将使用权给CPU（之后Device 不能访问，否则数据不一致），<br>使用dma_sync_sg_for_device（）函数，将使用权给Device（CPU 不能访问）。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span></span><br><span class="line">dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg,</span><br><span class="line">		    <span class="keyword">int</span> nelems, <span class="keyword">enum</span> dma_data_direction dir);</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg,</span><br><span class="line">		       <span class="keyword">int</span> nelems, <span class="keyword">enum</span> dma_data_direction dir)  ;</span><br></pre></td></tr></table></figure>
+<p>究其原因，是因为流式DMA缓冲区是cached，在map时刷了下cache，在设备DMA完成unmap时再刷cache（根据数据流向写回或者无效），来保证了cache数据一致性，在unmap之前CPU操作缓冲区是不能保证数据一致的。因此kernel需要严格保证操作时序。<br>当然kernel也提供函数dma_sync_sg_for_cpu与dma_sync_sg_for_device，可以在未释放时操作缓冲区，很明显这2个函数实现中肯定是再次进行刷新cache的操作保证数据一致性。</p>
+<h3 id="2-2-单个page-流式映射"><a href="#2-2-单个page-流式映射" class="headerlink" title="2.2. 单个page 流式映射"></a>2.2. 单个page 流式映射</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dma_map_single(dev, addr, size, dir);</span><br><span class="line">dma_unmap_single(dev, hnd, size, dir);</span><br></pre></td></tr></table></figure>
+<p>与前面分散/聚集的多页映射一样， 我们不能在Device 访问期间，CPU 在访问，两者不能交互访问。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dma_sync_single_for_cpu</span><span class="params">(struct device *dev, <span class="keyword">dma_addr_t</span> addr,</span></span></span><br><span class="line"><span class="function"><span class="params">					   <span class="keyword">size_t</span> size,</span></span></span><br><span class="line"><span class="function"><span class="params">					   <span class="keyword">enum</span> dma_data_direction dir)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dma_sync_single_for_device</span><span class="params">(struct device *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">					      <span class="keyword">dma_addr_t</span> addr, <span class="keyword">size_t</span> size,</span></span></span><br><span class="line"><span class="function"><span class="params">					      <span class="keyword">enum</span> dma_data_direction dir)</span></span>; </span><br><span class="line">```                       </span><br><span class="line"></span><br><span class="line">dma_map_single ==&gt; __dma_map_page ==&gt; __dma_page_cpu_to_dev ==&gt; ___dma_page_cpu_to_dev </span><br><span class="line">```c</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> __dma_page_cpu_to_dev(struct page *page, <span class="keyword">unsigned</span> <span class="keyword">long</span> off,</span><br><span class="line">	<span class="keyword">size_t</span> size, <span class="keyword">enum</span> dma_data_direction dir)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">phys_addr_t</span> paddr;</span><br><span class="line"></span><br><span class="line">	dma_cache_maint_page(page, off, size, dir, dmac_map_area);</span><br><span class="line"></span><br><span class="line">	paddr = page_to_phys(page) + off;</span><br><span class="line">	<span class="keyword">if</span> (dir == DMA_FROM_DEVICE) &#123;</span><br><span class="line">		outer_inv_range(paddr, paddr + size);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		outer_clean_range(paddr, paddr + size);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">/* <span class="doctag">FIXME:</span> non-speculating: flush on bidirectional mappings? */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>dmac_map_area 在我们配置的ARMV7 是指向的rch/arm/mm/cache-v7.S 文件中<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ENTRY(v7_dma_map_area)</span><br><span class="line">	add	r1, r1, r0</span><br><span class="line">	teq	r2, #DMA_FROM_DEVICE</span><br><span class="line">	beq	v7_dma_inv_range</span><br><span class="line">	b	v7_dma_clean_range</span><br><span class="line">ENDPROC(v7_dma_map_area)</span><br><span class="line"></span><br><span class="line">ENTRY(v7_dma_unmap_area)</span><br><span class="line">	add	r1, r1, r0</span><br><span class="line">	teq	r2, #DMA_TO_DEVICE</span><br><span class="line">	bne	v7_dma_inv_range</span><br><span class="line">	ret	lr</span><br><span class="line">ENDPROC(v7_dma_unmap_area)</span><br></pre></td></tr></table></figure></p>
+<p>我们由此可以看出dma_map_sigle() 最终是使用汇编指令clean 或者invalidate cache 里面的数据，保证cache 与mem 之间的一致性。因此，在给Device 访问后，禁止CPU 访问，除非使用dma_sync_single_for_cpu（）函数，以此来将cache 数据invalidate。</p>
+<h2 id="参看资料"><a href="#参看资料" class="headerlink" title="参看资料"></a>参看资料</h2><p><a href="https://blog.csdn.net/skyflying2012/article/" target="_blank" rel="noopener">https://blog.csdn.net/skyflying2012/article/</a><br><a href="https://my.oschina.net/yepanl/blog/3053881" target="_blank" rel="noopener">https://my.oschina.net/yepanl/blog/3053881</a><br><a href="http://www.wowotech.net/memory_management/cma.html" target="_blank" rel="noopener">http://www.wowotech.net/memory_management/cma.html</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/blog/tags/memory/" rel="tag"># memory</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/06/25/kernel-mtd/" rel="next" title="kernel_mtd">
+                <i class="fa fa-chevron-left"></i> kernel_mtd
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/07/02/buildbot/" rel="prev" title="buildbot">
+                buildbot <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-一致性DMA-映射"><span class="nav-text">1. 一致性DMA 映射</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-一致性DMA"><span class="nav-text">1.1. 一致性DMA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-DMA-池"><span class="nav-text">1.2 DMA 池</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-流式DMA-映射"><span class="nav-text">2. 流式DMA 映射</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-多个page-流式映射"><span class="nav-text">2.1. 多个page 流式映射</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-单个page-流式映射"><span class="nav-text">2.2. 单个page 流式映射</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参看资料"><span class="nav-text">参看资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

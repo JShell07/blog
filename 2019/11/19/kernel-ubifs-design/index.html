@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="ubifs(Unsorted block images file system)之前本设计为jffs3，后改名为ubifs。">
+<meta name="keywords" content="mtd,ubifs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel-ubifs-design">
+<meta property="og:url" content="https://jshell07.github.io/2019/11/19/kernel-ubifs-design/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="ubifs(Unsorted block images file system)之前本设计为jffs3，后改名为ubifs。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/indexing_problem.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/wandering_tree.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_non_leaf_node.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_indexing_nodes_leaf_nodes.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_store_indexing_nodes_leaf_nodes.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_in_ram.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_read_flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/superblock%20management%20scheme.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:56.964Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel-ubifs-design">
+<meta name="twitter:description" content="ubifs(Unsorted block images file system)之前本设计为jffs3，后改名为ubifs。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/indexing_problem.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/11/19/kernel-ubifs-design/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel-ubifs-design | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/11/19/kernel-ubifs-design/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel-ubifs-design
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-11-19 15:27:46" itemprop="dateCreated datePublished" datetime="2019-11-19T15:27:46+08:00">2019-11-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:56" itemprop="dateModified" datetime="2020-04-28T11:16:56+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/fs/" itemprop="url" rel="index"><span itemprop="name">fs</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>ubifs(Unsorted block images file system)之前本设计为jffs3，后改名为ubifs。</p>
+<a id="more"></a>
+<p>jffs2 本身设计是为small size NOR Flash。</p>
+<p>他有如下缺点：</p>
+<ul>
+<li>index 是建立在RAM， 并且内存的消耗与Flash size 成线性关系</li>
+<li>mount 时间需要scan 整个Flash</li>
+</ul>
+<p>但他有如下优点：</p>
+<ul>
+<li>支持数据压缩</li>
+<li>支持wear-leveling</li>
+<li>unclean reboot robustness(健壮性)，jffs2 为LOGFS</li>
+</ul>
+<p>因此ubifs 的需求有如下：</p>
+<ul>
+<li>继承jffs2 的优点</li>
+<li>mem 消耗与Flash size 不是线性关系</li>
+<li>cache write （异步方式）实现性能提升，而不是jffs2 的sync 性同步写入</li>
+<li>能处理data corruptions, flash bit flip, dynamically bad blocks</li>
+</ul>
+<h3 id="1-index-problem"><a href="#1-index-problem" class="headerlink" title="1. index problem"></a>1. index problem</h3><p>block device 与flash device最大的不同在于”in placed updates”. Flash 设备不能直接写，除非进行了Erase 操作。<br>因此， ubifs 采用“out-of-place updates”， 只在必要的时候（有其他的sector 需要更新时）才将数据真正写入flash。<br>ubifs 使用log-structured design 记录这些更新。另一方面，这样也可以减少flash的erase cycles。</p>
+<p>问题：<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/indexing_problem.png" alt=""></p>
+<p>A 引用了B, A引用了C, B，C 引用了D， 现在D 使用了”out-of-place updates” 更新到了D1, 怎么保证B, C 是引用的最新的D1。</p>
+<h4 id="1-2-wandering-tree"><a href="#1-2-wandering-tree" class="headerlink" title="1.2. wandering tree"></a>1.2. wandering tree</h4><p>wandering tree 可以解决如上问题。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/wandering_tree.png" alt="截图 wandering tree"><br>假设需更新H1， 涉及到的F, A也需更新。</p>
+<p>any tree may be called ”wandering tree” if any update in the tree requires updating parent nodes up<br>to the root. For example, it makes sense to talk about wandering Red-Black trees or wandering B+-trees and so forth.</p>
+<h4 id="1-3-B-tree"><a href="#1-3-B-tree" class="headerlink" title="1.3. B+ tree"></a>1.3. B+ tree</h4><p>ubifs 采用B+ tree 多路平衡搜索二叉树。<strong>只有叶子节点包含data，非叶子节点只包含keys 和links</strong>。 B+ tree 广泛用于<br>block devices上。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree.png" alt="B+ tree 截图"></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_non_leaf_node.png" alt="B+ non-leaf node 截图"><br>non-leaf node 包含如下：</p>
+<ul>
+<li>增序的keys</li>
+<li>指向leaf node 或non-leaf node 的 links</li>
+</ul>
+<p>当有新的insert 或者remove 发生时， B+ tree 将会重新re-balancing， node 的删除与合并可能发生。</p>
+<h3 id="2-indexing-in-ubifs"><a href="#2-indexing-in-ubifs" class="headerlink" title="2. indexing in ubifs"></a>2. indexing in ubifs</h3><p>UBIFS 参考了Reiser4 file system. 所有的 fs objects（inodes, files, directory entries, extended attributes, etc) 都包含在一个large B+ tree。<br>他们的keys 可能如下：</p>
+<ul>
+<li>file data key: {inode number, offset};</li>
+<li>directory entry key: {parent directory inode number, direntry name hash};</li>
+<li>extended attribute key: {target inode number, xattr name hash} and the like</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_indexing_nodes_leaf_nodes.png" alt="B+ tree indexing nodes and leaf nodes"></p>
+<p>non-leaf node 被称为indexing nodes, 只包含indexing 信息。<br>leaf node 有flexible size, 他对应与flash 的sector size， 例如 512, 2K 等（与Flash 的硬件特性有关）。<br>leaf node 包含：</p>
+<ul>
+<li>header (describes the node data and information like the key of the node, the length, and the like)</li>
+<li>data （some file system data）</li>
+</ul>
+<p><strong>leaf nodes 与indexing nodes 是分开存储在不同的Eraseblock上。</strong></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/B%2B_tree_store_indexing_nodes_leaf_nodes.png" alt="B+ tree store of indexing nodes and leaf nodes"></p>
+<p>ubifs indexing approach 优点：</p>
+<ul>
+<li>The leaf nodes may be compressed</li>
+<li>In case of corruptions of the indexing information, it is possible to re-create it by scanning leaf nodes’ headers</li>
+<li>There is a clear separation between data and indexing information. indexing and data may be cached separately</li>
+</ul>
+<h3 id="3-the-journal"><a href="#3-the-journal" class="headerlink" title="3. the journal"></a>3. the journal</h3><p>ubifs tree 本身是B+ tree and wandering tree. 如果某些nodes 需要更新，就update flash data, 这并不理想。<br>journal provides a mechanism to avoid this. 因此， ubifs 中有index and journal B+ tree.</p>
+<p>journal 有位置不固定的journal eraseblocks组成。</p>
+<p><strong>create</strong><br>journal tree 在ubifs mount 时根据Flash 上journal eraseblocks创建于RAM 中 。</p>
+<p><strong>Write</strong><br>在有更新时，相应的leaf nodes 被写入到journal tree, 而相应的indexing nodes 不更新。</p>
+<p><strong>read</strong><br>首先查询是否在journal tree, 存在则从该树read，否则执行常规tree lookup.</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_in_ram.png" alt="journal tree in RAM"></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/journal_tree_read_flow.png" alt="journal tree read flow"></p>
+<p><strong>update</strong><br>journal tree 在full 或者在适当的时机是会checkpointed。在journal tree 中记录的信息与相应的indexing nodes 将会被写入到Flash 中。<br>checkpointed journal eraseblocks 会被当做leaf eraseblocks， 新的journal eraseblocks 会被UBIFS 通过 wear-leveling 算法选出(这是journal eraseblocks 不固定的产生)。</p>
+<p>另外，journal tree 越大，可能会达到更好的性能， 但是在mount 时创建tree耗费的时间也会变长，这需要选取平衡在mount time and journal tree size.</p>
+<h3 id="4-the-superblock"><a href="#4-the-superblock" class="headerlink" title="4. the superblock"></a>4. the superblock</h3><p>superblock 包含描述整个fs 的数据结构。传统的fs 可以存储superblock 在固定的位置， 但是Flash 由于badblock， 寿命的因素（wear-leveling）的原因，<br>导致superblock 不能存储在固定位置。</p>
+<p>ubifs 将superblock 划分为两种类型：</p>
+<ul>
+<li>static superblock， 不会被ubifs 改变，可以被external user-level tools 更改（例如name, volume size，compression type等）。</li>
+<li>superblock, 包含动态数据，时常被更改，使用wear-leveling 算法挑选。</li>
+</ul>
+<p>ubifs 前3个good eraseblock 如下安排：</p>
+<p>.———————————————————————————–.<br>| static superblock(1 eraseblock) | anchor area (2 eraseblocks) |<br>`———————————————————————————–.</p>
+<p>2 eraseblocks anchor area 是为了确保数据的安全性在unclean reboots时。</p>
+<p>anchor area 与 dynamic superblock 结构如下：</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubifs_design/superblock%20management%20scheme.png" alt="superblock management scheme"></p>
+<p>为了使superblock 使用上wear-leveling。superblock 的管理方法如下：</p>
+<ol>
+<li>在super eraseblock 上更新数据， 如果写满了则使用wear-leveling 选出新的eraseblock， 同时更新chain eraseblock2 中sector</li>
+<li>如果chain eraseblock2 中sector写满， 则pick up 新的eraseblock 作为chain eraseblock2，并记录信息在chain eraseblock1 中sector</li>
+<li>以此类推记录数据到Anchor area 中的sector。</li>
+</ol>
+<p>super eraseblock sector -&gt; chain eraseblock2 sector -&gt; chain eraseblock1 sector -&gt; anchor area sector</p>
+<p>Search 则是存储的相反顺序了。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><p><a href="http://www.linux-mtd.infradead.org/doc/ubifs.pdf" target="_blank" rel="noopener">ubifs</a></p>
+<p><a href="http://www.linux-mtd.infradead.org/doc/ubifs_whitepaper.pdf" target="_blank" rel="noopener">ubifs_whitepaper</a></p>
+<p><a href="http://www.linux-mtd.infradead.org/doc/JFFS3design.pdf" target="_blank" rel="noopener">jffs3 design</a></p>
+<p><a href="https://www.cnblogs.com/vianzhang/p/7922426.html" target="_blank" rel="noopener">B tree, B+ tree</a></p>
+<p><a href="https://www.jianshu.com/p/ac12d2c83708" target="_blank" rel="noopener">B tree and B+ tree</a></p>
+<p><a href="http://www.namesys.com/" target="_blank" rel="noopener">Reiser4 File system</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/mtd/" rel="tag"># mtd</a>
+          
+            <a href="/blog/tags/ubifs/" rel="tag"># ubifs</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/09/05/人性的弱点/" rel="next" title="人性的弱点">
+                <i class="fa fa-chevron-left"></i> 人性的弱点
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/11/27/arm-generic-timer/" rel="prev" title="arm_generic_timer">
+                arm_generic_timer <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-index-problem"><span class="nav-text">1. index problem</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-wandering-tree"><span class="nav-text">1.2. wandering tree</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-B-tree"><span class="nav-text">1.3. B+ tree</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-indexing-in-ubifs"><span class="nav-text">2. indexing in ubifs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-the-journal"><span class="nav-text">3. the journal</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-the-superblock"><span class="nav-text">4. the superblock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

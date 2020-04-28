@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. Method with cryptographic用户空间的方式有如下方式：  netlink (AF_ALG)  socket 的形式（kernel 已经merge进入主线）  ioctl （OpenBSD 的形式， kenrel 没有merge此部分代码  ） openssl  我们常见的userspace 与kernel space 之间通信的方式有：  IOCTL /proc /sy">
+<meta name="keywords" content="cryptographic">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_crypto_III">
+<meta property="og:url" content="https://jshell07.github.io/2019/08/07/kernel-crypto-III/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. Method with cryptographic用户空间的方式有如下方式：  netlink (AF_ALG)  socket 的形式（kernel 已经merge进入主线）  ioctl （OpenBSD 的形式， kenrel 没有merge此部分代码  ） openssl  我们常见的userspace 与kernel space 之间通信的方式有：  IOCTL /proc /sy">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/af_alg%20kernel%20flow.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:50.896Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_crypto_III">
+<meta name="twitter:description" content="1. Method with cryptographic用户空间的方式有如下方式：  netlink (AF_ALG)  socket 的形式（kernel 已经merge进入主线）  ioctl （OpenBSD 的形式， kenrel 没有merge此部分代码  ） openssl  我们常见的userspace 与kernel space 之间通信的方式有：  IOCTL /proc /sy">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/af_alg%20kernel%20flow.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/08/07/kernel-crypto-III/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_crypto_III | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/08/07/kernel-crypto-III/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_crypto_III
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-08-07 14:46:14" itemprop="dateCreated datePublished" datetime="2019-08-07T14:46:14+08:00">2019-08-07</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:50" itemprop="dateModified" datetime="2020-04-28T11:16:50+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1-Method-with-cryptographic"><a href="#1-Method-with-cryptographic" class="headerlink" title="1. Method with cryptographic"></a>1. Method with cryptographic</h3><p>用户空间的方式有如下方式：</p>
+<ul>
+<li>netlink (AF_ALG)  socket 的形式（kernel 已经merge进入主线） </li>
+<li>ioctl （OpenBSD 的形式， kenrel 没有merge此部分代码  ）</li>
+<li>openssl</li>
+</ul>
+<p>我们常见的userspace 与kernel space 之间通信的方式有：</p>
+<ul>
+<li>IOCTL</li>
+<li>/proc</li>
+<li>/sys</li>
+<li>netlink</li>
+</ul>
+<p>我们主张使用socket 的方式，更为优雅与灵活。有人在此基础上封装了lib， <a href="http://www.chronox.de/libkcapi.html" target="_blank" rel="noopener">libkcapi</a></p>
+<a id="more"></a>
+<h3 id="2-netlink-socket"><a href="#2-netlink-socket" class="headerlink" title="2. netlink(socket)"></a>2. netlink(socket)</h3><h4 id="2-1-data-structure"><a href="#2-1-data-structure" class="headerlink" title="2.1. data structure"></a>2.1. data structure</h4><p>&lt;linux/if_alg.h&gt;<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/types.h&gt;</span></span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_alg</span> &#123;</span></span><br><span class="line">        __u16   salg_family;</span><br><span class="line">        __u8    salg_type[<span class="number">14</span>];</span><br><span class="line">        __u32   salg_feat;</span><br><span class="line">        __u32   salg_mask;</span><br><span class="line">        __u8    salg_name[<span class="number">64</span>];</span><br><span class="line">&#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">af_alg_iv</span> &#123;</span></span><br><span class="line">        __u32   ivlen;</span><br><span class="line">        __u8    iv[<span class="number">0</span>];</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">/* Socket options */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALG_SET_KEY                     1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALG_SET_IV                      2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALG_SET_OP                      3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Operations */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALG_OP_DECRYPT                  0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALG_OP_ENCRYPT                  1</span></span><br></pre></td></tr></table></figure></p>
+<p>Currently, the following ciphers are accessible:</p>
+<ul>
+<li>Message digest including keyed message digest (HMAC, CMAC)  </li>
+<li>Symmetric ciphers  </li>
+<li>AEAD ciphers  </li>
+<li>Random Number Generators  </li>
+</ul>
+<p>我们可以使用如下的sockaddr_alg 的实例联系到具体的算法上。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* salg_type support:</span></span><br><span class="line"><span class="comment">    - hash</span></span><br><span class="line"><span class="comment">    - skcipher</span></span><br><span class="line"><span class="comment">    - ahead</span></span><br><span class="line"><span class="comment">    - rnd</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_alg</span> <span class="title">sa</span> = &#123;</span></span><br><span class="line">    .salg_family = AF_ALG,</span><br><span class="line">    .salg_type = <span class="string">"skcipher"</span>, <span class="comment">/* this selects the symmetric cipher */</span></span><br><span class="line">    .salg_name = <span class="string">"cbc(aes)"</span> <span class="comment">/* this is the cipher name */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>socket 中的family AF_ALG, setsockopt 使用 SOL_ALG。如果header 中没有申明，可以使用如下定义：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> AF_ALG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> AF_ALG 38</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> SOL_ALG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SOL_ALG 279</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<h4 id="2-2-Kernel-internal"><a href="#2-2-Kernel-internal" class="headerlink" title="2.2. Kernel internal"></a>2.2. Kernel internal</h4><p>在kenrel 内部注册了AF_ALG family 类型的socket。在kernel/crypto/af_alg.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">proto</span> <span class="title">alg_proto</span> = &#123;</span></span><br><span class="line">	.name			= <span class="string">"ALG"</span>,</span><br><span class="line">	.memory_allocated	= &amp;alg_memory_allocated,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PF_ALG		AF_ALG</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">net_proto_family</span> <span class="title">alg_family</span> = &#123;</span></span><br><span class="line">	.family	=	PF_ALG,</span><br><span class="line">	.create	=	alg_create,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> __<span class="function">init <span class="title">af_alg_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> err = proto_register(&amp;alg_proto, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	err = sock_register(&amp;alg_family);</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在kernel/crypto/algif_skcipher.c， 类似的algif_hash.c 注册了hash 类型的对象。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">proto_ops</span> <span class="title">algif_skcipher_ops</span> = &#123;</span></span><br><span class="line">	.family		=	PF_ALG,</span><br><span class="line"></span><br><span class="line">	.release	=	af_alg_release,</span><br><span class="line">	.sendmsg	=	skcipher_sendmsg,</span><br><span class="line">	.sendpage	=	skcipher_sendpage,</span><br><span class="line">	.recvmsg	=	skcipher_recvmsg,</span><br><span class="line">	.poll		=	skcipher_poll,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">af_alg_type</span> <span class="title">algif_type_skcipher</span> = &#123;</span></span><br><span class="line">	.bind		=	skcipher_bind,</span><br><span class="line">	.release	=	skcipher_release,</span><br><span class="line">	.setkey		=	skcipher_setkey,</span><br><span class="line">	.accept		=	skcipher_accept_parent,</span><br><span class="line">	.ops		=	&amp;algif_skcipher_ops,</span><br><span class="line">	.name		=	<span class="string">"skcipher"</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> __<span class="function">init <span class="title">algif_skcipher_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> af_alg_register_type(&amp;algif_type_skcipher);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/af_alg%20kernel%20flow.png" alt="kernel af_alg system call image"></p>
+<h4 id="2-3-usage-flow"><a href="#2-3-usage-flow" class="headerlink" title="2.3. usage flow"></a>2.3. usage flow</h4><p>我们使用如下流程进行使用：</p>
+<ol>
+<li>create socket with AF_ALG  </li>
+<li>bind socket with sockaddr_alg addr. </li>
+<li>set key, setsocketopt()</li>
+<li>accept with socket. accept system call return new file descriptor.</li>
+<li>use new fd to sendmsg(), recvmsg()</li>
+</ol>
+<p><strong>Setsockopt Interface</strong><br>我们可以是用setsockopt（） 系统调用进行设定。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;          /* See NOTES */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getsockopt</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">int</span> level, <span class="keyword">int</span> optname,</span></span></span><br><span class="line"><span class="function"><span class="params">                <span class="keyword">void</span> *optval, <span class="keyword">socklen_t</span> *optlen)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setsockopt</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">int</span> level, <span class="keyword">int</span> optname,</span></span></span><br><span class="line"><span class="function"><span class="params">                <span class="keyword">const</span> <span class="keyword">void</span> *optval, <span class="keyword">socklen_t</span> optlen)</span></span>;</span><br></pre></td></tr></table></figure>
+<h4 id="2-4-usage"><a href="#2-4-usage" class="headerlink" title="2.4. usage"></a>2.4. usage</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/if_alg.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> AF_ALG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> AF_ALG 38</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SOL_ALG 279</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> errno;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PRINT_ROW_LEN 15</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">print_hex_dump</span><span class="params">(<span class="keyword">char</span> *src, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">0</span>; i&lt;n; i++) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%02x "</span>, src[i]);</span><br><span class="line">      <span class="keyword">if</span> (i % PRINT_ROW_LEN == <span class="number">0</span> &amp;&amp; i != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setkey</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">char</span> * key, <span class="keyword">int</span> keylen)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> err = setsockopt(sockfd, SOL_ALG, ALG_SET_KEY, key, keylen);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (err) &#123;</span><br><span class="line">      perror(<span class="string">"setsockopt err"</span>);</span><br><span class="line">      <span class="keyword">goto</span> out;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"setkey success\n"</span>);</span><br><span class="line">out:</span><br><span class="line">    err = errno;</span><br><span class="line">    <span class="keyword">return</span> err;    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sendmsg_to_cipher</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">int</span> cmsg_type, <span class="keyword">int</span> operation, <span class="keyword">char</span> * src, <span class="keyword">int</span> len)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> err = <span class="number">0</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">msghdr</span> <span class="title">msg</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">iov</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">cmsghdr</span>* <span class="title">cmsg</span> = <span class="title">malloc</span>(<span class="title">CMSG_SPACE</span>(<span class="title">sizeof</span>(<span class="title">operation</span>)));</span></span><br><span class="line">    <span class="keyword">if</span> (cmsg == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        perror(<span class="string">"malloc setop_cmsg err"</span>);</span><br><span class="line">        <span class="keyword">goto</span> out;</span><br><span class="line">    &#125;</span><br><span class="line">    cmsg-&gt;cmsg_len = CMSG_SPACE(<span class="keyword">sizeof</span>(operation));</span><br><span class="line">    cmsg-&gt;cmsg_level = SOL_ALG;</span><br><span class="line">    cmsg-&gt;cmsg_type = cmsg_type;</span><br><span class="line">    <span class="built_in">memcpy</span>(CMSG_DATA(cmsg), &amp;operation, <span class="keyword">sizeof</span>(operation));</span><br><span class="line"></span><br><span class="line">    iov.iov_base = src;</span><br><span class="line">    iov.iov_len = len;</span><br><span class="line"></span><br><span class="line">    msg.msg_name = <span class="literal">NULL</span>;</span><br><span class="line">    msg.msg_namelen = <span class="number">0</span>;</span><br><span class="line">    msg.msg_iov = &amp;iov;</span><br><span class="line">    msg.msg_iovlen = <span class="number">1</span>;</span><br><span class="line">    msg.msg_control = cmsg;</span><br><span class="line">    msg.msg_controllen = CMSG_SPACE(<span class="keyword">sizeof</span>(<span class="keyword">unsigned</span> <span class="keyword">int</span>));</span><br><span class="line">    msg.msg_flags = <span class="number">0</span>;</span><br><span class="line">    err = sendmsg(sockfd, &amp;msg, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (err == <span class="number">-1</span>) &#123;</span><br><span class="line">        perror(<span class="string">"sendmsg operation err"</span>);</span><br><span class="line">        <span class="keyword">goto</span> send_msg_err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"sendmsg success\n"</span>);</span><br><span class="line"></span><br><span class="line">send_msg_err:</span><br><span class="line">    <span class="built_in">free</span>(cmsg);</span><br><span class="line">out:</span><br><span class="line">    err = errno;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">recvmsg_from_cipher</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">char</span> *src, <span class="keyword">int</span> len)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">int</span> err = <span class="number">0</span>;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">msghdr</span> <span class="title">msg</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">iov</span>;</span></span><br><span class="line"></span><br><span class="line">  iov.iov_base = src;</span><br><span class="line">  iov.iov_len = len;</span><br><span class="line"></span><br><span class="line">  msg.msg_name = <span class="literal">NULL</span>;</span><br><span class="line">  msg.msg_namelen = <span class="number">0</span>;</span><br><span class="line">  msg.msg_iov = &amp;iov;</span><br><span class="line">  msg.msg_iovlen = <span class="number">1</span>;</span><br><span class="line">  msg.msg_control = <span class="literal">NULL</span>;</span><br><span class="line">  msg.msg_controllen = <span class="number">0</span>;</span><br><span class="line">  msg.msg_flags = <span class="number">0</span>;</span><br><span class="line">  err = recvmsg(sockfd, &amp;msg, <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">if</span> (err == <span class="number">-1</span>) &#123;</span><br><span class="line">    perror(<span class="string">"recvmsg operation err"</span>);</span><br><span class="line">    <span class="keyword">goto</span> out;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">"recvmsg data: \n"</span>);</span><br><span class="line">  print_hex_dump(src, len);</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line">  err = errno;</span><br><span class="line">  <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> opfd, tfmfd, err =<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">char</span> plaintext_buf[] = &#123;<span class="number">0x11</span>, <span class="number">0x22</span>, <span class="number">0x33</span>, <span class="number">0x44</span>, <span class="number">0x55</span>, <span class="number">0x66</span>, <span class="number">0x77</span>, <span class="number">0x88</span>, </span><br><span class="line">                        <span class="number">0x99</span>, <span class="number">0x00</span>, <span class="number">0xaa</span>, <span class="number">0xbb</span>, <span class="number">0xcc</span>, <span class="number">0xdd</span>, <span class="number">0xee</span>, <span class="number">0xff</span>, <span class="number">0x00</span>, <span class="number">0x11</span>&#125;;</span><br><span class="line">    <span class="keyword">char</span> key_buf[] = &#123;<span class="number">0xff</span>, <span class="number">0xd7</span>, <span class="number">0x40</span>, <span class="number">0x57</span>, <span class="number">0x47</span>, <span class="number">0x68</span>, <span class="number">0x5e</span>, <span class="number">0xd6</span>, <span class="number">0xe0</span>, </span><br><span class="line">                        <span class="number">0x0b</span>, <span class="number">0xc6</span>, <span class="number">0x82</span>, <span class="number">0xa7</span>, <span class="number">0x72</span>, <span class="number">0x86</span>, <span class="number">0x09</span>&#125;;</span><br><span class="line">    <span class="keyword">char</span> encrypt_buf[<span class="number">32</span>];</span><br><span class="line">    <span class="keyword">char</span> decrypt_buf[<span class="number">32</span>];</span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_alg</span> <span class="title">sa</span> = &#123;</span></span><br><span class="line">		.salg_family = AF_ALG,</span><br><span class="line">		.salg_type = <span class="string">"skcipher"</span>,</span><br><span class="line">		.salg_name = <span class="string">"AES128_ECB_CLR_CLR"</span></span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	tfmfd = socket(AF_ALG, SOCK_SEQPACKET, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span>(tfmfd == <span class="number">-1</span>) &#123;</span><br><span class="line">        perror(<span class="string">"socket err"</span>);</span><br><span class="line">        <span class="keyword">goto</span> socket_err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	err = bind(tfmfd, (struct sockaddr *)&amp;sa, <span class="keyword">sizeof</span>(sa));</span><br><span class="line">    <span class="keyword">if</span>(err) &#123;</span><br><span class="line">        perror(<span class="string">"bind error"</span>);</span><br><span class="line">        <span class="keyword">goto</span> bind_err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"plaintext buf: \n"</span>);</span><br><span class="line">    print_hex_dump(plaintext_buf, <span class="keyword">sizeof</span>(plaintext_buf));</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* setkey, we need to set key before connect */</span></span><br><span class="line">    err = setkey(tfmfd, key_buf, <span class="keyword">sizeof</span>(key_buf));</span><br><span class="line">    <span class="keyword">if</span>(err)</span><br><span class="line">        <span class="keyword">goto</span> setkey_err;</span><br><span class="line"></span><br><span class="line">	opfd = accept(tfmfd, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span>(opfd == <span class="number">-1</span>) &#123;</span><br><span class="line">        perror(<span class="string">"accept err!"</span>);</span><br><span class="line">        <span class="keyword">goto</span> accept_err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* set iv */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* set encryption */</span></span><br><span class="line">    err = sendmsg_to_cipher(opfd, ALG_SET_OP,</span><br><span class="line">                      ALG_OP_ENCRYPT, plaintext_buf, <span class="keyword">sizeof</span>(plaintext_buf));</span><br><span class="line">    <span class="keyword">if</span>(err)</span><br><span class="line">        <span class="keyword">goto</span> sendmsg_err;</span><br><span class="line"></span><br><span class="line">    err = recvmsg_from_cipher(opfd, encrypt_buf, <span class="keyword">sizeof</span>(plaintext_buf));</span><br><span class="line">    <span class="keyword">if</span> (err)</span><br><span class="line">      <span class="keyword">goto</span> recvmsg_err;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* set decryption */</span></span><br><span class="line">    err = sendmsg_to_cipher(opfd, ALG_SET_OP, ALG_OP_DECRYPT, encrypt_buf,</span><br><span class="line">                            <span class="keyword">sizeof</span>(plaintext_buf));</span><br><span class="line">    <span class="keyword">if</span> (err)</span><br><span class="line">      <span class="keyword">goto</span> sendmsg_err;</span><br><span class="line"></span><br><span class="line">    err = recvmsg_from_cipher(opfd, decrypt_buf, <span class="keyword">sizeof</span>(plaintext_buf));</span><br><span class="line">    <span class="keyword">if</span> (err)</span><br><span class="line">      <span class="keyword">goto</span> recvmsg_err;</span><br><span class="line"></span><br><span class="line">recvmsg_err:</span><br><span class="line">sendmsg_err:</span><br><span class="line">    close(opfd);</span><br><span class="line">accept_err:</span><br><span class="line">setkey_err:</span><br><span class="line">bind_err:</span><br><span class="line">    close(tfmfd);</span><br><span class="line">socket_err:</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-openssl"><a href="#3-openssl" class="headerlink" title="3. openssl"></a>3. openssl</h3><h4 id="3-1-afalg-engine"><a href="#3-1-afalg-engine" class="headerlink" title="3.1. afalg engine"></a>3.1. afalg engine</h4><p>我们再1.1.0 版本后的openssl/engines 可以找到e_afalg.c 模块。在1.1.1c 版本中支持的afalg 只有三种：</p>
+<ul>
+<li>aes_128_cbc</li>
+<li>aes_192_cbc</li>
+<li>aes_256_cbc</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">afalg_ciphers</span><span class="params">(ENGINE *e, <span class="keyword">const</span> EVP_CIPHER **cipher,</span></span></span><br><span class="line"><span class="function"><span class="params">                         <span class="keyword">const</span> <span class="keyword">int</span> **nids, <span class="keyword">int</span> nid)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> r = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (cipher == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        *nids = afalg_cipher_nids;</span><br><span class="line">        <span class="keyword">return</span> (<span class="keyword">sizeof</span>(afalg_cipher_nids) / <span class="keyword">sizeof</span>(afalg_cipher_nids[<span class="number">0</span>]));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (nid) &#123;</span><br><span class="line">    <span class="keyword">case</span> NID_aes_128_cbc:</span><br><span class="line">    <span class="keyword">case</span> NID_aes_192_cbc:</span><br><span class="line">    <span class="keyword">case</span> NID_aes_256_cbc:</span><br><span class="line">        *cipher = afalg_aes_cbc(nid);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        *cipher = <span class="literal">NULL</span>;</span><br><span class="line">        r = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>openssl 内部的afalg engine 其实与自己写的userspace code 类似，都是使用netlink AF_ALG family socket。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> ossl_inline <span class="keyword">void</span> <span class="title">afalg_set_op_sk</span><span class="params">(struct cmsghdr *cmsg,</span></span></span><br><span class="line"><span class="function"><span class="params">                                   <span class="keyword">const</span> ALG_OP_TYPE op)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cmsg-&gt;cmsg_level = SOL_ALG;</span><br><span class="line">    cmsg-&gt;cmsg_type = ALG_SET_OP;</span><br><span class="line">    cmsg-&gt;cmsg_len = CMSG_LEN(ALG_OP_LEN);</span><br><span class="line">    <span class="built_in">memcpy</span>(CMSG_DATA(cmsg), &amp;op, ALG_OP_LEN);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">afalg_set_iv_sk</span><span class="params">(struct cmsghdr *cmsg, <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> *iv,</span></span></span><br><span class="line"><span class="function"><span class="params">                            <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> len)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">af_alg_iv</span> *<span class="title">aiv</span>;</span></span><br><span class="line"></span><br><span class="line">    cmsg-&gt;cmsg_level = SOL_ALG;</span><br><span class="line">    cmsg-&gt;cmsg_type = ALG_SET_IV;</span><br><span class="line">    cmsg-&gt;cmsg_len = CMSG_LEN(ALG_IV_LEN(len));</span><br><span class="line">    aiv = (struct af_alg_iv *)CMSG_DATA(cmsg);</span><br><span class="line">    aiv-&gt;ivlen = len;</span><br><span class="line">    <span class="built_in">memcpy</span>(aiv-&gt;iv, iv, len);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> ossl_inline <span class="keyword">int</span> <span class="title">afalg_set_key</span><span class="params">(afalg_ctx *actx, <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                                <span class="keyword">const</span> <span class="keyword">int</span> klen)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret;</span><br><span class="line">    ret = setsockopt(actx-&gt;bfd, SOL_ALG, ALG_SET_KEY, key, klen);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">afalg_create_sk</span><span class="params">(afalg_ctx *actx, <span class="keyword">const</span> <span class="keyword">char</span> *ciphertype,</span></span></span><br><span class="line"><span class="function"><span class="params">                                <span class="keyword">const</span> <span class="keyword">char</span> *ciphername)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_alg</span> <span class="title">sa</span>;</span></span><br><span class="line">    <span class="keyword">int</span> r = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">    actx-&gt;bfd = actx-&gt;sfd = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memset</span>(&amp;sa, <span class="number">0</span>, <span class="keyword">sizeof</span>(sa));</span><br><span class="line">    sa.salg_family = AF_ALG;</span><br><span class="line">    <span class="built_in">strncpy</span>((<span class="keyword">char</span> *) sa.salg_type, ciphertype, ALG_MAX_SALG_TYPE);</span><br><span class="line">    sa.salg_type[ALG_MAX_SALG_TYPE<span class="number">-1</span>] = <span class="string">'\0'</span>;</span><br><span class="line">    <span class="built_in">strncpy</span>((<span class="keyword">char</span> *) sa.salg_name, ciphername, ALG_MAX_SALG_NAME);</span><br><span class="line">    sa.salg_name[ALG_MAX_SALG_NAME<span class="number">-1</span>] = <span class="string">'\0'</span>;</span><br><span class="line"></span><br><span class="line">    actx-&gt;bfd = socket(AF_ALG, SOCK_SEQPACKET, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    r = bind(actx-&gt;bfd, (struct sockaddr *)&amp;sa, <span class="keyword">sizeof</span>(sa));</span><br><span class="line"></span><br><span class="line">    actx-&gt;sfd = accept(actx-&gt;bfd, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>openssl 中体现的优点在于：</p>
+<ul>
+<li>使用EVP 抽象统一all engines， 比如afalg, crypdev 等</li>
+<li>使用async io</li>
+<li>支持zero copy (vmsplice(), splice() 函数使用)</li>
+</ul>
+<h4 id="3-2-performance"><a href="#3-2-performance" class="headerlink" title="3.2. performance"></a>3.2. performance</h4><p>使用openssl speed 模块可以测试速度。</p>
+<blockquote>
+<p>time openssl speed -evp aes-128-cbc -elapsed<br>time openssl speed -evp aes-128-cbc -elapsed -engine afalg</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Method</th>
+<th style="text-align:left">Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Software Crypto</td>
+<td style="text-align:left">type 16 bytes 64 bytes 256 bytes 1024 bytes 8192 bytes 16384 bytes <br> <font color="red">aes-128-cbc 13681.29k 16959.06k 18170.71k 18484.91k 18590.38k 18573.99k</font> <br><br> real 0m 18.67s <br> user 0m 18.10s <br> sys 0m 0.19s <br></td>
+</tr>
+<tr>
+<td style="text-align:center">Hardware Crypto</td>
+<td style="text-align:left">type 16 bytes 64 bytes 256 bytes 1024 bytes 8192 bytes 16384 bytes <br><font color="red">    aes-128-cbc 293.11k 1052.46k 4073.64k 11785.59k 27314.86k 30938.45k</font> <br><br> real 0m 18.24s <br> user 0m 0.73s<br> sys 0m 10.80s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="参看资料"><a href="#参看资料" class="headerlink" title="参看资料"></a>参看资料</h3><p><a href="https://01.org/linuxgraphics/gfx-docs/drm/crypto/userspace-if.html" target="_blank" rel="noopener">User Space Interface</a></p>
+<p><a href="https://blog.csdn.net/yazhouren/article/details/53035690" target="_blank" rel="noopener">Crypto API (Linux)
+</a></p>
+<p><a href="https://blog.csdn.net/yazhouren/article/details/53035742" target="_blank" rel="noopener">userspace if_alg example code</a></p>
+<p><a href="http://www.chronox.de/libkcapi.html" target="_blank" rel="noopener">libkcapi, crypto user space library</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/cryptographic/" rel="tag"># cryptographic</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/08/06/kernel-crypto-II/" rel="next" title="kernel_crypto_II">
+                <i class="fa fa-chevron-left"></i> kernel_crypto_II
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/08/21/kernel-zero-copy/" rel="prev" title="kernel-zero-copy">
+                kernel-zero-copy <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Method-with-cryptographic"><span class="nav-text">1. Method with cryptographic</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-netlink-socket"><span class="nav-text">2. netlink(socket)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-data-structure"><span class="nav-text">2.1. data structure</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-Kernel-internal"><span class="nav-text">2.2. Kernel internal</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-usage-flow"><span class="nav-text">2.3. usage flow</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-usage"><span class="nav-text">2.4. usage</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-openssl"><span class="nav-text">3. openssl</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-afalg-engine"><span class="nav-text">3.1. afalg engine</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-performance"><span class="nav-text">3.2. performance</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参看资料"><span class="nav-text">参看资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

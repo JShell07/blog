@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="WebRTC 如何避免拥塞？1. WebRTC 网络传输背景1.1. WebRTC &amp;amp;&amp;amp; 多数直播大多数视频直播平台    子项 说明     传输协议 RTMP（Real Time MEssaging Protocol)   优点 使用RTMP， 其基于TCP传输，跟flash等流媒体服务支持比较好，同时CDN支持良好   缺点 直播音视频数据量大，实时性要求比较高，TCP的重传">
+<meta name="keywords" content="WebRTC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WebRTC 如何避免拥塞？">
+<meta property="og:url" content="https://jshell07.github.io/2018/06/03/WebRTC 如何避免拥塞/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="WebRTC 如何避免拥塞？1. WebRTC 网络传输背景1.1. WebRTC &amp;amp;&amp;amp; 多数直播大多数视频直播平台    子项 说明     传输协议 RTMP（Real Time MEssaging Protocol)   优点 使用RTMP， 其基于TCP传输，跟flash等流媒体服务支持比较好，同时CDN支持良好   缺点 直播音视频数据量大，实时性要求比较高，TCP的重传">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=57e79b5fb0de9c82b268f1dd0de8eb6f/4bed2e738bd4b31c42beebdd84d6277f9f2ff8d2.jpg">
+<meta property="og:image" content="https://gss2.bdstatic.com/-fo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=54395c9081d4b31cf03c93bdbfed4042/2cf5e0fe9925bc3142b4464b54df8db1ca137073.jpg">
+<meta property="og:image" content="https://gss0.bdstatic.com/94o3dSag_xI4khGkpoWK1HF6hhy/baike/s%3D220/sign=bb31c6af3812b31bc36cca2bb61a3674/54fbb2fb43166d2287f64f7c472309f79152d251.jpg">
+<meta property="og:image" content="https://gss0.bdstatic.com/-4o3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=1db5f93247c2d562f208d7ebdf2af7d2/f9198618367adab4ee604c1183d4b31c8701e434.jpg">
+<meta property="og:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=5838ca994410b912bfc1f1f8fbc69b3e/500fd9f9d72a6059b0046c382b34349b033bbaf8.jpg">
+<meta property="og:image" content="https://gss1.bdstatic.com/9vo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=37f66727093387449cc5287a6934bec4/d53f8794a4c27d1e13c902b31ed5ad6edcc438dd.jpg">
+<meta property="og:image" content="http://www.ucpaas.com/u/allimg/1706/8-1F602094T0135.jpg">
+<meta property="og:image" content="http://www.ucpaas.com/u/allimg/1706/8-1F602094Z4a1.jpg">
+<meta property="og:updated_time" content="2020-04-26T02:48:26.582Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="WebRTC 如何避免拥塞？">
+<meta name="twitter:description" content="WebRTC 如何避免拥塞？1. WebRTC 网络传输背景1.1. WebRTC &amp;amp;&amp;amp; 多数直播大多数视频直播平台    子项 说明     传输协议 RTMP（Real Time MEssaging Protocol)   优点 使用RTMP， 其基于TCP传输，跟flash等流媒体服务支持比较好，同时CDN支持良好   缺点 直播音视频数据量大，实时性要求比较高，TCP的重传">
+<meta name="twitter:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=57e79b5fb0de9c82b268f1dd0de8eb6f/4bed2e738bd4b31c42beebdd84d6277f9f2ff8d2.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2018/06/03/WebRTC 如何避免拥塞/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>WebRTC 如何避免拥塞？ | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2018/06/03/WebRTC 如何避免拥塞/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">WebRTC 如何避免拥塞？
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2018-06-03 19:59:25" itemprop="dateCreated datePublished" datetime="2018-06-03T19:59:25+08:00">2018-06-03</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-26 10:48:26" itemprop="dateModified" datetime="2020-04-26T10:48:26+08:00">2020-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/WebRTC/" itemprop="url" rel="index"><span itemprop="name">WebRTC</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="WebRTC-如何避免拥塞？"><a href="#WebRTC-如何避免拥塞？" class="headerlink" title="WebRTC 如何避免拥塞？"></a>WebRTC 如何避免拥塞？</h2><h3 id="1-WebRTC-网络传输背景"><a href="#1-WebRTC-网络传输背景" class="headerlink" title="1. WebRTC 网络传输背景"></a>1. WebRTC 网络传输背景</h3><h4 id="1-1-WebRTC-amp-amp-多数直播"><a href="#1-1-WebRTC-amp-amp-多数直播" class="headerlink" title="1.1. WebRTC &amp;&amp; 多数直播"></a>1.1. WebRTC &amp;&amp; 多数直播</h4><p><strong>大多数视频直播平台</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">子项</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">传输协议</td>
+<td style="text-align:left">RTMP（Real Time MEssaging Protocol)</td>
+</tr>
+<tr>
+<td style="text-align:left">优点</td>
+<td style="text-align:left">使用RTMP， 其基于TCP传输，跟flash等流媒体服务支持比较好，同时CDN支持良好</td>
+</tr>
+<tr>
+<td style="text-align:left">缺点</td>
+<td style="text-align:left">直播音视频数据量大，实时性要求比较高，TCP的重传机制和拥塞机制不适用于实时传输。传输控制依赖于TCP本身协议控制机制，网络成本较大不够灵活。</td>
+</tr>
+</tbody>
+</table>
+<p>音视频对网络丢包有一定程度天然容忍性（常见优酷，爱奇艺都有缓冲）。使用UDP传输是不错到选择。</p>
+<a id="more"></a>
+<p><strong>webRTC</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">子项</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">传输协议</td>
+<td style="text-align:left">RTP: 针对流媒体传输的基础协议，定义Internet上传输音视频数据包。 <br> RTCP：负责流媒体到传输质量保证，提供流量控制和拥塞控制等机制。<img src="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=57e79b5fb0de9c82b268f1dd0de8eb6f/4bed2e738bd4b31c42beebdd84d6277f9f2ff8d2.jpg" alt=""></td>
+</tr>
+<tr>
+<td style="text-align:left">优点</td>
+<td style="text-align:left">包括ICE、STUN、TURN等信令交互、网络大洞（P2P)，主流浏览器支持（chrome, firefox,opera, safari,edge等）<br> <img src="https://gss2.bdstatic.com/-fo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=54395c9081d4b31cf03c93bdbfed4042/2cf5e0fe9925bc3142b4464b54df8db1ca137073.jpg" alt=""> <img src="https://gss0.bdstatic.com/94o3dSag_xI4khGkpoWK1HF6hhy/baike/s%3D220/sign=bb31c6af3812b31bc36cca2bb61a3674/54fbb2fb43166d2287f64f7c472309f79152d251.jpg" alt=""><img src="https://gss0.bdstatic.com/-4o3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=1db5f93247c2d562f208d7ebdf2af7d2/f9198618367adab4ee604c1183d4b31c8701e434.jpg" alt=""><img src="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=5838ca994410b912bfc1f1f8fbc69b3e/500fd9f9d72a6059b0046c382b34349b033bbaf8.jpg" alt=""><img src="https://gss1.bdstatic.com/9vo3dSag_xI4khGkpoWK1HF6hhy/baike/w%3D268%3Bg%3D0/sign=37f66727093387449cc5287a6934bec4/d53f8794a4c27d1e13c902b31ed5ad6edcc438dd.jpg" alt=""></td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-WebRTC-处理"><a href="#2-WebRTC-处理" class="headerlink" title="2. WebRTC 处理"></a>2. WebRTC 处理</h3><h4 id="2-1-NACK"><a href="#2-1-NACK" class="headerlink" title="2.1. NACK"></a>2.1. NACK</h4><p>NACK( negative acknowledge character)， 就是否定应答。与之对应的是TCP中的ACK( acknowledge character)。</p>
+<blockquote>
+<p>在TCP中，接收端对于收到的包都要进行应答即发送ACK包，发送端通过接受ACK包，来确定发送的包已经被成功接收，以此来保证网络包的传输可靠。</p>
+</blockquote>
+<p>RTP协议不保证传输的可靠性，所以接收端也就不会发送ACK包。如果这个包比较重要，可以给对端发送NACK包，来告诉这个包我没有收到，你如果‘还有’的话，就给我重新发送一遍（Retransmission）。</p>
+<p>前面说到的丢包，都加了引号，这个“丢包”，有可能是真的丢了，也有可能是顺序乱了。我们知道网络包的到达，有时候不是一定严格按照包序到达的，我收到了很多较新的包了，某个旧的包还没有收到，我就认为它丢了，也没准儿一会儿它又到了。怎么判断“丢包”呢？ 我们通过：</p>
+<ol>
+<li><p><strong>乱序的偏移来决定发起重传</strong></p>
+</li>
+<li><p><strong>根据预计到达时间已经超过一定时间了来发起重传 (一般是等待一个rtt＋jitter的时长)。</strong></p>
+</li>
+</ol>
+<p>更多丢包判断参见如下连接：<a href="https://www.jianshu.com/p/a7f6ec0c9273" target="_blank" rel="noopener">WebRTC中丢包重传NACK实现分析</a></p>
+<h4 id="2-2-前向纠错编码-FEC"><a href="#2-2-前向纠错编码-FEC" class="headerlink" title="2.2. 前向纠错编码( FEC )"></a>2.2. 前向纠错编码( FEC )</h4><p>FEC（Forward Error Correction，前向纠错码），通过增加冗余来增强容错性到一种方法。如果没有FEC，接受端发现丢包时，需要通过发送NACK 来发起重传，但重传会影响延时性。</p>
+<ul>
+<li><p>FEC则是在发送端增加冗余数据，接受端在数据丢失到情况下可以重建丢失的数据。</p>
+</li>
+<li><p>增加FEC冗余数据占据了有效带宽</p>
+</li>
+</ul>
+<p>上面两点涉及到取舍，冗余的数据与减少丢包导致的延时。不过，FEC到冗余度是可以根据网络状况动态调整。</p>
+<h4 id="2-3-抖动缓冲-Jitterbuffer"><a href="#2-3-抖动缓冲-Jitterbuffer" class="headerlink" title="2.3. 抖动缓冲( Jitterbuffer )"></a>2.3. 抖动缓冲( Jitterbuffer )</h4><p>网络传输中总是存在着抖动，导致网络包不是均匀顺序到达，WebRTC利用一个缓冲区，进行等待与排序，这就是jitterbuffer。他能动态根据网络情况调整缓冲区的大小。</p>
+<p>主流的实时音视频框架基本都会实现jitterbuffer功能，诸如WebRTC、doubango等。WebRTC的jitterbuffer按照功能分类的话，可以分为jitter和buffer。</p>
+<p><code>jitterbuffer = jitter + buffer</code></p>
+<p><code>buffer</code></p>
+<p>buffer主要对<strong>丢包、乱序、延时到达等异常</strong>情况进行处理，还会和NACK、FEC（前向纠错码）、FIR(关键帧请求))等QOS（质量服务）相互配合。</p>
+<p><img src="http://www.ucpaas.com/u/allimg/1706/8-1F602094T0135.jpg" alt=""></p>
+<p>buffer 主要分为如下几种type：</p>
+<ul>
+<li><p>freeframes</p>
+</li>
+<li><p>incompleteframes</p>
+</li>
+<li><p>decodableframes</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>remark</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>freeframes</td>
+<td>新到的数据包会根据时间戳在incompleteframes 和decodableframes 中寻找，相同放置到相应队列，否则从freeframes弹出空frame</td>
+</tr>
+<tr>
+<td>incompleteframes</td>
+<td>至少有一个数据包，帧数据不完整</td>
+</tr>
+<tr>
+<td>decodableframes</td>
+<td>可解码，此队列中有decodable和complete 状态。complete 状态帧可被解码线程取出解码，完成后将buffer 重新push 到freeframes 队列。<br><br> decodable会根据decode_error_mode 有不同的规则，QOS的不同策略会设置不同的decode_error_mode ，包含kNoErrors、kSelectiveErrors以及kWithErrors。decode_error_mode 就决定了解码线程从buffer中取出来的帧是否包含错误，即当前帧是否有丢包。</td>
+</tr>
+</tbody>
+</table>
+<p>jitterbuffer与QOS策略联系紧密，比如，incompleteframes和decodable队列清除一些frame之后，需要FIR（关键帧请求），根据包序号检测到丢包之后要NACK（丢包重传）等。</p>
+<p><code>jitter</code></p>
+<p>网络延迟带来的抖动会让音视频的播放不平稳，如音频的颤音，视频的忽快忽慢。那么如何对抗jitter呢？增加延时。</p>
+<p>jitter主要根据当前帧的大小和延时评估出<strong>jitterdelay</strong>，再结合<strong>decode delay、render delay以及音视频同步延时，得到render time</strong>，来控制<strong>平稳的渲染视频帧</strong>。</p>
+<p><img src="http://www.ucpaas.com/u/allimg/1706/8-1F602094Z4a1.jpg" alt=""></p>
+<p>其中:</p>
+<ul>
+<li><p>freeDelayMS: 两笔RTP1, RTP2 之间时间差</p>
+</li>
+<li><p>frameSizeBytes: 当前帧数据大小</p>
+</li>
+<li><p>incompleteFrame: 是否微完整帧</p>
+</li>
+<li><p>UpdateEstimate: 用卡尔曼滤波对帧间延迟进行滤波（具体算法这里不进行讨论）</p>
+</li>
+</ul>
+<p>在得到jitterdelay之后，通过jitterdelay+ decodedelay +renderdelay，再确保大于音视频同步的延时，加上当前系统时间得到rendertime，这样就可以控制播放时间。控制播放，也就间接控制了buffer的大小。</p>
+<p>当然，仅仅通过动态的jitterbuffer 是无法完全解决网络拥塞的问题，根本上还是应该调整发送的码率。</p>
+<h4 id="2-4-带宽自适应"><a href="#2-4-带宽自适应" class="headerlink" title="2.4. 带宽自适应"></a>2.4. 带宽自适应</h4><p>带宽自适应是指在音视频的收发过程中，根据网络带宽的变化，自动的来调整发送码率，来适应带宽的变化。在带宽足够的情况下，增加帧率和码率，提高音视频的质量，带来更好的通信体验。在带宽不足的情况下，主动降低码率或者帧率，保证通信的流畅性和可用性，也是带来更好的通信体验。</p>
+<p>带宽自适应的核心：<strong>如何准确的估计带宽</strong>。WebRTC在实现带宽自适应时采用了Google提出一个称为REMB（Receiver Estimated Max Bitrate，最大接收带宽估计）的带宽估计算法。</p>
+<p>大致算法是：</p>
+<ul>
+<li><p>接受端维护状态机（根据丢包率或延时情况）</p>
+</li>
+<li><p>根据丢包率或延时情况修改remb 值</p>
+</li>
+<li><p>将remb 值通过RTCP 发送给发送端</p>
+</li>
+<li><p>发送端根据remb 值调整码率</p>
+</li>
+</ul>
+<p>补充：<a href="https://blog.csdn.net/xiangjai/article/details/44238005" target="_blank" rel="noopener">码流 / 码率 / 比特率 / 帧速率 / 分辨率 / 高清的区别</a></p>
+<h3 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源:"></a>参考资源:</h3><p><a href="https://blog.csdn.net/mantis_1984/article/details/53572822" target="_blank" rel="noopener">webrtc 中到网络反馈于控制</a></p>
+<p><a href="https://blog.csdn.net/u012635648/article/details/72953237" target="_blank" rel="noopener">WebRTC视频JitterBuff</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/WebRTC/" rel="tag"># WebRTC</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2018/06/01/Docker/" rel="next" title="Docker 简单介绍">
+                <i class="fa fa-chevron-left"></i> Docker 简单介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2018/06/04/敏捷软件开发原则与模式及实践/" rel="prev" title="敏捷软件开发原则与模式及实践">
+                敏捷软件开发原则与模式及实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#WebRTC-如何避免拥塞？"><span class="nav-text">WebRTC 如何避免拥塞？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-WebRTC-网络传输背景"><span class="nav-text">1. WebRTC 网络传输背景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-WebRTC-amp-amp-多数直播"><span class="nav-text">1.1. WebRTC &amp;&amp; 多数直播</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-WebRTC-处理"><span class="nav-text">2. WebRTC 处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-NACK"><span class="nav-text">2.1. NACK</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-前向纠错编码-FEC"><span class="nav-text">2.2. 前向纠错编码( FEC )</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-抖动缓冲-Jitterbuffer"><span class="nav-text">2.3. 抖动缓冲( Jitterbuffer )</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-带宽自适应"><span class="nav-text">2.4. 带宽自适应</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资源"><span class="nav-text">参考资源:</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

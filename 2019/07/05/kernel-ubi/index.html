@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. 背景Flash 设备存在如下缺点  存在坏块   使用寿命较短   存储介质不稳定(bitflip)   读写速度慢   只能通过擦除将0改成1   最小读写单位为page or sub-page">
+<meta name="keywords" content="mtd,ubi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_ubi">
+<meta property="og:url" content="https://jshell07.github.io/2019/07/05/kernel-ubi/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. 背景Flash 设备存在如下缺点  存在坏块   使用寿命较短   存储介质不稳定(bitflip)   读写速度慢   只能通过擦除将0改成1   最小读写单位为page or sub-page">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/mtd%20partition%20vs%20ubi%20volume.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20software%20structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/UBI%20headers.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_data_structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_attach.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_wl.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:56.402Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_ubi">
+<meta name="twitter:description" content="1. 背景Flash 设备存在如下缺点  存在坏块   使用寿命较短   存储介质不稳定(bitflip)   读写速度慢   只能通过擦除将0改成1   最小读写单位为page or sub-page">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/mtd%20partition%20vs%20ubi%20volume.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/07/05/kernel-ubi/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_ubi | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/07/05/kernel-ubi/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_ubi
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-07-05 16:55:03" itemprop="dateCreated datePublished" datetime="2019-07-05T16:55:03+08:00">2019-07-05</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:56" itemprop="dateModified" datetime="2020-04-28T11:16:56+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-背景"><a href="#1-背景" class="headerlink" title="1. 背景"></a>1. 背景</h2><p>Flash 设备存在如下缺点</p>
+<ul>
+<li>存在坏块  </li>
+<li>使用寿命较短  </li>
+<li>存储介质不稳定(bitflip)  </li>
+<li>读写速度慢  </li>
+<li>只能通过擦除将0改成1  </li>
+<li>最小读写单位为page or sub-page  </li>
+</ul>
+<a id="more"></a>
+<p>Kernel 引入UBI (Unsorted Block Images)来解决这些问题。<font color="red">UBI 本身就是针对RAW Flash的一个卷管理系统，并且提供基于磨损均衡的逻辑到物理的映射</font>。它类似于LVM（Logical Volume Manager)</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/mtd%20partition%20vs%20ubi%20volume.png" alt=""></p>
+<p>因此UBI 具有如下特点：</p>
+<ul>
+<li>UBI provides volumes which may be dynamically created, removed, or re-sized</li>
+<li>UBI implements wear-leveling across whole flash device </li>
+<li>UBI transparently handles bad physical eraseblocks;</li>
+<li>UBI minimizes chances to lose data by means of scrubbing. （针对Nand Flash 的bit flip现象，将有bit-flips的数据块移动到好的数据块上）</li>
+</ul>
+<!--more-->
+<h2 id="2-框架"><a href="#2-框架" class="headerlink" title="2. 框架"></a>2. 框架</h2><p>在kernel MTD 模块看来， UBI 子系统的框架如下图：<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20structure.png" alt=""></p>
+<p>UBI 子模块的文件组织结构如下图：<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi%20software%20structure.png" alt=""></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">文件名</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">cdev.c</td>
+<td style="text-align:left">字符设备节点访问操作, attach/detach MTD, volume add/remove/rename/resize</td>
+</tr>
+<tr>
+<td style="text-align:center">build.c</td>
+<td style="text-align:left">/dev/ubictrl, /sys 等节点注册</td>
+</tr>
+<tr>
+<td style="text-align:center">attach.c</td>
+<td style="text-align:left">attach MTD sub-system</td>
+</tr>
+<tr>
+<td style="text-align:center">vmt.c</td>
+<td style="text-align:left">volume 逻辑操作，增删， 重命名， 重新设定size </td>
+</tr>
+<tr>
+<td style="text-align:center">vtbl.c</td>
+<td style="text-align:left">vmt.c 的下层，实际操作读写</td>
+</tr>
+<tr>
+<td style="text-align:center">fastmap.c</td>
+<td style="text-align:left">支持快速扫描MTD 设备</td>
+</tr>
+<tr>
+<td style="text-align:center">upd.c</td>
+<td style="text-align:left">update volume, 考虑到突然掉电等引起的更新错误</td>
+</tr>
+<tr>
+<td style="text-align:center">eba.c</td>
+<td style="text-align:left">Erase Block Association sub-system 子系统， 逻辑映射</td>
+</tr>
+<tr>
+<td style="text-align:center">wl.c</td>
+<td style="text-align:left">wear-leveling sub-system 磨损均衡子系统</td>
+</tr>
+<tr>
+<td style="text-align:center">io.c</td>
+<td style="text-align:left"><font color="red">与MTD 设备I/O 交互, R/W data, VID(volume ID)/EC(Erase Counter) header </font>  </td>
+</tr>
+<tr>
+<td style="text-align:center">kapi.c</td>
+<td style="text-align:left">向UBIFS 提供的api 接口</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-代码分析"><a href="#3-代码分析" class="headerlink" title="3. 代码分析"></a>3. 代码分析</h2><h3 id="3-1-数据结构"><a href="#3-1-数据结构" class="headerlink" title="3.1. 数据结构"></a>3.1. 数据结构</h3><h4 id="3-1-1-UBI-Headers"><a href="#3-1-1-UBI-Headers" class="headerlink" title="3.1.1. UBI Headers"></a>3.1.1. UBI Headers</h4><p>UBI 包含两个被CRC32 保护的64 bytes header在每一个非坏块的开始：</p>
+<ul>
+<li>erase counter(EC) header</li>
+<li>volume identifier(VID) header</li>
+</ul>
+<p>因此，LEB &lt; PEB 就是因为存储了UBI headers.</p>
+<p>参见 drivers/mtd/ubi/ubi-media.h<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_ec_hdr</span> &#123;</span></span><br><span class="line">	__be32  magic;</span><br><span class="line">	__u8    version;</span><br><span class="line">	__u8    padding1[<span class="number">3</span>];</span><br><span class="line">	__be64  ec; <span class="comment">/* Warning: the current limit is 31-bit anyway! */</span></span><br><span class="line">	__be32  vid_hdr_offset;</span><br><span class="line">	__be32  data_offset;</span><br><span class="line">	__be32  image_seq;</span><br><span class="line">	__u8    padding2[<span class="number">32</span>];</span><br><span class="line">	__be32  hdr_crc;</span><br><span class="line">&#125; __packed;</span><br></pre></td></tr></table></figure></p>
+<p>每一次Erase 都会将EC 值增加。在unclean reboot 发生或者数据被corrupted， EC 将会被写入attach MTD 设备扫描的EC average。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_vid_hdr</span> &#123;</span></span><br><span class="line">	__be32  magic;</span><br><span class="line">	__u8    version;</span><br><span class="line">	__u8    vol_type;</span><br><span class="line">	__u8    copy_flag;</span><br><span class="line">	__u8    compat;</span><br><span class="line">	__be32  vol_id;</span><br><span class="line">	__be32  lnum;</span><br><span class="line">	__u8    padding1[<span class="number">4</span>];</span><br><span class="line">	__be32  data_size;</span><br><span class="line">	__be32  used_ebs;</span><br><span class="line">	__be32  data_pad;</span><br><span class="line">	__be32  data_crc;</span><br><span class="line">	__u8    padding2[<span class="number">4</span>];</span><br><span class="line">	__be64  sqnum;</span><br><span class="line">	__u8    padding3[<span class="number">12</span>];</span><br><span class="line">	__be32  hdr_crc;</span><br><span class="line">&#125; __packed;</span><br></pre></td></tr></table></figure>
+<p>EC header 存储offset 为0， 而VID header 存储offset 为next min I/O Unit, sub-page or page.</p>
+<ul>
+<li>NOR Flash, min I/O 为 1 byte, VID header offset 为64</li>
+<li>Nand Flash, sub-page or page</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/UBI%20headers.png" alt=""></p>
+<h4 id="3-1-2-volume-table"><a href="#3-1-2-volume-table" class="headerlink" title="3.1.2. volume table"></a>3.1.2. volume table</h4><p>数据是存储在flash 设备上， volume table 是ubit_vtbl_record 的数组，每一个记录它包含了如下meta-data:  </p>
+<ul>
+<li>卷名  </li>
+<li>保留物理擦除快的数量  </li>
+<li>类型(static or dynamica) </li>
+<li>crc 校验  </li>
+<li>update marker（用于标记更新volume name or size）  </li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_vtbl_record</span> &#123;</span></span><br><span class="line">	__be32  reserved_pebs;</span><br><span class="line">	__be32  alignment;</span><br><span class="line">	__be32  data_pad;</span><br><span class="line">	__u8    vol_type;</span><br><span class="line">	__u8    upd_marker;</span><br><span class="line">	__be16  name_len;</span><br><span class="line">	__u8    name[UBI_VOL_NAME_MAX+<span class="number">1</span>];</span><br><span class="line">	__u8    flags;</span><br><span class="line">	__u8    padding[<span class="number">23</span>];</span><br><span class="line">	__be32  crc;</span><br><span class="line">&#125; __packed;</span><br></pre></td></tr></table></figure>
+<p>UBI 使用了两个逻辑擦除快(Logical EraseBlock)保存record 数据，LEB0 and LEB1. 他们两者相互拷贝，以此来保证突发事件例如掉电等异常情形。当attach MTD 设备时，UBI确保这两个volume table是相同的，否则上次可能是unclean boot导致，使用新的，无corrupted data 拷贝到另一块。</p>
+<p>UBI 需要维护三种table:</p>
+<ul>
+<li>volume table  </li>
+<li>eraseblock association(EBA) table  </li>
+<li>erase counter(EC) table  </li>
+</ul>
+<p>volume table 是存储在Flash 上，它的修改只会发生在create, delete, re-size 时。</p>
+<p>EBA table 是用于logical to phsical 映射关系。<br>EC table 包含每个PEB 的erase conter 值， UBI wear-leveling 将会使用此表格。</p>
+<p>EBA, EC table 可以做到存储在flash 上，但是它需要journaling, journal replay, journal commit 等，在boot-loader 时保证简单，代码的size 是不太容易的。</p>
+<p>因此， <strong>EBA, EC table 默认在attach MTD 时，根据扫描的EC,VID header 信息在RAM 中构建.</strong> </p>
+<p>在vid_hdr 中包含的vol_id, lnum, squm 指定了他们的volume_id， squm 序列号， lnum 逻辑num 号， UBI attach 子系统在attach 时，根据这些信息创建red-block tree， 就能顺序读取data。</p>
+<h3 id="3-2-UBI-Sub-system"><a href="#3-2-UBI-Sub-system" class="headerlink" title="3.2. UBI Sub-system"></a>3.2. UBI Sub-system</h3><h4 id="3-2-1-attach-mtd"><a href="#3-2-1-attach-mtd" class="headerlink" title="3.2.1. attach mtd"></a>3.2.1. attach mtd</h4><p>本质是扫描(scan_all or scan_fast(fastmap))MTD 设备上的EC、VID header 信息生成volume 等结构体。</p>
+<p>相关的数据接口如下：<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_data_structure.png" alt=""></p>
+<p>ubi_ainf_peb -&gt; ubi_ainf_volume.rb -&gt; ubi_attach_info.volume。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_attach_info</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">volumes</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">corr</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">free</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">erase</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">alien</span>;</span></span><br><span class="line">	<span class="keyword">int</span> corr_peb_count;</span><br><span class="line">	<span class="keyword">int</span> empty_peb_count;</span><br><span class="line">	<span class="keyword">int</span> alien_peb_count;</span><br><span class="line">	<span class="keyword">int</span> bad_peb_count;</span><br><span class="line">	<span class="keyword">int</span> maybe_bad_peb_count;</span><br><span class="line">	<span class="keyword">int</span> vols_found;</span><br><span class="line">	<span class="keyword">int</span> highest_vol_id;</span><br><span class="line">	<span class="keyword">int</span> is_empty;</span><br><span class="line">	<span class="keyword">int</span> min_ec;</span><br><span class="line">	<span class="keyword">int</span> max_ec;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> max_sqnum;</span><br><span class="line">	<span class="keyword">int</span> mean_ec;</span><br><span class="line">	<span class="keyword">uint64_t</span> ec_sum;</span><br><span class="line">	<span class="keyword">int</span> ec_count;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">kmem_cache</span> *<span class="title">aeb_slab_cache</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_ainf_volume</span> &#123;</span></span><br><span class="line">	<span class="keyword">int</span> vol_id;</span><br><span class="line">	<span class="keyword">int</span> highest_lnum;</span><br><span class="line">	<span class="keyword">int</span> leb_count;</span><br><span class="line">	<span class="keyword">int</span> vol_type;</span><br><span class="line">	<span class="keyword">int</span> used_ebs;</span><br><span class="line">	<span class="keyword">int</span> last_data_size;</span><br><span class="line">	<span class="keyword">int</span> data_pad;</span><br><span class="line">	<span class="keyword">int</span> compat;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_node</span> <span class="title">rb</span>;</span> <span class="comment">/* link in the volume RB-tree */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">root</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_ainf_peb</span> &#123;</span></span><br><span class="line">	<span class="keyword">int</span> ec;</span><br><span class="line">	<span class="keyword">int</span> pnum;	<span class="comment">/* physical eraseblock number */</span></span><br><span class="line">	<span class="keyword">int</span> vol_id; <span class="comment">/* ID of the volume this LEB belongs to */</span></span><br><span class="line">	<span class="keyword">int</span> lnum;	<span class="comment">/* logical eraseblock number */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> scrub:<span class="number">1</span>;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> copy_flag:<span class="number">1</span>;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> sqnum;</span><br><span class="line">	<span class="keyword">union</span> &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">rb_node</span> <span class="title">rb</span>;</span>	<span class="comment">/* link in the per-volume RB-tree of &amp;struct ubi_ainf_peb objects */</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	&#125; u;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_attach.png" alt=""><br>scan_all() 扫描每一个peb 并读取其中的ec_hdr, vid_hdr。 这里分层了三层结构体：</p>
+<ul>
+<li>ubi_attach_info  </li>
+<li>ubi_ainf_volume  </li>
+<li>ubi_ainf_peb<br>管理volume， 以及属于该volume 的全部pebs 分类清晰，便于管理。</li>
+</ul>
+<p>ubi_read_volume_table() 会在RAM 中生成volume table record. 他们是存放在具体的vol_id 的前两个LEB[0,1]中， 在process_lvol() 读取数据，并检查是否数据污染。</p>
+<h4 id="3-2-2-eba-eraseblock-association"><a href="#3-2-2-eba-eraseblock-association" class="headerlink" title="3.2.2. eba, eraseblock association"></a>3.2.2. eba, eraseblock association</h4><p>在attach 时候， 调用ubi_eba_init（）, UBI EBA 子系统会根据数据结构 ubi_attach_info -&gt; ubi_ainf_volume -&gt; ubi_ainf_peb, 在ubi_ainf_peb 里面记录了pnum, lnum，这就是物理逻辑映射关系。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">ubi_eba_init</span><span class="params">(struct ubi_device *ubi, struct ubi_attach_info *ai)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; num_volumes; i++) &#123;</span><br><span class="line">		vol = ubi-&gt;volumes[i];</span><br><span class="line">		<span class="keyword">if</span> (!vol)</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		vol-&gt;eba_tbl = kmalloc(vol-&gt;reserved_pebs * <span class="keyword">sizeof</span>(<span class="keyword">int</span>),</span><br><span class="line">				       GFP_KERNEL);</span><br><span class="line">		<span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; vol-&gt;reserved_pebs; j++)</span><br><span class="line">			vol-&gt;eba_tbl[j] = UBI_LEB_UNMAPPED;</span><br><span class="line"></span><br><span class="line">		av = ubi_find_av(ai, idx2vol_id(ubi, i));</span><br><span class="line">		<span class="keyword">if</span> (!av)</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">		ubi_rb_for_each_entry(rb, aeb, &amp;av-&gt;root, u.rb) &#123;</span><br><span class="line">			<span class="keyword">if</span> (aeb-&gt;lnum &gt;= vol-&gt;reserved_pebs)</span><br><span class="line">				<span class="comment">/*</span></span><br><span class="line"><span class="comment">				 * This may happen in case of an unclean reboot</span></span><br><span class="line"><span class="comment">				 * during re-size.</span></span><br><span class="line"><span class="comment">				 */</span></span><br><span class="line">				ubi_move_aeb_to_list(av, aeb, &amp;ai-&gt;erase);</span><br><span class="line">			vol-&gt;eba_tbl[aeb-&gt;lnum] = aeb-&gt;pnum;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>后续的write, read 都是通过在RAM 中的eba_tlb 进行逻辑查询后，再调用到io -&gt; mtd.read/write<br>假如EBA 没有映射， 调用Wear-leveling 子系统获取PEB。</p>
+<p>至于lnum 的值在UBIFS 中体现，是从上层下来。UBI wear-leveling 会考虑磨损均衡的情况下选择合适的PEBs 映射到某一个lnum 上。</p>
+<p><strong>marking eraseblocks as bad</strong><br>判断依据：</p>
+<ul>
+<li>写操作时失败，UBI 将数据搬移，并准备对该eraseblock 进行torturing(拷问，审查)。</li>
+<li>erase 操作失败EIO error， 直接将它标记为bad</li>
+</ul>
+<p>torturing 主要是两方面</p>
+<ol>
+<li>eraseblock, and read check all is 0xFF</li>
+<li>write data, and read check</li>
+</ol>
+<h4 id="3-2-3-wear-leveling"><a href="#3-2-3-wear-leveling" class="headerlink" title="3.2.3. wear-leveling"></a>3.2.3. wear-leveling</h4><p>磨损均衡是UBI的核心功能之一，负责管理PEB的分配、回收、擦除、scrub、磨损均衡等, 在这些操作时都会触发磨损均衡检查。其中scrub、擦除, 磨损均衡功能由UBI后台线程进行异步调度管理。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_ubi/ubi_wl.png" alt=""><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ubi_wl_entry</span> &#123;</span></span><br><span class="line">	<span class="keyword">union</span> &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">rb_node</span> <span class="title">rb</span>;</span>  <span class="comment">/* link in the corresponding (free/used) RB-tree*/</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	&#125; u;</span><br><span class="line">	<span class="keyword">int</span> ec;</span><br><span class="line">	<span class="keyword">int</span> pnum;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>如果used peb 的EC 与free peb 的EC 差大于 <font color="red">UBI_WL_THRESHOLD</font> 则会考虑使用wear-leveling 子系统进行磨损均衡搬移，避免过多的搬移数据造成本身的反复擦除。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">wear_leveling_worker</span><span class="params">(struct ubi_device *ubi, struct ubi_work *wrk,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="keyword">int</span> shutdown)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> err, scrubbing = <span class="number">0</span>, torture = <span class="number">0</span>, protect = <span class="number">0</span>, erroneous = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">int</span> vol_id = <span class="number">-1</span>, uninitialized_var(lnum);</span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ubi_wl_entry</span> *<span class="title">e1</span>, *<span class="title">e2</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ubi_vid_hdr</span> *<span class="title">vid_hdr</span>;</span></span><br><span class="line"></span><br><span class="line">	vid_hdr = ubi_zalloc_vid_hdr(ubi, GFP_NOFS);</span><br><span class="line"></span><br><span class="line">	mutex_lock(&amp;ubi-&gt;move_mutex);</span><br><span class="line">	spin_lock(&amp;ubi-&gt;wl_lock);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!ubi-&gt;scrub.rb_node) &#123;</span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 * Now pick the least worn-out used physical eraseblock and a</span></span><br><span class="line"><span class="comment">		 * highly worn-out free physical eraseblock. If the erase</span></span><br><span class="line"><span class="comment">		 * counters differ much enough, start wear-leveling.</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		e1 = rb_entry(rb_first(&amp;ubi-&gt;used), struct ubi_wl_entry, u.rb);</span><br><span class="line">		e2 = get_peb_for_wl(ubi);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (!(e2-&gt;ec - e1-&gt;ec &gt;= UBI_WL_THRESHOLD)) &#123;</span><br><span class="line">			dbg_wl(<span class="string">"no WL needed: min used EC %d, max free EC %d"</span>,</span><br><span class="line">			       e1-&gt;ec, e2-&gt;ec);</span><br><span class="line"></span><br><span class="line">			<span class="comment">/* Give the unused PEB back */</span></span><br><span class="line">			wl_tree_add(e2, &amp;ubi-&gt;<span class="built_in">free</span>);</span><br><span class="line">			ubi-&gt;free_count++;</span><br><span class="line">			<span class="keyword">goto</span> out_cancel;</span><br><span class="line">		&#125;</span><br><span class="line">		rb_erase(&amp;e1-&gt;u.rb, &amp;ubi-&gt;used);</span><br><span class="line">		dbg_wl(<span class="string">"move PEB %d EC %d to PEB %d EC %d"</span>,</span><br><span class="line">		       e1-&gt;pnum, e1-&gt;ec, e2-&gt;pnum, e2-&gt;ec);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">/* Perform scrubbing */</span></span><br><span class="line">		scrubbing = <span class="number">1</span>;</span><br><span class="line">		e1 = rb_entry(rb_first(&amp;ubi-&gt;scrub), struct ubi_wl_entry, u.rb);</span><br><span class="line">		e2 = get_peb_for_wl(ubi);</span><br><span class="line">		</span><br><span class="line">		rb_erase(&amp;e1-&gt;u.rb, &amp;ubi-&gt;scrub);</span><br><span class="line">		dbg_wl(<span class="string">"scrub PEB %d to PEB %d"</span>, e1-&gt;pnum, e2-&gt;pnum);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ubi-&gt;move_from = e1;</span><br><span class="line">	ubi-&gt;move_to = e2;</span><br><span class="line">	spin_unlock(&amp;ubi-&gt;wl_lock);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Now we are going to copy physical eraseblock @e1-&gt;pnum to @e2-&gt;pnum.</span></span><br><span class="line"><span class="comment">	 * We so far do not know which logical eraseblock our physical</span></span><br><span class="line"><span class="comment">	 * eraseblock (@e1) belongs to. We have to read the volume identifier</span></span><br><span class="line"><span class="comment">	 * header first.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * Note, we are protected from this PEB being unmapped and erased. The</span></span><br><span class="line"><span class="comment">	 * 'ubi_wl_put_peb()' would wait for moving to be finished if the PEB</span></span><br><span class="line"><span class="comment">	 * which is being moved was unmapped.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	err = ubi_io_read_vid_hdr(ubi, e1-&gt;pnum, vid_hdr, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	vol_id = be32_to_cpu(vid_hdr-&gt;vol_id);</span><br><span class="line">	lnum = be32_to_cpu(vid_hdr-&gt;lnum);</span><br><span class="line"></span><br><span class="line">	err = ubi_eba_copy_leb(ubi, e1-&gt;pnum, e2-&gt;pnum, vid_hdr);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* The PEB has been successfully moved */</span></span><br><span class="line">	<span class="keyword">if</span> (scrubbing)</span><br><span class="line">		ubi_msg(<span class="string">"scrubbed PEB %d (LEB %d:%d), data moved to PEB %d"</span>,</span><br><span class="line">			e1-&gt;pnum, vol_id, lnum, e2-&gt;pnum);</span><br><span class="line">	ubi_free_vid_hdr(ubi, vid_hdr);</span><br><span class="line"></span><br><span class="line">	spin_lock(&amp;ubi-&gt;wl_lock);</span><br><span class="line">	<span class="keyword">if</span> (!ubi-&gt;move_to_put) &#123;</span><br><span class="line">		wl_tree_add(e2, &amp;ubi-&gt;used);</span><br><span class="line">		e2 = <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	ubi-&gt;move_from = ubi-&gt;move_to = <span class="literal">NULL</span>;</span><br><span class="line">	ubi-&gt;move_to_put = ubi-&gt;wl_scheduled = <span class="number">0</span>;</span><br><span class="line">	spin_unlock(&amp;ubi-&gt;wl_lock);</span><br><span class="line"></span><br><span class="line">	err = do_sync_erase(ubi, e1, vol_id, lnum, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (e2) &#123;</span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 * Well, the target PEB was put meanwhile, schedule it for</span></span><br><span class="line"><span class="comment">		 * erasure.</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		dbg_wl(<span class="string">"PEB %d (LEB %d:%d) was put meanwhile, erase"</span>,</span><br><span class="line">		       e2-&gt;pnum, vol_id, lnum);</span><br><span class="line">		err = do_sync_erase(ubi, e2, vol_id, lnum, <span class="number">0</span>);</span><br><span class="line">		<span class="keyword">if</span> (err)</span><br><span class="line">			<span class="keyword">goto</span> out_ro;</span><br><span class="line">	&#125;</span><br><span class="line">	mutex_unlock(&amp;ubi-&gt;move_mutex);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在EBA write 时，如果没有映射，我们就会调用ubi_wl_get_peb() 获取free PEB。 </p>
+<ul>
+<li>drivers/mtd/ubi/wl.c *<br>ubi_wl_get_peb() -&gt;<br>&nbsp;&nbsp;__wl_get_peb() -&gt;  </li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">ubi_eba_write_leb</span><span class="params">(struct ubi_device *ubi, struct ubi_volume *vol, <span class="keyword">int</span> lnum,</span></span></span><br><span class="line"><span class="function"><span class="params">		      <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">int</span> offset, <span class="keyword">int</span> len)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> err, pnum, tries = <span class="number">0</span>, vol_id = vol-&gt;vol_id;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ubi_vid_hdr</span> *<span class="title">vid_hdr</span>;</span></span><br><span class="line"></span><br><span class="line">	err = leb_write_lock(ubi, vol_id, lnum);</span><br><span class="line"></span><br><span class="line">	pnum = vol-&gt;eba_tbl[lnum];</span><br><span class="line">	<span class="keyword">if</span> (pnum &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">		err = ubi_io_write_data(ubi, buf, pnum, offset, len);</span><br><span class="line">		leb_write_unlock(ubi, vol_id, lnum);</span><br><span class="line">		<span class="keyword">return</span> err;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * The logical eraseblock is not mapped. We have to get a free physical</span></span><br><span class="line"><span class="comment">	 * eraseblock and write the volume identifier header there first.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	vid_hdr = ubi_zalloc_vid_hdr(ubi, GFP_NOFS);</span><br><span class="line"></span><br><span class="line">	vid_hdr-&gt;vol_type = UBI_VID_DYNAMIC;</span><br><span class="line">	vid_hdr-&gt;sqnum = cpu_to_be64(ubi_next_sqnum(ubi));</span><br><span class="line">	vid_hdr-&gt;vol_id = cpu_to_be32(vol_id);</span><br><span class="line">	vid_hdr-&gt;lnum = cpu_to_be32(lnum);</span><br><span class="line">	vid_hdr-&gt;compat = ubi_get_compat(ubi, vol_id);</span><br><span class="line">	vid_hdr-&gt;data_pad = cpu_to_be32(vol-&gt;data_pad);</span><br><span class="line"></span><br><span class="line">retry:</span><br><span class="line">	pnum = ubi_wl_get_peb(ubi);</span><br><span class="line"></span><br><span class="line">	err = ubi_io_write_vid_hdr(ubi, pnum, vid_hdr);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (len) &#123;</span><br><span class="line">		err = ubi_io_write_data(ubi, buf, pnum, offset, len);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	down_read(&amp;ubi-&gt;fm_sem);</span><br><span class="line">	vol-&gt;eba_tbl[lnum] = pnum;</span><br><span class="line">	up_read(&amp;ubi-&gt;fm_sem);</span><br><span class="line"></span><br><span class="line">	leb_write_unlock(ubi, vol_id, lnum);</span><br><span class="line">	ubi_free_vid_hdr(ubi, vid_hdr);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> __wl_get_peb(struct ubi_device *ubi)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">int</span> err;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ubi_wl_entry</span> *<span class="title">e</span>;</span></span><br><span class="line"></span><br><span class="line">retry:</span><br><span class="line">	<span class="keyword">if</span> (!ubi-&gt;<span class="built_in">free</span>.rb_node) &#123;</span><br><span class="line">		<span class="keyword">if</span> (ubi-&gt;works_count == <span class="number">0</span>) &#123;</span><br><span class="line">			ubi_err(<span class="string">"no free eraseblocks"</span>);</span><br><span class="line">			ubi_assert(list_empty(&amp;ubi-&gt;works));</span><br><span class="line">			<span class="keyword">return</span> -ENOSPC;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		err = produce_free_peb(ubi);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">goto</span> retry;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	e = find_mean_wl_entry(ubi, &amp;ubi-&gt;<span class="built_in">free</span>);</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Move the physical eraseblock to the protection queue where it will</span></span><br><span class="line"><span class="comment">	 * be protected from being moved for some time.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	rb_erase(&amp;e-&gt;u.rb, &amp;ubi-&gt;<span class="built_in">free</span>);</span><br><span class="line">	ubi-&gt;free_count--;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> e-&gt;pnum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-4-fastmap"><a href="#3-2-4-fastmap" class="headerlink" title="3.2.4. fastmap"></a>3.2.4. fastmap</h4><p>fastmap 利用存储在flash 上的fastmap volume 以此来加速attach。<br><strong>fastmap 一般用于large flash， 例如4Gib Nand chips。</strong><br>是否启用fastmap, 需要考虑到fastmap 本身会占用一些PEB，并且fastmap pool full, volume layout change or detach时，fastmap都需要写入信息到保留的PEB 中。</p>
+<p>fastmap volume中存储的信息有：</p>
+<ul>
+<li>erase value</li>
+<li>a list of all PEBs and their state  </li>
+<li>a list of all volumes and their EBA </li>
+<li>a list of PEBs called fastmap pool   </li>
+</ul>
+<p>fastmap 还有一个fastmap pool 概念， 它的size 大约为 5% of the total amount of PEBs。我们从fastmap pool 中取用PEBs，这样我们只需要关心fastmap pool 的PEBs， 而不用关心total PEBs, 减少了需要存储的信息量。</p>
+<h2 id="参看资料"><a href="#参看资料" class="headerlink" title="参看资料"></a>参看资料</h2><p><a href="https://www.cnblogs.com/wahaha02/p/4814698.html" target="_blank" rel="noopener">Linux UBI子系统设计初探</a></p>
+<p><a href="http://www.linux-mtd.infradead.org/doc/ubi.html" target="_blank" rel="noopener">ubi 官方文档</a></p>
+<p><a href="http://www.linux-mtd.infradead.org/doc/ubidesign/ubidesign.pdf" target="_blank" rel="noopener">ubi design pdf from MTD org</a></p>
+<p><a href="http://www.linux-mtd.infradead.org/doc/ubi.ppt" target="_blank" rel="noopener">ubi ppt from MTD org</a></p>
+<p><a href="https://elinux.org/UBIFS" target="_blank" rel="noopener">elinux/ubifs</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/mtd/" rel="tag"># mtd</a>
+          
+            <a href="/blog/tags/ubi/" rel="tag"># ubi</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/07/04/hexo-add-search/" rel="next" title="hexo_add_search">
+                <i class="fa fa-chevron-left"></i> hexo_add_search
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/07/12/kernel-virtual-addr-map/" rel="prev" title="kernel_virtual_addr_map">
+                kernel_virtual_addr_map <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-背景"><span class="nav-text">1. 背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-框架"><span class="nav-text">2. 框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-代码分析"><span class="nav-text">3. 代码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-数据结构"><span class="nav-text">3.1. 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-1-UBI-Headers"><span class="nav-text">3.1.1. UBI Headers</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-2-volume-table"><span class="nav-text">3.1.2. volume table</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-UBI-Sub-system"><span class="nav-text">3.2. UBI Sub-system</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-attach-mtd"><span class="nav-text">3.2.1. attach mtd</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-eba-eraseblock-association"><span class="nav-text">3.2.2. eba, eraseblock association</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-wear-leveling"><span class="nav-text">3.2.3. wear-leveling</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-4-fastmap"><span class="nav-text">3.2.4. fastmap</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参看资料"><span class="nav-text">参看资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. Kernel Timer 软件架构">
+<meta name="keywords" content="timer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel-timer-system">
+<meta property="og:url" content="https://jshell07.github.io/2019/11/28/kernel-timer-system/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. Kernel Timer 软件架构">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_timer_structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_tick_device_structure.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:54.640Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel-timer-system">
+<meta name="twitter:description" content="1. Kernel Timer 软件架构">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_timer_structure.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/11/28/kernel-timer-system/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel-timer-system | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/11/28/kernel-timer-system/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel-timer-system
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-11-28 14:54:31" itemprop="dateCreated datePublished" datetime="2019-11-28T14:54:31+08:00">2019-11-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:54" itemprop="dateModified" datetime="2020-04-28T11:16:54+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-Kernel-Timer-软件架构"><a href="#1-Kernel-Timer-软件架构" class="headerlink" title="1. Kernel Timer 软件架构"></a>1. Kernel Timer 软件架构</h2><p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_timer_structure.png" alt="Kernel timer structure"></p>
+<a id="more"></a>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">术语</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Global Counter</td>
+<td style="text-align:left">free running system counter, 可以参看arm_arm 手册里的Generic Timer-&gt;system counter。Rollover 时间至少40年。他提供了一个基础的timeline, 无线延伸</td>
+</tr>
+<tr>
+<td style="text-align:center">CPU local Timer</td>
+<td style="text-align:left">CPU local timer 可以是Peripheral HW Timer, 或者是CPU 如ARM 含有的Generic Timer -&gt; timer.</td>
+</tr>
+<tr>
+<td style="text-align:center">clock event</td>
+<td style="text-align:left">通过timer硬件的 <strong>中断处理函数</strong> 完成的，在此基础上可以构建tick模块。clock event 是在timeline 上指定点产生event。</td>
+</tr>
+<tr>
+<td style="text-align:center">tick 模块</td>
+<td style="text-align:left">维护了系统的tick，各个 <strong>进程的时间统计</strong> 也是基于tick的，内核的 <strong>调度器</strong> 根据这些信息进行调度。<strong>System Load和Kernel Profiling模块</strong> 也是基于tick的，用于计算系统负荷和进行内核性能剖析。</td>
+</tr>
+<tr>
+<td style="text-align:center">timekeeping模块</td>
+<td style="text-align:left">系统时间， 每tick 的发生，其值增加。高进度的值，可以来源于clocksource</td>
+</tr>
+<tr>
+<td style="text-align:center">timer lib</td>
+<td style="text-align:left">用户空间需求：1.获取系统时间，time, stime, gettimeofday, 2.定时器功能，settimer, alarm等</td>
+</tr>
+</tbody>
+</table>
+<p>一个CPU 可以有多个local Clock Event， 但是会选择一个适合的作为tick device。</p>
+<p>tick device 工作模式：</p>
+<ul>
+<li>one shot mode(提供高精度的clock event)</li>
+<li>periodic mode</li>
+</ul>
+<p>一般有多少个cpu，就会有多少个tick device - local tick device, 在所有device 中会选取一个做global tick device, 负责维护整个系统的jiffies，更新wall clock，计算全局负荷等。</p>
+<p>当系统处于高精度timer的时候（tick device处于one shot mode），系统会setup一个特别的高精度timer（可以称之sched timer），该高精度timer会周期性的触发，从而模拟的传统的periodic tick，从而推动了传统低精度timer的运转。因此，一些传统的内核模块仍然可以调用经典的低精度timer模块的接口。 </p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_timer_system/kernel_tick_device_structure.png" alt="Tick Device Layer structure"></p>
+<h2 id="2-file-structure"><a href="#2-file-structure" class="headerlink" title="2. file structure"></a>2. file structure</h2><table>
+<thead>
+<tr>
+<th style="text-align:center">文件</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">time.c<br>timeconv.c</td>
+<td style="text-align:left">用户空间函数,time, stime, gettimeofday，alarm等，以及转换函数</td>
+</tr>
+<tr>
+<td style="text-align:center">time_list.c<br>time_status.c</td>
+<td style="text-align:left">向用户空间提供的调试接口。在用户空间，可以通过/proc/timer_list接口可以获得内核中的时间子系统的相关信息。</td>
+</tr>
+<tr>
+<td style="text-align:center">posix-timer.c<br>posix-cpu-timers.c<br>posix-clock.c</td>
+<td style="text-align:left">POSIX timer， clock模块</td>
+</tr>
+<tr>
+<td style="text-align:center">alrmtimer.c</td>
+<td style="text-align:left">alarmtimer 模块</td>
+</tr>
+<tr>
+<td style="text-align:center">ntp.c</td>
+<td style="text-align:left">NTP 模块</td>
+</tr>
+<tr>
+<td style="text-align:center">timerkeeping.c<br>timerkeeping_debug.c</td>
+<td style="text-align:left">timerkeeping.c模块</td>
+</tr>
+<tr>
+<td style="text-align:center">ick-common.c<br>tick-oneshot.c<br>tick-sched.c</td>
+<td style="text-align:left">tick device layer模块。<br>tick-common.c文件是periodic tick模块，用于管理周期性tick事件。<br>tick-oneshot.c文件是for高精度timer的，用于管理高精度tick时间。<br> tick-sched.c是用于dynamic tick的。</td>
+</tr>
+<tr>
+<td style="text-align:center">tick-broadcast.c<br>tick-broadcast-hrtimer.c</td>
+<td style="text-align:left">broadcast tick模块。</td>
+</tr>
+<tr>
+<td style="text-align:center">sched_clock.c</td>
+<td style="text-align:left">通用sched clock模块。这个模块主要是提供一个sched_clock的接口函数，可以获取当前时间点到系统启动之间的纳秒值。底层的HW counter其实是千差万别的，有些平台可以提供64-bit的HW counter，我们可以不使用这个通用sched clock模块（不配置CONFIG_GENERIC_SCHED_CLOCK这个内核选项），而在自己的clock source chip driver中直接提供sched_clock接口。使用通用sched clock模块的好处是：该模块扩展了64-bit的counter，即使底层的HW counter比特数目不足（有些平台HW counter只有32个bit）。</td>
+</tr>
+<tr>
+<td style="text-align:center">clocksource.c<br>jiffies.c</td>
+<td style="text-align:left">clocksource.c是通用clocksource driver。其实也可以把system tick也看成一个特定的clocksource，其代码在jiffies.c文件中</td>
+</tr>
+<tr>
+<td style="text-align:center">clockevnet.c</td>
+<td style="text-align:left">clockevent 模块</td>
+</tr>
+<tr>
+<td style="text-align:center">timer.c</td>
+<td style="text-align:left">传统的低精度timer 模块， 基本tick</td>
+</tr>
+<tr>
+<td style="text-align:center">htimer.c</td>
+<td style="text-align:left">高精度timer</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-clocksource"><a href="#3-clocksource" class="headerlink" title="3. clocksource"></a>3. clocksource</h2><p>时间其实可以抽象成一条直线, timeline. clock source就是用来抽象一个在指定输入频率的clock下工作的一个counter。输入频率可以确定以什么样的精度来划分timeline(假设输入counter的频率是1GHz，那么一个cycle就是1ns)</p>
+<p>clocksource 数据结构如下：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux-4.9.198 code */</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * struct clocksource - hardware abstraction for a free running counter</span></span><br><span class="line"><span class="comment"> *	Provides mostly state-free accessors to the underlying hardware.</span></span><br><span class="line"><span class="comment"> *	This is the structure used for system time.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @name:		ptr to clocksource name</span></span><br><span class="line"><span class="comment"> * @list:		list head for registration</span></span><br><span class="line"><span class="comment"> * @rating:		rating value for selection (higher is better)</span></span><br><span class="line"><span class="comment"> *			To avoid rating inflation the following</span></span><br><span class="line"><span class="comment"> *			list should give you a guide as to how</span></span><br><span class="line"><span class="comment"> *			to assign your clocksource a rating</span></span><br><span class="line"><span class="comment"> *			1-99: Unfit for real use</span></span><br><span class="line"><span class="comment"> *				Only available for bootup and testing purposes.</span></span><br><span class="line"><span class="comment"> *			100-199: Base level usability.</span></span><br><span class="line"><span class="comment"> *				Functional for real use, but not desired.</span></span><br><span class="line"><span class="comment"> *			200-299: Good.</span></span><br><span class="line"><span class="comment"> *				A correct and usable clocksource.</span></span><br><span class="line"><span class="comment"> *			300-399: Desired.</span></span><br><span class="line"><span class="comment"> *				A reasonably fast and accurate clocksource.</span></span><br><span class="line"><span class="comment"> *			400-499: Perfect</span></span><br><span class="line"><span class="comment"> *				The ideal clocksource. A must-use where</span></span><br><span class="line"><span class="comment"> *				available.</span></span><br><span class="line"><span class="comment"> * @read:		returns a cycle value, passes clocksource as argument</span></span><br><span class="line"><span class="comment"> * @enable:		optional function to enable the clocksource</span></span><br><span class="line"><span class="comment"> * @disable:		optional function to disable the clocksource</span></span><br><span class="line"><span class="comment"> * @mask:		bitmask for two's complement</span></span><br><span class="line"><span class="comment"> *			subtraction of non 64 bit counters</span></span><br><span class="line"><span class="comment"> * @mult:		cycle to nanosecond multiplier</span></span><br><span class="line"><span class="comment"> * @shift:		cycle to nanosecond divisor (power of two)</span></span><br><span class="line"><span class="comment"> * @max_idle_ns:	max idle time permitted by the clocksource (nsecs)</span></span><br><span class="line"><span class="comment"> * @maxadj:		maximum adjustment value to mult (~11%)</span></span><br><span class="line"><span class="comment"> * @max_cycles:		maximum safe cycle value which won't overflow on multiplication</span></span><br><span class="line"><span class="comment"> * @flags:		flags describing special properties</span></span><br><span class="line"><span class="comment"> * @archdata:		arch-specific data</span></span><br><span class="line"><span class="comment"> * @suspend:		suspend function for the clocksource, if necessary</span></span><br><span class="line"><span class="comment"> * @resume:		resume function for the clocksource, if necessary</span></span><br><span class="line"><span class="comment"> * @owner:		module reference, must be set by clocksource in modules</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Note: This struct is not used in hotpathes of the timekeeping code</span></span><br><span class="line"><span class="comment"> * because the timekeeper caches the hot path fields in its own data</span></span><br><span class="line"><span class="comment"> * structure, so no line cache alignment is required,</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * The pointer to the clocksource itself is handed to the read</span></span><br><span class="line"><span class="comment"> * callback. If you need extra information there you can wrap struct</span></span><br><span class="line"><span class="comment"> * clocksource into your own struct. Depending on the amount of</span></span><br><span class="line"><span class="comment"> * information you need you should consider to cache line align that</span></span><br><span class="line"><span class="comment"> * structure.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">clocksource</span> &#123;</span></span><br><span class="line">	<span class="keyword">cycle_t</span> (*read)(struct clocksource *cs);</span><br><span class="line">	<span class="keyword">cycle_t</span> mask;</span><br><span class="line">	u32 mult;</span><br><span class="line">	u32 shift;</span><br><span class="line">	u64 max_idle_ns;</span><br><span class="line">	u32 maxadj;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_ARCH_CLOCKSOURCE_DATA</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">arch_clocksource_data</span> <span class="title">archdata</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	u64 max_cycles;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *name;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	<span class="keyword">int</span> rating;</span><br><span class="line">	<span class="keyword">int</span> (*enable)(struct clocksource *cs);</span><br><span class="line">	<span class="keyword">void</span> (*disable)(struct clocksource *cs);</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</span><br><span class="line">	<span class="keyword">void</span> (*suspend)(struct clocksource *cs);</span><br><span class="line">	<span class="keyword">void</span> (*resume)(struct clocksource *cs);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* private: */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_CLOCKSOURCE_WATCHDOG</span></span><br><span class="line">	<span class="comment">/* Watchdog related data, used by the framework */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">wd_list</span>;</span></span><br><span class="line">	<span class="keyword">cycle_t</span> cs_last;</span><br><span class="line">	<span class="keyword">cycle_t</span> wd_last;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-1-register-unregister-clocksource"><a href="#3-1-register-unregister-clocksource" class="headerlink" title="3.1. register/unregister clocksource"></a>3.1. register/unregister clocksource</h3><p>系统中使用cycle_t cycles 进行计数， 为了人们的方便会转换成年月日方式，所以就会用mult, shift（乘法，除法系数）进行转换。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> s64 <span class="title">clocksource_cyc2ns</span><span class="params">(<span class="keyword">cycle_t</span> cycles, u32 mult, u32 shift)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ((u64) cycles * mult) &gt;&gt; shift;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* need to calculate mult, shift by caller */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">clocksource_register</span><span class="params">(struct clocksource *cs)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* os will calculate mult, shift */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">clocksource_register_hz</span><span class="params">(struct clocksource *cs,  u32 hz)</span> </span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">clocksource_register_khz</span><span class="params">(struct clocksource *cs,  u32 khz)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">clocksource_unbind</span><span class="params">(struct clocksource *cs)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-OS选择clock-source"><a href="#3-2-OS选择clock-source" class="headerlink" title="3.2. OS选择clock source"></a>3.2. OS选择clock source</h3><p>主要参看的因素有两个：</p>
+<ul>
+<li>best rate （分辨率越高的）</li>
+<li>用户空间的选择<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> __clocksource_select(<span class="keyword">bool</span> skipcur)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="3-3-timecounter-与-cyclecounter"><a href="#3-3-timecounter-与-cyclecounter" class="headerlink" title="3.3. timecounter 与 cyclecounter"></a>3.3. timecounter 与 cyclecounter</h3><p>具体来讲， cyclecounter 表示free running system counter 绝对的时间点, 而timecounter 表示counter， 但是表达的是ns 时间单位。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * struct cyclecounter - hardware abstraction for a free running counter</span></span><br><span class="line"><span class="comment"> *	Provides completely state-free accessors to the underlying hardware.</span></span><br><span class="line"><span class="comment"> *	Depending on which hardware it reads, the cycle counter may wrap</span></span><br><span class="line"><span class="comment"> *	around quickly. Locking rules (if necessary) have to be defined</span></span><br><span class="line"><span class="comment"> *	by the implementor and user of specific instances of this API.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @read:		returns the current cycle value</span></span><br><span class="line"><span class="comment"> * @mask:		bitmask for two's complement</span></span><br><span class="line"><span class="comment"> *			subtraction of non 64 bit counters,</span></span><br><span class="line"><span class="comment"> *			see CYCLECOUNTER_MASK() helper macro</span></span><br><span class="line"><span class="comment"> * @mult:		cycle to nanosecond multiplier</span></span><br><span class="line"><span class="comment"> * @shift:		cycle to nanosecond divisor (power of two)</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cyclecounter</span> &#123;</span></span><br><span class="line">	<span class="keyword">cycle_t</span> (*read)(<span class="keyword">const</span> struct cyclecounter *cc);</span><br><span class="line">	<span class="keyword">cycle_t</span> mask;</span><br><span class="line">	u32 mult;</span><br><span class="line">	u32 shift;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * struct timecounter - layer above a %struct cyclecounter which counts nanoseconds</span></span><br><span class="line"><span class="comment"> *	Contains the state needed by timecounter_read() to detect</span></span><br><span class="line"><span class="comment"> *	cycle counter wrap around. Initialize with</span></span><br><span class="line"><span class="comment"> *	timecounter_init(). Also used to convert cycle counts into the</span></span><br><span class="line"><span class="comment"> *	corresponding nanosecond counts with timecounter_cyc2time(). Users</span></span><br><span class="line"><span class="comment"> *	of this code are responsible for initializing the underlying</span></span><br><span class="line"><span class="comment"> *	cycle counter hardware, locking issues and reading the time</span></span><br><span class="line"><span class="comment"> *	more often than the cycle counter wraps around. The nanosecond</span></span><br><span class="line"><span class="comment"> *	counter will only wrap around after ~585 years.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @cc:			the cycle counter used by this instance</span></span><br><span class="line"><span class="comment"> * @cycle_last:		most recent cycle counter value seen by</span></span><br><span class="line"><span class="comment"> *			timecounter_read()</span></span><br><span class="line"><span class="comment"> * @nsec:		continuously increasing count</span></span><br><span class="line"><span class="comment"> * @mask:		bit mask for maintaining the 'frac' field</span></span><br><span class="line"><span class="comment"> * @frac:		accumulated fractional nanoseconds</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timecounter</span> &#123;</span></span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cyclecounter</span> *<span class="title">cc</span>;</span></span><br><span class="line">	<span class="keyword">cycle_t</span> cycle_last;</span><br><span class="line">	u64 nsec;</span><br><span class="line">	u64 mask;</span><br><span class="line">	u64 frac;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="4-clockevent"><a href="#4-clockevent" class="headerlink" title="4. clockevent"></a>4. clockevent</h2><p>clockevent 数据结构如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * struct clock_event_device - clock event device descriptor</span></span><br><span class="line"><span class="comment"> * @event_handler:	Assigned by the framework to be called by the low</span></span><br><span class="line"><span class="comment"> *			level handler of the event source</span></span><br><span class="line"><span class="comment"> * @set_next_event:	set next event function using a clocksource delta</span></span><br><span class="line"><span class="comment"> * @set_next_ktime:	set next event function using a direct ktime value</span></span><br><span class="line"><span class="comment"> * @next_event:		local storage for the next event in oneshot mode</span></span><br><span class="line"><span class="comment"> * @max_delta_ns:	maximum delta value in ns</span></span><br><span class="line"><span class="comment"> * @min_delta_ns:	minimum delta value in ns</span></span><br><span class="line"><span class="comment"> * @mult:		nanosecond to cycles multiplier</span></span><br><span class="line"><span class="comment"> * @shift:		nanoseconds to cycles divisor (power of two)</span></span><br><span class="line"><span class="comment"> * @state_use_accessors:current state of the device, assigned by the core code</span></span><br><span class="line"><span class="comment"> * @features:		features</span></span><br><span class="line"><span class="comment"> * @retries:		number of forced programming retries</span></span><br><span class="line"><span class="comment"> * @set_state_periodic:	switch state to periodic</span></span><br><span class="line"><span class="comment"> * @set_state_oneshot:	switch state to oneshot</span></span><br><span class="line"><span class="comment"> * @set_state_oneshot_stopped: switch state to oneshot_stopped</span></span><br><span class="line"><span class="comment"> * @set_state_shutdown:	switch state to shutdown</span></span><br><span class="line"><span class="comment"> * @tick_resume:	resume clkevt device</span></span><br><span class="line"><span class="comment"> * @broadcast:		function to broadcast events</span></span><br><span class="line"><span class="comment"> * @min_delta_ticks:	minimum delta value in ticks stored for reconfiguration</span></span><br><span class="line"><span class="comment"> * @max_delta_ticks:	maximum delta value in ticks stored for reconfiguration</span></span><br><span class="line"><span class="comment"> * @name:		ptr to clock event name</span></span><br><span class="line"><span class="comment"> * @rating:		variable to rate clock event devices</span></span><br><span class="line"><span class="comment"> * @irq:		IRQ number (only for non CPU local devices)</span></span><br><span class="line"><span class="comment"> * @bound_on:		Bound on CPU</span></span><br><span class="line"><span class="comment"> * @cpumask:		cpumask to indicate for which CPUs this device works</span></span><br><span class="line"><span class="comment"> * @list:		list head for the management code</span></span><br><span class="line"><span class="comment"> * @owner:		module reference</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">clock_event_device</span> &#123;</span></span><br><span class="line">	<span class="keyword">void</span>			(*event_handler)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*set_next_event)(<span class="keyword">unsigned</span> <span class="keyword">long</span> evt, struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*set_next_ktime)(<span class="keyword">ktime_t</span> expires, struct clock_event_device *);</span><br><span class="line">	<span class="keyword">ktime_t</span>			next_event;</span><br><span class="line">	u64			max_delta_ns;</span><br><span class="line">	u64			min_delta_ns;</span><br><span class="line">	u32			mult;</span><br><span class="line">	u32			shift;</span><br><span class="line">	<span class="keyword">enum</span> clock_event_state	state_use_accessors;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>		features;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>		retries;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">int</span>			(*set_state_periodic)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*set_state_oneshot)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*set_state_oneshot_stopped)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*set_state_shutdown)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">int</span>			(*tick_resume)(struct clock_event_device *);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">void</span>			(*broadcast)(<span class="keyword">const</span> struct cpumask *mask);</span><br><span class="line">	<span class="keyword">void</span>			(*suspend)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">void</span>			(*resume)(struct clock_event_device *);</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>		min_delta_ticks;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>		max_delta_ticks;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>		*name;</span><br><span class="line">	<span class="keyword">int</span>			rating;</span><br><span class="line">	<span class="keyword">int</span>			irq;</span><br><span class="line">	<span class="keyword">int</span>			bound_on;</span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cpumask</span>	*<span class="title">cpumask</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>	<span class="title">list</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">module</span>		*<span class="title">owner</span>;</span></span><br><span class="line">&#125; ____cacheline_aligned;</span><br></pre></td></tr></table></figure>
+<p>上面重要的有<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">   <span class="comment">/* set next event interrupt by cyclecounter or ktime */</span></span><br><span class="line">   <span class="keyword">int</span>			(*set_next_event)(<span class="keyword">unsigned</span> <span class="keyword">long</span> evt, struct clock_event_device *);</span><br><span class="line"><span class="keyword">int</span>			(*set_next_ktime)(<span class="keyword">ktime_t</span> expires, struct clock_event_device *);</span><br><span class="line"></span><br><span class="line">   <span class="comment">/* switch event mode: periodic or oneshot */</span></span><br><span class="line"><span class="keyword">int</span>			(*set_state_periodic)(struct clock_event_device *);</span><br><span class="line"><span class="keyword">int</span>			(*set_state_oneshot)(struct clock_event_device *);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-1-常用函数"><a href="#4-1-常用函数" class="headerlink" title="4.1. 常用函数"></a>4.1. 常用函数</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span> <span class="title">clockevents_config_and_register</span><span class="params">(struct clock_event_device *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">					    u32 freq, <span class="keyword">unsigned</span> <span class="keyword">long</span> min_delta,</span></span></span><br><span class="line"><span class="function"><span class="params">					    <span class="keyword">unsigned</span> <span class="keyword">long</span> max_delta)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span> <span class="title">clockevents_config</span><span class="params">(struct clock_event_device *dev, u32 freq)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span> <span class="title">clockevents_register_device</span><span class="params">(struct clock_event_device *dev)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">int</span> <span class="title">clockevents_unbind_device</span><span class="params">(struct clock_event_device *ced, <span class="keyword">int</span> cpu)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>在我们register clockevnet 后， 上层的tick layer 可能会考虑替换当前的clockevent device.<br>替换参考的依据是：</p>
+<ul>
+<li>首先是CPU local device</li>
+<li>具备更好的rate</li>
+</ul>
+<p>如果current clockevent device 是broadcast device(broadcost clockevent device 主要用于在CPU sleep 时，其他CPU local timer 已经睡眠，在resume时我们可以通过broadcast device 唤醒其他CPU)，需要先close.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux-4.9.198 code */</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Check, if the new registered device should be used. Called with</span></span><br><span class="line"><span class="comment"> * clockevents_lock held and interrupts disabled.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">tick_check_new_device</span><span class="params">(struct clock_event_device *newdev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">clock_event_device</span> *<span class="title">curdev</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tick_device</span> *<span class="title">td</span>;</span></span><br><span class="line">	<span class="keyword">int</span> cpu;</span><br><span class="line"></span><br><span class="line">	cpu = smp_processor_id();</span><br><span class="line">	td = &amp;per_cpu(tick_cpu_device, cpu);</span><br><span class="line">	curdev = td-&gt;evtdev;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* cpu local device ? */</span></span><br><span class="line">	<span class="keyword">if</span> (!tick_check_percpu(curdev, newdev, cpu))</span><br><span class="line">		<span class="keyword">goto</span> out_bc;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Preference decision */</span></span><br><span class="line">	<span class="keyword">if</span> (!tick_check_preferred(curdev, newdev))</span><br><span class="line">		<span class="keyword">goto</span> out_bc;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!try_module_get(newdev-&gt;owner))</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Replace the eventually existing device by the new</span></span><br><span class="line"><span class="comment">	 * device. If the current device is the broadcast device, do</span></span><br><span class="line"><span class="comment">	 * not give it back to the clockevents layer !</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (tick_is_broadcast_device(curdev)) &#123;</span><br><span class="line">		clockevents_shutdown(curdev);</span><br><span class="line">		curdev = <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	clockevents_exchange_device(curdev, newdev);</span><br><span class="line">	tick_setup_device(td, newdev, cpu, cpumask_of(cpu));</span><br><span class="line">	<span class="keyword">if</span> (newdev-&gt;features &amp; CLOCK_EVT_FEAT_ONESHOT)</span><br><span class="line">		tick_oneshot_notify();</span><br><span class="line">	<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">out_bc:</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Can the new device be used as a broadcast device ?</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	tick_install_broadcast_device(newdev);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="http://www.wowotech.net/timer_subsystem/time-subsyste-architecture.html" target="_blank" rel="noopener">Linux时间子系统之（二）：软件架构</a></p>
+<p><a href="http://www.wowotech.net/timer_subsystem/tick-device-layer.html" target="_blank" rel="noopener">Linux时间子系统之（十三）：Tick Device layer 综述</a></p>
+<p><a href="http://www.wowotech.net/timer_subsystem/clocksource.html" target="_blank" rel="noopener">Linux时间子系统之（十五）：clocksource</a></p>
+<p><a href="http://www.wowotech.net/timer_subsystem/clock-event.html" target="_blank" rel="noopener">Linux时间子系统之（十六）：clockevent</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/timer/" rel="tag"># timer</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/11/27/arm-generic-timer/" rel="next" title="arm_generic_timer">
+                <i class="fa fa-chevron-left"></i> arm_generic_timer
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2020/02/17/kernel-tty/" rel="prev" title="kernel_tty">
+                kernel_tty <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Kernel-Timer-软件架构"><span class="nav-text">1. Kernel Timer 软件架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-file-structure"><span class="nav-text">2. file structure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-clocksource"><span class="nav-text">3. clocksource</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-register-unregister-clocksource"><span class="nav-text">3.1. register/unregister clocksource</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-OS选择clock-source"><span class="nav-text">3.2. OS选择clock source</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-timecounter-与-cyclecounter"><span class="nav-text">3.3. timecounter 与 cyclecounter</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-clockevent"><span class="nav-text">4. clockevent</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-常用函数"><span class="nav-text">4.1. 常用函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="常见的测量CPU loading 的工具有:  sar top iostat mpstat cat /proc/stat">
+<meta name="keywords" content="cpu_loading">
+<meta property="og:type" content="article">
+<meta property="og:title" content="measure cpu loading by &#x2F;proc&#x2F;stat">
+<meta property="og:url" content="https://jshell07.github.io/2020/04/10/measure-cpu-loading-by-proc-stat/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="常见的测量CPU loading 的工具有:  sar top iostat mpstat cat /proc/stat">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/iostat.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/mpstat.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_pid_stat.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat_precision.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/cpu_process_switch.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:58.586Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="measure cpu loading by &#x2F;proc&#x2F;stat">
+<meta name="twitter:description" content="常见的测量CPU loading 的工具有:  sar top iostat mpstat cat /proc/stat">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/iostat.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2020/04/10/measure-cpu-loading-by-proc-stat/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>measure cpu loading by /proc/stat | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2020/04/10/measure-cpu-loading-by-proc-stat/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">measure cpu loading by /proc/stat
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-04-10 10:38:59" itemprop="dateCreated datePublished" datetime="2020-04-10T10:38:59+08:00">2020-04-10</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:58" itemprop="dateModified" datetime="2020-04-28T11:16:58+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/tools/" itemprop="url" rel="index"><span itemprop="name">tools</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>常见的测量CPU loading 的工具有:</p>
+<ul>
+<li>sar</li>
+<li>top</li>
+<li>iostat</li>
+<li>mpstat</li>
+<li>cat /proc/stat</li>
+</ul>
+<a id="more"></a>
+<p>我们参看busybox 中src code，可以发现top，iostat, mpstat 都是使用到/proc/stat, 或者/proc/<pid>stat 文件并进行解析呈现。</pid></p>
+<p><code>iostat</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/iostat.png" alt="iostat"></p>
+<p><code>mpstat</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/mpstat.png" alt="mpstat"></p>
+<p><code>cat /proc/1/stat</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_pid_stat.png" alt="proc_pid_stat"></p>
+<h2 id="1-proc-stat"><a href="#1-proc-stat" class="headerlink" title="1. /proc/stat"></a>1. /proc/stat</h2><p><code>CPU time = user + nice + system + idle + iowait + irq + softirq + Steal</code></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">item</th>
+<th style="text-align:left">remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">user time</td>
+<td style="text-align:left">普通用户进程占用时间</td>
+</tr>
+<tr>
+<td style="text-align:center">nice time</td>
+<td style="text-align:left">高优先级用户进程占用时间</td>
+</tr>
+<tr>
+<td style="text-align:center">system time</td>
+<td style="text-align:left">OS 中运行时间</td>
+</tr>
+<tr>
+<td style="text-align:center">idle time</td>
+<td style="text-align:left">CPU 空闲时间</td>
+</tr>
+<tr>
+<td style="text-align:center">iowait time</td>
+<td style="text-align:left">I/O 等待时间</td>
+</tr>
+<tr>
+<td style="text-align:center">irq time</td>
+<td style="text-align:left">硬中断处理时间</td>
+</tr>
+<tr>
+<td style="text-align:center">softirq time</td>
+<td style="text-align:left">软中断处理时间</td>
+</tr>
+<tr>
+<td style="text-align:center">steal time</td>
+<td style="text-align:left">类似于guest os 切换等未统计到的时间</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat.png" alt="proc_stat"></p>
+<h3 id="1-1-原理"><a href="#1-1-原理" class="headerlink" title="1.1. 原理"></a>1.1. 原理</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* kernel/fs/proc/stat.c, kernel-4.9.198 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">stat_open</span><span class="params">(struct inode *inode, struct file *file)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">size_t</span> size = <span class="number">1024</span> + <span class="number">128</span> * num_online_cpus();</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* minimum size to display an interrupt count : 2 bytes */</span></span><br><span class="line">	size += <span class="number">2</span> * nr_irqs;</span><br><span class="line">	<span class="keyword">return</span> single_open_size(file, show_stat, <span class="literal">NULL</span>, size);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">show_stat</span><span class="params">(struct seq_file *p, <span class="keyword">void</span> *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> i, j;</span><br><span class="line">	u64 user, nice, system, idle, iowait, irq, softirq, steal;</span><br><span class="line">	u64 guest, guest_nice;</span><br><span class="line"></span><br><span class="line">	user = nice = system = idle = iowait =</span><br><span class="line">		irq = softirq = steal = <span class="number">0</span>;</span><br><span class="line">	guest = guest_nice = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	getboottime64(&amp;boottime);</span><br><span class="line"></span><br><span class="line">	for_each_possible_cpu(i) &#123;</span><br><span class="line">		user += kcpustat_cpu(i).cpustat[CPUTIME_USER];</span><br><span class="line">		nice += kcpustat_cpu(i).cpustat[CPUTIME_NICE];</span><br><span class="line">		system += kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];</span><br><span class="line">		idle += get_idle_time(i);</span><br><span class="line">		iowait += get_iowait_time(i);</span><br><span class="line">		irq += kcpustat_cpu(i).cpustat[CPUTIME_IRQ];</span><br><span class="line">		softirq += kcpustat_cpu(i).cpustat[CPUTIME_SOFTIRQ];</span><br><span class="line">		steal += kcpustat_cpu(i).cpustat[CPUTIME_STEAL];</span><br><span class="line">		guest += kcpustat_cpu(i).cpustat[CPUTIME_GUEST];</span><br><span class="line">		guest_nice += kcpustat_cpu(i).cpustat[CPUTIME_GUEST_NICE];</span><br><span class="line">		sum += kstat_cpu_irqs_sum(i);</span><br><span class="line">		sum += arch_irq_stat_cpu(i);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在show_stat() 中<font color="red">kcpustat_cpu(i).cpustat[CPUTIME_USER]</font> 这个变量时一个关键全局变量。per_cpu 的用法大致是在kernel init 时拷贝CPU NUM 份变量到不同的内存空间，访问时加上CPU NUM(i) 的偏移量。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">kernel_cpustat</span> &#123;</span></span><br><span class="line">	u64 cpustat[NR_STATS];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> kstat_cpu(cpu) per_cpu(kstat, cpu)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> kcpustat_cpu(cpu) per_cpu(kernel_cpustat, cpu)</span></span><br></pre></td></tr></table></figure>
+<h3 id="1-2-何时更新"><a href="#1-2-何时更新" class="headerlink" title="1.2. 何时更新"></a>1.2. 何时更新</h3><p>那kernel_cpustat 是在什么时候更新的呢？答案是在Timer 的中断函数中进行更新。</p>
+<p>我们可以使用<code>dump_stack()</code>函数打印调用栈。在<code>clockevents_config_and_register()</code> 进行clock event 注册时有如下关系：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">clockevents_config_and_register() -&gt;</span><br><span class="line">    tick_check_new_device() -&gt; </span><br><span class="line">        tick_setup_device() -&gt; </span><br><span class="line">            tick_setup_periodic() -&gt; </span><br><span class="line">                tick_set_periodic_handle()</span><br></pre></td></tr></table></figure>
+<p>那之后timer 将会在1/HZ 时raise 中断， 则有如下调用关系起来：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tick_handle_periodic()-&gt;</span><br><span class="line">    update_process_times() -&gt;</span><br><span class="line">        account_process_tick() -&gt;</span><br><span class="line">            account_system_time()</span><br></pre></td></tr></table></figure>
+<p>在<code>account_system_time()</code> 函数中会进行分类统计CPU 占用时间。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* linux/kernel/sched/cputime.c, kernel-4.9.18 */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">account_process_tick</span><span class="params">(struct task_struct *p, <span class="keyword">int</span> user_tick)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">cputime_t</span> cputime, scaled, steal;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rq</span> *<span class="title">rq</span> = <span class="title">this_rq</span>();</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (vtime_accounting_cpu_enabled())</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (sched_clock_irqtime) &#123;</span><br><span class="line">		irqtime_account_process_tick(p, user_tick, rq, <span class="number">1</span>);</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	cputime = cputime_one_jiffy;</span><br><span class="line">	steal = steal_account_process_time(ULONG_MAX);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (steal &gt;= cputime)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	cputime -= steal;</span><br><span class="line">	scaled = cputime_to_scaled(cputime);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (user_tick)</span><br><span class="line">		account_user_time(p, cputime, scaled);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> ((p != rq-&gt;idle) || (irq_count() != HARDIRQ_OFFSET))</span><br><span class="line">		account_system_time(p, HARDIRQ_OFFSET, cputime, scaled);</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		account_idle_time(cputime);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="1-3-怎么分类"><a href="#1-3-怎么分类" class="headerlink" title="1.3. 怎么分类"></a>1.3. 怎么分类</h3><p>接下来的问题是我们怎么知道何时是user, system, idle 等呢？</p>
+<h4 id="1-3-1-user-or-system"><a href="#1-3-1-user-or-system" class="headerlink" title="1.3.1 user or system?"></a>1.3.1 user or system?</h4><p>ARM CPU 可以从CPSR reg 得到当前的运行态，下面函数大概也是基于此思想：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">tick_handle_periodic() -&gt;</span></span><br><span class="line"><span class="comment">    tick_periodic()</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">tick_periodic</span><span class="params">(<span class="keyword">int</span> cpu)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (tick_do_timer_cpu == cpu) &#123;</span><br><span class="line">		write_seqlock(&amp;jiffies_lock);</span><br><span class="line"></span><br><span class="line">		<span class="comment">/* Keep track of the next tick event */</span></span><br><span class="line">		tick_next_period = ktime_add(tick_next_period, tick_period);</span><br><span class="line"></span><br><span class="line">		do_timer(<span class="number">1</span>);</span><br><span class="line">		write_sequnlock(&amp;jiffies_lock);</span><br><span class="line">		update_wall_time();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	update_process_times(user_mode(get_irq_regs()));</span><br><span class="line">	profile_tick(CPU_PROFILING);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> user_mode(regs)	\</span></span><br><span class="line">	(((regs)-&gt;ARM_cpsr &amp; <span class="number">0xf</span>) == <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> struct pt_regs *<span class="title">get_irq_regs</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> __this_cpu_read(__irq_regs);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="1-3-2-system-irq-softirq"><a href="#1-3-2-system-irq-softirq" class="headerlink" title="1.3.2. system, irq, softirq ?"></a>1.3.2. system, irq, softirq ?</h4><p><strong>判断idle or system</strong><br>主要通过<code>struct rq -&gt; runqueue</code> 运行队列上状态判断是否是IDLE。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">account_process_tick</span><span class="params">(struct task_struct *p, <span class="keyword">int</span> user_tick)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rq</span> *<span class="title">rq</span> = <span class="title">this_rq</span>();</span></span><br><span class="line">    ...</span><br><span class="line">	<span class="keyword">if</span> (user_tick)</span><br><span class="line">		account_user_time(p, cputime, scaled);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> ((p != rq-&gt;idle) || (irq_count() != HARDIRQ_OFFSET))</span><br><span class="line">		account_system_time(p, HARDIRQ_OFFSET, cputime, scaled);</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		account_idle_time(cputime);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>判断system, irq, softirq</strong></p>
+<p>kernel 判断通过thread_info 中<font color="red">preempt_count</font> 进行判断。<br>在进入中断时，preempt_count 会进行设定。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> __irq_enter()					\</span></span><br><span class="line">	<span class="keyword">do</span> &#123;						\</span><br><span class="line">		account_irq_enter_time(current);	\</span><br><span class="line">		preempt_count_add(HARDIRQ_OFFSET);	\</span><br><span class="line">		trace_hardirq_enter();			\</span><br><span class="line">	&#125; <span class="keyword">while</span> (<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> in_irq()		        (hardirq_count())</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> in_softirq()		    (softirq_count())</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> in_interrupt()		    (irq_count())</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> in_serving_softirq()	(softirq_count() &amp; SOFTIRQ_OFFSET)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> hardirq_count()	(preempt_count() &amp; HARDIRQ_MASK)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> softirq_count()	(preempt_count() &amp; SOFTIRQ_MASK)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> __<span class="function">always_inline <span class="keyword">int</span> <span class="title">preempt_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> READ_ONCE(current_thread_info()-&gt;preempt_count);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">account_system_time</span><span class="params">(struct task_struct *p, <span class="keyword">int</span> hardirq_offset,</span></span></span><br><span class="line"><span class="function"><span class="params">			 <span class="keyword">cputime_t</span> cputime, <span class="keyword">cputime_t</span> cputime_scaled)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> index;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> ((p-&gt;flags &amp; PF_VCPU) &amp;&amp; (irq_count() - hardirq_offset == <span class="number">0</span>)) &#123;</span><br><span class="line">		account_guest_time(p, cputime, cputime_scaled);</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (hardirq_count() - hardirq_offset)</span><br><span class="line">		index = CPUTIME_IRQ;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (in_serving_softirq())</span><br><span class="line">		index = CPUTIME_SOFTIRQ;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		index = CPUTIME_SYSTEM;</span><br><span class="line"></span><br><span class="line">	__account_system_time(p, cputime, cputime_scaled, index);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="1-4-准确性"><a href="#1-4-准确性" class="headerlink" title="1.4. 准确性"></a>1.4. 准确性</h3><p>通过上面的分析，我们知道数据更新频率是1/HZ。 如果在一个timer 中断周期内有进程的调度，那么我们在timer 周期中断函数统计就可能漏掉了调度前进程占用CPU 的时间。这就最终与我们的Kernel HZ 的配置有一定的关系， 不过一般情况下kenrel 进程切换的频率并没有达到如此频繁程度。</p>
+<p>如下图所示， 在前一个Timer 周期内，Process A, Process B 在调度，那么在中断时，我们只统计到了process B， 我们就漏了Process A 占用时间。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/proc_stat_precision.png" alt="proc_stat_precision"></p>
+<p>引起进程调度的常见原因有：</p>
+<ul>
+<li>进程调用sleep(), exit() 等函数</li>
+<li>进程时间片耗尽</li>
+<li>driver 中主动调用schedule()</li>
+<li>从中断等异常，系统调用返回用户态</li>
+</ul>
+<p>我们可以通过如下方式得到当前OS 调度程度 <code>watch -d -n 1 &#39;cat /proc/sched_debug | grep nr_switches&#39;</code><br><img src="https://raw.githubusercontent.com/JShell07/images/master/tools/proc_stat/cpu_process_switch.png" alt="cpu_process_switch"></p>
+<h2 id="2-总结"><a href="#2-总结" class="headerlink" title="2. 总结"></a>2. 总结</h2><ul>
+<li>Linux CPU占用率是根据/proc/stat文件中的数据计算而来；</li>
+<li>/proc/stat中的数据精度为ticks，即1/HZ秒；</li>
+<li>内核每个ticks会更新一次CPU使用信息；</li>
+<li>CPU 占用率的精度为1/HZ秒, 数据信息单位是ticks</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="http://www.ilinuxkernel.com/files/Linux_CPU_Usage_Analysis.pdf" target="_blank" rel="noopener">linux cpu usage analysis</a></p>
+<p><a href="https://www.jianshu.com/p/f595ee986b55?from=singlemessage" target="_blank" rel="noopener">理解 CPU 利用率</a></p>
+<p><a href="https://blog.csdn.net/lihualoveyou/article/details/78392229" target="_blank" rel="noopener">Linux系统中的CPU利用率</a></p>
+<p><a href="http://linuxperf.com/?p=36" target="_blank" rel="noopener">借助perf工具分析CPU使用率</a></p>
+<p><a href="https://www.jianshu.com/p/919c75dbc420" target="_blank" rel="noopener">我是如何把CPU使用率从70%降到25%的</a></p>
+<p><a href="https://www.iteye.com/blog/sunrise-king-1697486" target="_blank" rel="noopener">solaris上应该如何监控CPU使用情况</a></p>
+<p><a href="https://blog.csdn.net/dayancn/article/details/51169241" target="_blank" rel="noopener">kernel per_cpu</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/cpu-loading/" rel="tag"># cpu_loading</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/04/09/bootgraph/" rel="next" title="bootgraph">
+                <i class="fa fa-chevron-left"></i> bootgraph
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2020/04/15/kernel-tickless-idle/" rel="prev" title="kernel_tickless_idle">
+                kernel_tickless_idle <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-proc-stat"><span class="nav-text">1. /proc/stat</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-原理"><span class="nav-text">1.1. 原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-何时更新"><span class="nav-text">1.2. 何时更新</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-怎么分类"><span class="nav-text">1.3. 怎么分类</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-1-user-or-system"><span class="nav-text">1.3.1 user or system?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-2-system-irq-softirq"><span class="nav-text">1.3.2. system, irq, softirq ?</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-准确性"><span class="nav-text">1.4. 准确性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-总结"><span class="nav-text">2. 总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

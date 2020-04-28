@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. User spacemmap, munmap - map or unmap files or devices into memory.将文件或者设备与内存映射起来。 12345678#include &amp;lt;sys/mman.h&amp;gt;void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset">
+<meta name="keywords" content="kernel,memory">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_virtual_addr_map">
+<meta property="og:url" content="https://jshell07.github.io/2019/07/12/kernel-virtual-addr-map/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. User spacemmap, munmap - map or unmap files or devices into memory.将文件或者设备与内存映射起来。 12345678#include &amp;lt;sys/mman.h&amp;gt;void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/page_to_addr.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/1level_page_table.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/2level_page_table.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/proc_self_maps.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:57.213Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_virtual_addr_map">
+<meta name="twitter:description" content="1. User spacemmap, munmap - map or unmap files or devices into memory.将文件或者设备与内存映射起来。 12345678#include &amp;lt;sys/mman.h&amp;gt;void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/page_to_addr.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/07/12/kernel-virtual-addr-map/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_virtual_addr_map | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/07/12/kernel-virtual-addr-map/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_virtual_addr_map
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-07-12 10:51:28" itemprop="dateCreated datePublished" datetime="2019-07-12T10:51:28+08:00">2019-07-12</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:57" itemprop="dateModified" datetime="2020-04-28T11:16:57+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-User-space"><a href="#1-User-space" class="headerlink" title="1. User space"></a>1. User space</h2><p>mmap, munmap - map or unmap files or devices into memory.<br>将文件或者设备与内存映射起来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">mmap</span><span class="params">(<span class="keyword">void</span> *addr, <span class="keyword">size_t</span> length, <span class="keyword">int</span> prot, <span class="keyword">int</span> flags, <span class="keyword">int</span> fd, <span class="keyword">off_t</span> offset)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">munmap</span><span class="params">(<span class="keyword">void</span> *addr, <span class="keyword">size_t</span> length)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getpagesize</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="2-Kernel-space"><a href="#2-Kernel-space" class="headerlink" title="2. Kernel space"></a>2. Kernel space</h2><h3 id="2-1-静态映射"><a href="#2-1-静态映射" class="headerlink" title="2.1. 静态映射"></a>2.1. 静态映射</h3><p>start_kernel() -&gt;<br>&nbsp;&nbsp;setup_arch() -&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp; paging_init() -&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devicemaps_init(const struct machine_desc *mdesc) -&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mdesc-&gt;map_io()</p>
+<p>涉及到的结构体<strong>struct machine_desc</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">machine_desc</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>		nr;		<span class="comment">/* architecture number	*/</span></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>		*name;		<span class="comment">/* architecture </span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">	unsigned int		nr_irqs;	/* number of IRQs */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_ZONE_DMA</span></span><br><span class="line">	<span class="keyword">phys_addr_t</span>		dma_zone_size;	<span class="comment">/* size of DMA-able area */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	<span class="keyword">void</span>			(*init_meminfo)(<span class="keyword">void</span>);</span><br><span class="line">	<span class="keyword">void</span>			(*reserve)(<span class="keyword">void</span>);<span class="comment">/* reserve mem blocks	*/</span></span><br><span class="line">	<span class="keyword">void</span>			(*map_io)(<span class="keyword">void</span>);<span class="comment">/* IO mapping function	*/</span></span><br><span class="line">	<span class="keyword">void</span>			(*init_early)(<span class="keyword">void</span>);</span><br><span class="line">	<span class="keyword">void</span>			(*init_irq)(<span class="keyword">void</span>);</span><br><span class="line">	<span class="keyword">void</span>			(*init_time)(<span class="keyword">void</span>);</span><br><span class="line">	<span class="keyword">void</span>			(*init_machine)(<span class="keyword">void</span>);</span><br><span class="line">	<span class="keyword">void</span>			(*init_late)(<span class="keyword">void</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MULTI_IRQ_HANDLER</span></span><br><span class="line">	<span class="keyword">void</span>			(*handle_irq)(struct pt_regs *);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	<span class="keyword">void</span>			(*restart)(<span class="keyword">enum</span> reboot_mode, <span class="keyword">const</span> <span class="keyword">char</span> *);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">map_desc</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">virtual</span>;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> pfn;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> length;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>例如我们在arch/arm/mach-s3c24xx/mach-smdk2440.c<br>smdk2440_map_io() -&gt;<br>&nbsp;&nbsp;iotable_init(mach_desc, size)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">map_desc</span> <span class="title">smdk2440_iodesc</span>[] __<span class="title">initdata</span> = &#123;</span></span><br><span class="line">	&#123;</span><br><span class="line">		.<span class="keyword">virtual</span>	= (u32)S3C24XX_VA_ISA_WORD,</span><br><span class="line">		.pfn		= __phys_to_pfn(S3C2410_CS2),</span><br><span class="line">		.length		= <span class="number">0x10000</span>,</span><br><span class="line">		.type		= MT_DEVICE,</span><br><span class="line">	&#125;, </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MACHINE_START(S3C2440, <span class="string">"SMDK2440"</span>)</span><br><span class="line">	<span class="comment">/* Maintainer: Ben Dooks &lt;ben-linux@fluff.org&gt; */</span></span><br><span class="line">	.atag_offset	= <span class="number">0x100</span>,</span><br><span class="line"></span><br><span class="line">	.init_irq	= s3c2440_init_irq,</span><br><span class="line">	.map_io		= smdk2440_map_io,</span><br><span class="line">	.init_machine	= smdk2440_machine_init,</span><br><span class="line">	.init_time	= smdk2440_init_time,</span><br><span class="line">MACHINE_END</span><br></pre></td></tr></table></figure>
+<p>在这一步定义了物理与虚拟地址之间的映射关系，一旦编译完成就不会修改，<font color="red"> 静态编译常用于不容易变动的物理地址与虚拟地址之间的映射，例如寄存器的映射。</font></p>
+<h3 id="2-2-页表创建"><a href="#2-2-页表创建" class="headerlink" title="2.2. 页表创建"></a>2.2. 页表创建</h3><p>Linux下的页表映射分为两种，一是Linux自身的页表映射，另一种是ARM32 MMU硬件的映射。这样是为了更大的灵活性，可以映射Linux bits 到 硬件tables 上，例如有YOUNG, DIRTY bits.</p>
+<p>参见 linux/arch/arm/include/asm/pagetable-2level.h 注释：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Hardware-wise, we have a two level page table structure, where the first</span></span><br><span class="line"><span class="comment"> * level has 4096 entries, and the second level has 256 entries.  Each entry</span></span><br><span class="line"><span class="comment"> * is one 32-bit word.  Most of the bits in the second level entry are used</span></span><br><span class="line"><span class="comment"> * by hardware, and there aren't any "accessed" and "dirty" bits.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Linux on the other hand has a three level page table structure, which can</span></span><br><span class="line"><span class="comment"> * be wrapped to fit a two level page table structure easily - using the PGD</span></span><br><span class="line"><span class="comment"> * and PTE only.  However, Linux also expects one "PTE" table per page, and</span></span><br><span class="line"><span class="comment"> * at least a "dirty" bit.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Therefore, we tweak the implementation slightly - we tell Linux that we</span></span><br><span class="line"><span class="comment"> * have 2048 entries in the first level, each of which is 8 bytes (iow, two</span></span><br><span class="line"><span class="comment"> * hardware pointers to the second level.)  The second level contains two</span></span><br><span class="line"><span class="comment"> * hardware PTE tables arranged contiguously, preceded by Linux versions</span></span><br><span class="line"><span class="comment"> * which contain the state information Linux needs.  We, therefore, end up</span></span><br><span class="line"><span class="comment"> * with 512 entries in the "PTE" level.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * This leads to the page tables having the following layout:</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *    pgd             pte</span></span><br><span class="line"><span class="comment"> * |        |</span></span><br><span class="line"><span class="comment"> * +--------+</span></span><br><span class="line"><span class="comment"> * |        |       +------------+ +0</span></span><br><span class="line"><span class="comment"> * +- - - - +       | Linux pt 0 |</span></span><br><span class="line"><span class="comment"> * |        |       +------------+ +1024</span></span><br><span class="line"><span class="comment"> * +--------+ +0    | Linux pt 1 |</span></span><br><span class="line"><span class="comment"> * |        |-----&gt; +------------+ +2048</span></span><br><span class="line"><span class="comment"> * +- - - - + +4    |  h/w pt 0  |</span></span><br><span class="line"><span class="comment"> * |        |-----&gt; +------------+ +3072</span></span><br><span class="line"><span class="comment"> * +--------+ +8    |  h/w pt 1  |</span></span><br><span class="line"><span class="comment"> * |        |       +------------+ +4096</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * See L_PTE_xxx below for definitions of bits in the "Linux pt", and</span></span><br><span class="line"><span class="comment"> * PTE_xxx for definitions of bits appearing in the "h/w pt".</span></span><br></pre></td></tr></table></figure></p>
+<p>32bit的Linux采用三级映射：PGD–&gt;PMD–&gt;PTE，64bit的Linux采用四级映射：PGD–&gt;PUD–&gt;PMD–&gt;PTE，多了个PUD</p>
+<blockquote>
+<p>PGD - Page Global Directory<br>PUD - Page Upper Directory<br>PMD - Page Middle Directory<br>PTE - Page Table Entry。</p>
+</blockquote>
+<p>在ARM32 Linux采用两层映射，省略了PMD，除非在定义了CONFIG_ARM_LPAE才会使用3级映射。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/page_to_addr.png" alt="页表转换过程"></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/1level_page_table.png" alt="1 level page table"></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/2level_page_table.png" alt="2 level page table"></p>
+<p>更多可以参看&lt;<arm ®="" architecture="" reference="" manual="" --="" armv7-a="" and="" armv7-r="" edition="">&gt; (ARM DDI 0406C.c (ID051414)) B3 Virtual Memory System Architecture (VMSA)</arm></p>
+<p>iotable_init()-&gt;<br>&nbsp;&nbsp;create_mapping()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;alloc_init_pud()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alloc_init_pmd()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alloc_init_pte()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set_pte_ext-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_pte_ext()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_v7_set_pte_ext() （linux/arm/arm/mm/proc-v7-2level.S）</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> __<span class="function">init <span class="title">create_mapping</span><span class="params">(struct map_desc *md)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	...</span><br><span class="line">	pgd = pgd_offset_k(addr);</span><br><span class="line">	end = addr + length;</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		<span class="keyword">unsigned</span> <span class="keyword">long</span> next = pgd_addr_end(addr, end);</span><br><span class="line"></span><br><span class="line">		alloc_init_pud(pgd, addr, next, phys, type);</span><br><span class="line"></span><br><span class="line">		phys += next - addr;</span><br><span class="line">		addr = next;</span><br><span class="line">	&#125; <span class="keyword">while</span> (pgd++, addr != end);	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> __<span class="function">init <span class="title">alloc_init_pte</span><span class="params">(<span class="keyword">pmd_t</span> *pmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> addr,</span></span></span><br><span class="line"><span class="function"><span class="params">				  <span class="keyword">unsigned</span> <span class="keyword">long</span> end, <span class="keyword">unsigned</span> <span class="keyword">long</span> pfn,</span></span></span><br><span class="line"><span class="function"><span class="params">				  <span class="keyword">const</span> struct mem_type *type)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">pte_t</span> *pte = early_pte_alloc(pmd, addr, type-&gt;prot_l1);</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		set_pte_ext(pte, pfn_pte(pfn, __pgprot(type-&gt;prot_pte)), <span class="number">0</span>);</span><br><span class="line">		pfn++;</span><br><span class="line">	&#125; <span class="keyword">while</span> (pte++, addr += PAGE_SIZE, addr != end);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>set_pte_ext()函数，根据配置情况最终指向的是cpu_v7_set_pte_ext()<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *	cpu_v7_set_pte_ext(ptep, pte)</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *	Set a level 2 translation table entry.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *	- ptep  - pointer to level 2 translation table entry</span></span><br><span class="line"><span class="comment"> *		  (hardware version is stored at +2048 bytes)</span></span><br><span class="line"><span class="comment"> *	- pte   - PTE value to store</span></span><br><span class="line"><span class="comment"> *	- ext	- value for extended PTE bits</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">ENTRY(cpu_v7_set_pte_ext)</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MMU</span></span><br><span class="line">	str	r1, [r0]			@ linux version</span><br><span class="line"></span><br><span class="line">	bic	r3, r1, #<span class="number">0x000003f0</span></span><br><span class="line">	bic	r3, r3, #PTE_TYPE_MASK</span><br><span class="line">	orr	r3, r3, r2</span><br><span class="line">	orr	r3, r3, #PTE_EXT_AP0 | <span class="number">2</span></span><br><span class="line"></span><br><span class="line">	tst	r1, #<span class="number">1</span> &lt;&lt; <span class="number">4</span></span><br><span class="line">	orrne	r3, r3, #PTE_EXT_TEX(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	eor	r1, r1, #L_PTE_DIRTY</span><br><span class="line">	tst	r1, #L_PTE_RDONLY | L_PTE_DIRTY</span><br><span class="line">	orrne	r3, r3, #PTE_EXT_APX</span><br><span class="line"></span><br><span class="line">	tst	r1, #L_PTE_USER</span><br><span class="line">	orrne	r3, r3, #PTE_EXT_AP1</span><br><span class="line"></span><br><span class="line">	tst	r1, #L_PTE_XN</span><br><span class="line">	orrne	r3, r3, #PTE_EXT_XN</span><br><span class="line"></span><br><span class="line">	tst	r1, #L_PTE_YOUNG</span><br><span class="line">	tstne	r1, #L_PTE_VALID</span><br><span class="line">	eorne	r1, r1, #L_PTE_NONE</span><br><span class="line">	tstne	r1, #L_PTE_NONE</span><br><span class="line">	moveq	r3, #<span class="number">0</span></span><br><span class="line"></span><br><span class="line"> ARM(	str	r3, [r0, #<span class="number">2048</span>]! )</span><br><span class="line"> THUMB(	add	r0, r0, #<span class="number">2048</span> )</span><br><span class="line"> THUMB(	str	r3, [r0] )</span><br><span class="line">	ALT_SMP(W(nop))</span><br><span class="line">	ALT_UP (mcr	p15, <span class="number">0</span>, r0, c7, c10, <span class="number">1</span>)		@ flush_pte</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	bx	lr</span><br><span class="line">ENDPROC(cpu_v7_set_pte_ext)</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-3-动态映射"><a href="#2-3-动态映射" class="headerlink" title="2.3. 动态映射"></a>2.3. 动态映射</h3><h4 id="2-3-1-virtual-memory-data-struct"><a href="#2-3-1-virtual-memory-data-struct" class="headerlink" title="2.3.1. virtual memory data struct"></a>2.3.1. virtual memory data struct</h4><p>linux/include/linux/mm_types.h</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> *<span class="title">mmap</span>;</span>		<span class="comment">/* list of VMAs */</span></span><br><span class="line">	</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MMU</span></span><br><span class="line">	<span class="function"><span class="keyword">unsigned</span> <span class="title">long</span> <span class="params">(*get_unmapped_area)</span> <span class="params">(struct file *filp,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="keyword">unsigned</span> <span class="keyword">long</span> addr, <span class="keyword">unsigned</span> <span class="keyword">long</span> len,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="keyword">unsigned</span> <span class="keyword">long</span> pgoff, <span class="keyword">unsigned</span> <span class="keyword">long</span> flags)</span></span>;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> mmap_base;		<span class="comment">/* base of mmap area */</span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> task_size;		<span class="comment">/* size of task vm space */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> highest_vm_end;		<span class="comment">/* highest vma end address */</span></span><br><span class="line">	<span class="keyword">pgd_t</span> * pgd;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">atomic_long_t</span> nr_ptes;			<span class="comment">/* Page table pages */</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> start_code, end_code, start_data, end_data;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> start_brk, brk, start_stack;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> arg_start, arg_end, env_start, env_end;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Architecture-specific MM context */</span></span><br><span class="line">	<span class="keyword">mm_context_t</span> context;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> vm_start;		<span class="comment">/* Our start address within vm_mm. */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> vm_end;		<span class="comment">/* The first byte after our end address</span></span><br><span class="line"><span class="comment">					   within vm_mm. */</span></span><br><span class="line">					   </span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> *<span class="title">vm_next</span>, *<span class="title">vm_prev</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Second cache line starts here. */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">vm_mm</span>;</span>	<span class="comment">/* The address space we belong to. */</span></span><br><span class="line">	<span class="keyword">pgprot_t</span> vm_page_prot;		<span class="comment">/* Access permissions of this VMA. */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> vm_flags;		<span class="comment">/* Flags, see mm.h. */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Information about our backing store: */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> vm_pgoff;		<span class="comment">/* Offset (within vm_file) in PAGE_SIZE</span></span><br><span class="line"><span class="comment">					   units, *not* PAGE_CACHE_SIZE */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>我们在kernel 中想要访问当前进程的mm_struct，可以使用<font color="red">current</font><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span> = <span class="title">current</span>-&gt;<span class="title">mm</span>;</span></span><br></pre></td></tr></table></figure></p>
+<p>另外，我们可以访问 /proc/<pid>/maps 得到某一进程的内存区域。（/proc/self 始终指向正在运行的进程）</pid></p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_virtual_addr_map/proc_self_maps.png" alt=""></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字段</th>
+<th style="text-align:left">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">00400000-0040b000</td>
+<td style="text-align:left">vma-&gt;vm_start ~ vma-&gt;vm_end</td>
+</tr>
+<tr>
+<td style="text-align:center">r-xp</td>
+<td style="text-align:left">vma-&gt;vm_flags</td>
+</tr>
+<tr>
+<td style="text-align:center">00000000</td>
+<td style="text-align:left">vma-&gt;vm_pgoff</td>
+</tr>
+<tr>
+<td style="text-align:center">08:01</td>
+<td style="text-align:left">主从设备号</td>
+</tr>
+<tr>
+<td style="text-align:center">1171031</td>
+<td style="text-align:left">设备节点inode 值</td>
+</tr>
+<tr>
+<td style="text-align:center">bin/cat</td>
+<td style="text-align:left">设备节点名字</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2-3-2-memory-mapping"><a href="#2-3-2-memory-mapping" class="headerlink" title="2.3.2. memory mapping"></a>2.3.2. memory mapping</h4><p>在使用high mem addr时，我们需要如下函数：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">kmap</span><span class="params">(struct page * page)</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">kunmap</span><span class="params">(struct page *page)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">kmap_atomic</span><span class="params">(struct page * page)</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">kumap_atomic</span><span class="params">(struct page *page)</span></span></span><br></pre></td></tr></table></figure></p>
+<p>如果* page 是low mem addr 直接返回，反之，是high mem addr kmap()在内核专用的空间创建特殊的映射。kmap() 可能会睡眠，而kmap_atomic() 会进行原子操作，不允许sleep.</p>
+<p>kernel 映射函数 <strong>remap_pfn_range()</strong></p>
+<p><strong>注意:</strong><br><strong><font color="red"> 如果使用的high mem， vmalloc() 分配的空间，我们只能PAGE_SIZE 的进行映射，他们本身逻辑连续，而物理地址非连续。</font></strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">remap_pfn_range</span><span class="params">(struct vm_area_struct *vma, <span class="keyword">unsigned</span> <span class="keyword">long</span> addr,</span></span></span><br><span class="line"><span class="function"><span class="params">		    <span class="keyword">unsigned</span> <span class="keyword">long</span> pfn, <span class="keyword">unsigned</span> <span class="keyword">long</span> size, <span class="keyword">pgprot_t</span> prot)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">pgd_t</span> *pgd;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> next;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> end = addr + PAGE_ALIGN(size);</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span> = <span class="title">vma</span>-&gt;<span class="title">vm_mm</span>;</span></span><br><span class="line">	<span class="keyword">int</span> err;</span><br><span class="line"></span><br><span class="line">	pfn -= addr &gt;&gt; PAGE_SHIFT;</span><br><span class="line">	pgd = pgd_offset(mm, addr);</span><br><span class="line">	flush_cache_range(vma, addr, end);</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		next = pgd_addr_end(addr, end);</span><br><span class="line">		err = remap_pud_range(mm, pgd, addr, next,</span><br><span class="line">				pfn + (addr &gt;&gt; PAGE_SHIFT), prot);</span><br><span class="line">		<span class="keyword">if</span> (err)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125; <span class="keyword">while</span> (pgd++, addr = next, addr != end);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用关系如下：<br>remap_pfn_range()-&gt;<br>&nbsp;&nbsp;remap_pud_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;remap_pmd_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remap_pte_range()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * maps a range of physical memory into the requested pages. the old</span></span><br><span class="line"><span class="comment"> * mappings are removed. any references to nonexistent pages results</span></span><br><span class="line"><span class="comment"> * in null mappings (currently treated as "copy-on-access")</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">remap_pte_range</span><span class="params">(struct mm_struct *mm, <span class="keyword">pmd_t</span> *pmd,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="keyword">unsigned</span> <span class="keyword">long</span> addr, <span class="keyword">unsigned</span> <span class="keyword">long</span> end,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="keyword">unsigned</span> <span class="keyword">long</span> pfn, <span class="keyword">pgprot_t</span> prot)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">pte_t</span> *pte;</span><br><span class="line">	<span class="keyword">spinlock_t</span> *ptl;</span><br><span class="line"></span><br><span class="line">	pte = pte_alloc_map_lock(mm, pmd, addr, &amp;ptl);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		BUG_ON(!pte_none(*pte));</span><br><span class="line">		set_pte_at(mm, addr, pte, pte_mkspecial(pfn_pte(pfn, prot)));</span><br><span class="line">		pfn++;</span><br><span class="line">	&#125; <span class="keyword">while</span> (pte++, addr += PAGE_SIZE, addr != end);</span><br><span class="line"></span><br><span class="line">	pte_unmap_unlock(pte - <span class="number">1</span>, ptl);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">set_pte_at</span><span class="params">(struct mm_struct *mm, <span class="keyword">unsigned</span> <span class="keyword">long</span> addr,</span></span></span><br><span class="line"><span class="function"><span class="params">			      <span class="keyword">pte_t</span> *ptep, <span class="keyword">pte_t</span> pteval)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> ext = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (addr &lt; TASK_SIZE &amp;&amp; pte_valid_user(pteval)) &#123;</span><br><span class="line">		<span class="keyword">if</span> (!pte_special(pteval))</span><br><span class="line">			__sync_icache_dcache(pteval);</span><br><span class="line">		ext |= PTE_EXT_NG;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	set_pte_ext(ptep, pteval, ext);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到与上面的静态映射其实也是差不多的，最终也会调用到set_pte_ext() -&gt; cpu_v7_set_pte_ext() 函数。</p>
+<p><strong><font color="red">因此，映射的本质都是重新建立页表2-level 或 3-level，并刷新页表</font></strong></p>
+<h4 id="2-3-3-io-memory-mapping"><a href="#2-3-3-io-memory-mapping" class="headerlink" title="2.3.3. io memory mapping"></a>2.3.3. io memory mapping</h4><p>ioremap将一个IO地址空间映射到内核的虚拟地址空间上去，便于访问。<a href="https://baike.baidu.com/item/ioremap/994207" target="_blank" rel="noopener">ioremap 百度百科</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ioremap(cookie,size)		__arm_ioremap((cookie), (size), MT_DEVICE)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ioremap_nocache(cookie,size)	__arm_ioremap((cookie), (size), MT_DEVICE)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ioremap_cache(cookie,size)	__arm_ioremap((cookie), (size), MT_DEVICE_CACHED)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ioremap_wc(cookie,size)		__arm_ioremap((cookie), (size), MT_DEVICE_WC)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> iounmap				__arm_iounmap</span></span><br></pre></td></tr></table></figure>
+<p>&nbsp;&nbsp;ioremap()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;<strong>arm_ioremap()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong>arm_ioremap_caller()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>arm_ioremap_pfn_caller()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong>ioremap_page_range() -&gt;__<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioremap_page_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioremap_pud_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioremap_pmd_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioremap_pte_range()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set_pte_at()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set_pte_ext()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_pte_ext()-&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_v7_set_pte_ext() （linux/arm/arm/mm/proc-v7-2level.S）</p>
+<p>可以看见，大致与上面的静态映射，动态映射是相同的， 只是不同点在于__arm_ioremap_pfn_caller（） 函数中调用get_vm_area_caller（）进行vm_area 空间的申请。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> __iomem * __arm_ioremap_pfn_caller(<span class="keyword">unsigned</span> <span class="keyword">long</span> pfn,</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> offset, <span class="keyword">size_t</span> size, <span class="keyword">unsigned</span> <span class="keyword">int</span> mtype, <span class="keyword">void</span> *caller)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">mem_type</span> *<span class="title">type</span>;</span></span><br><span class="line">	<span class="keyword">int</span> err;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> addr;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">vm_struct</span> *<span class="title">area</span>;</span></span><br><span class="line">	<span class="keyword">phys_addr_t</span> paddr = __pfn_to_phys(pfn);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> CONFIG_ARM_LPAE</span></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * High mappings must be supersection aligned</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (pfn &gt;= <span class="number">0x100000</span> &amp;&amp; (paddr &amp; ~SUPERSECTION_MASK))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">	type = get_mem_type(mtype);</span><br><span class="line">	<span class="keyword">if</span> (!type)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	size = PAGE_ALIGN(offset + size);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Try to reuse one of the static mapping whenever possible.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (size &amp;&amp; !(<span class="keyword">sizeof</span>(<span class="keyword">phys_addr_t</span>) == <span class="number">4</span> &amp;&amp; pfn &gt;= <span class="number">0x100000</span>)) &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">static_vm</span> *<span class="title">svm</span>;</span></span><br><span class="line"></span><br><span class="line">		svm = find_static_vm_paddr(paddr, size, mtype);</span><br><span class="line">		<span class="keyword">if</span> (svm) &#123;</span><br><span class="line">			addr = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)svm-&gt;vm.addr;</span><br><span class="line">			addr += paddr - svm-&gt;vm.phys_addr;</span><br><span class="line">			<span class="keyword">return</span> (<span class="keyword">void</span> __iomem *) (offset + addr);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	area = get_vm_area_caller(size, VM_IOREMAP, caller);</span><br><span class="line"> </span><br><span class="line"> 	addr = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)area-&gt;addr;</span><br><span class="line">	area-&gt;phys_addr = paddr;</span><br><span class="line"></span><br><span class="line">	err = ioremap_page_range(addr, addr + size, paddr,</span><br><span class="line">				 __pgprot(type-&gt;prot_pte));</span><br><span class="line"></span><br><span class="line">	flush_cache_vmap(addr, addr + size);</span><br><span class="line">	<span class="keyword">return</span> (<span class="keyword">void</span> __iomem *) (offset + addr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>get_vm_area_caller（）函数可以看见是从 VMALLOC_START ~ VMALLOC_END区域内分配一个空间。 </p>
+<p><strong>注:</strong><br>由于我们的ioremap（）是将IO 连续的物理地址映射成Kernel 能访问的虚拟地址， 所以本身物理地址的连续性是能保证的。vmalloc.c 中的核心函数get_vm_area_caller（）详细分析可见最后的参看资料。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">struct vm_struct *<span class="title">get_vm_area_caller</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">long</span> size, <span class="keyword">unsigned</span> <span class="keyword">long</span> flags,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="keyword">const</span> <span class="keyword">void</span> *caller)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> __get_vm_area_node(size, <span class="number">1</span>, flags, VMALLOC_START, VMALLOC_END,</span><br><span class="line">				  NUMA_NO_NODE, GFP_KERNEL, caller);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ioremap_pte_range</span><span class="params">(<span class="keyword">pmd_t</span> *pmd, <span class="keyword">unsigned</span> <span class="keyword">long</span> addr,</span></span></span><br><span class="line"><span class="function"><span class="params">		<span class="keyword">unsigned</span> <span class="keyword">long</span> end, <span class="keyword">phys_addr_t</span> phys_addr, <span class="keyword">pgprot_t</span> prot)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">pte_t</span> *pte;</span><br><span class="line">	u64 pfn;</span><br><span class="line"></span><br><span class="line">	pfn = phys_addr &gt;&gt; PAGE_SHIFT;</span><br><span class="line">	pte = pte_alloc_kernel(pmd, addr);</span><br><span class="line">	<span class="keyword">if</span> (!pte)</span><br><span class="line">		<span class="keyword">return</span> -ENOMEM;</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		BUG_ON(!pte_none(*pte));</span><br><span class="line">		set_pte_at(&amp;init_mm, addr, pte, pfn_pte(pfn, prot));</span><br><span class="line">		pfn++;</span><br><span class="line">	&#125; <span class="keyword">while</span> (pte++, addr += PAGE_SIZE, addr != end);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>io_remap_page_range() 如果没有定义，则该函数是等效于<strong>remap_pfn_range()</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> io_remap_pfn_range</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> io_remap_pfn_range remap_pfn_range</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<h4 id="2-3-4-dma-memory-mapping"><a href="#2-3-4-dma-memory-mapping" class="headerlink" title="2.3.4. dma memory mapping"></a>2.3.4. dma memory mapping</h4><p>参见之前文章 -&gt; <a href="https://jshell07.github.io/2019/06/28/kernel-dma-mem/">DMA memory mapping</a></p>
+<h2 id="参看资料"><a href="#参看资料" class="headerlink" title="参看资料"></a>参看资料</h2><p><strong>basic</strong><br><a href="https://www.cnblogs.com/embeded-linux/p/11108930.html" target="_blank" rel="noopener">虚拟地址映射机制–动态、静态</a></p>
+<p><a href="https://blog.csdn.net/zqixiao_09/article/details/51088478" target="_blank" rel="noopener">Linux的mmap内存映射机制解析</a></p>
+<p><a href="https://blog.csdn.net/vichie2008/article/details/48274967" target="_blank" rel="noopener">ARM MMU页表框架</a></p>
+<p><a href="https://www.cnblogs.com/arnoldlu/p/8087022.html" target="_blank" rel="noopener">Linux内存管理 (2)页表的映射过程</a></p>
+<p><strong>memory mapping</strong><br><a href="https://www.cnblogs.com/pengdonglin137/p/8149859.html" target="_blank" rel="noopener">内存映射函数remap_pfn_range学习——示例分析（1）</a></p>
+<p><a href="https://www.cnblogs.com/pengdonglin137/p/8150462.html" target="_blank" rel="noopener">内存映射函数remap_pfn_range学习——示例分析（2）</a></p>
+<p><a href="https://www.cnblogs.com/pengdonglin137/p/8150981.html" target="_blank" rel="noopener">内存映射函数remap_pfn_range学习——代码分析（3）</a></p>
+<p><strong>ioremap</strong><br><a href="https://blog.csdn.net/zqixiao_09/article/details/50859505" target="_blank" rel="noopener">Linux 字符设备驱动开发基础（五）—— ioremap() 函数解析</a></p>
+<p><strong>vmalloc</strong><br><a href="https://blog.csdn.net/vanbreaker/article/details/7591844" target="_blank" rel="noopener">Linux高端内存映射(下)</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1381130" target="_blank" rel="noopener">高端内存映射之vmalloc分配内存中不连续的页–Linux内存管理(十九)</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/blog/tags/memory/" rel="tag"># memory</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/07/05/kernel-ubi/" rel="next" title="kernel_ubi">
+                <i class="fa fa-chevron-left"></i> kernel_ubi
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/08/06/kernel-crypto-I/" rel="prev" title="kernel_crypto_I">
+                kernel_crypto_I <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-User-space"><span class="nav-text">1. User space</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Kernel-space"><span class="nav-text">2. Kernel space</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-静态映射"><span class="nav-text">2.1. 静态映射</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-页表创建"><span class="nav-text">2.2. 页表创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-动态映射"><span class="nav-text">2.3. 动态映射</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-virtual-memory-data-struct"><span class="nav-text">2.3.1. virtual memory data struct</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-memory-mapping"><span class="nav-text">2.3.2. memory mapping</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-3-io-memory-mapping"><span class="nav-text">2.3.3. io memory mapping</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-4-dma-memory-mapping"><span class="nav-text">2.3.4. dma memory mapping</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参看资料"><span class="nav-text">参看资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

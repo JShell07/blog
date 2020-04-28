@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Part A. Application Level Architecture A1. Introduction to the ARM Architecture">
+<meta name="keywords" content="arm,spec">
+<meta property="og:type" content="article">
+<meta property="og:title" content="arm arm">
+<meta property="og:url" content="https://jshell07.github.io/2019/05/28/arm_arm/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="Part A. Application Level Architecture A1. Introduction to the ARM Architecture">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-04-26T02:48:26.667Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="arm arm">
+<meta name="twitter:description" content="Part A. Application Level Architecture A1. Introduction to the ARM Architecture">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/05/28/arm_arm/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>arm arm | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/05/28/arm_arm/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">arm arm
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-28 13:55:44" itemprop="dateCreated datePublished" datetime="2019-05-28T13:55:44+08:00">2019-05-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-26 10:48:26" itemprop="dateModified" datetime="2020-04-26T10:48:26+08:00">2020-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/arm/" itemprop="url" rel="index"><span itemprop="name">arm</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Part-A-Application-Level-Architecture"><a href="#Part-A-Application-Level-Architecture" class="headerlink" title="Part A. Application Level Architecture"></a>Part A. Application Level Architecture</h2><hr>
+<h3 id="A1-Introduction-to-the-ARM-Architecture"><a href="#A1-Introduction-to-the-ARM-Architecture" class="headerlink" title="A1. Introduction to the ARM Architecture"></a>A1. Introduction to the ARM Architecture</h3><hr>
+<a id="more"></a>
+<h4 id="A1-4-Architecture-extensions"><a href="#A1-4-Architecture-extensions" class="headerlink" title="A1.4 Architecture extensions"></a>A1.4 Architecture extensions</h4><p><strong>Jazelle</strong><br>Is the Java bytecode execution extension that extended ARMv5TE to ARMv5TEJ. From<br>ARMv6, the architecture requires at least the trivial Jazelle implementation, but a Jazelle<br>implementation is still often described as a Jazelle extension.<br>The Virtualization Extensions require that the Jazelle implementation is the trivial Jazelle<br>implementation.</p>
+<p><strong>ThumbEE</strong><br>Is an extension that provides the ThumbEE instruction set, a variant of the Thumb<br>instruction set that is designed as a target for dynamically generated code. In the original<br>release of the ARMv7 architecture, the ThumbEE extension was:<br>• A required extension to the ARMv7-A profile.<br>• An optional extension to the ARMv7-R profile.</p>
+<p>From publication of issue C.a of this manual, ARM deprecates any use of ThumbEE<br>instructions. However, ARMv7-A implementations must continue to include ThumbEE<br>support, for backwards compatibility.</p>
+<p><strong>Floating-point</strong><br>Is a floating-point coprocessor extension to the instruction set architectures. For historic<br>reasons, the Floating-point Extension is also called the VFP Extension. </p>
+<p><strong>Advanced SIMD</strong><br>Is an instruction set extension that provides Single Instruction Multiple Data (SIMD)<br>integer and single-precision floating-point vector operations on doubleword and quadword<br>registers.    </p>
+<h3 id="A1-4-2-Architecture-extensions"><a href="#A1-4-2-Architecture-extensions" class="headerlink" title="A1.4.2 Architecture extensions"></a>A1.4.2 Architecture extensions</h3><p>This manual also describes the following extensions to the ARMv7 architecture:<br><strong>Security Extensions</strong></p>
+<p><strong>Multiprocessing Extensions</strong><br>Are an OPTIONAL set of extensions to the ARMv7-A and ARMv7-R profiles, that provides a set of<br>features that enhance multiprocessing functionality.</p>
+<p><strong>Large Physical Address Extension</strong><br>Is an OPTIONAL extension to VMSAv7 that provides an address translation system supporting<br>physical addresses of up to 40 bits at a fine grain of translation.<br>The Large Physical Address Extension requires implementation of the Multiprocessing Extensions.</p>
+<p><strong>Virtualization Extensions</strong><br>Are an OPTIONAL set of extensions to VMSAv7 that provides hardware support for virtualizing the<br>Non-secure state of a VMSAv7 implementation. This supports system use of a virtual machine<br>monitor, also called a hypervisor.</p>
+<p><strong>Generic Timer Extension</strong><br>Is an OPTIONAL extension to any ARMv7-A or ARMv7-R, that provides a system timer, and a<br>low-latency register interface to it.</p>
+<p><strong>Performance Monitors Extension</strong><br>The ARMv7 architecture:<br>• reserves CP15 register space for IMPLEMENTATION DEFINED performance monitors<br>• defines a recommended performance monitors implementation.</p>
+<hr>
+<h3 id="A2-Application-Level-Programmers’-Model"><a href="#A2-Application-Level-Programmers’-Model" class="headerlink" title="A2. Application Level Programmers’ Model"></a>A2. Application Level Programmers’ Model</h3><h4 id="A2-1-About-the-Application-level-programmers’-model"><a href="#A2-1-About-the-Application-level-programmers’-model" class="headerlink" title="A2.1 About the Application level programmers’ model"></a>A2.1 About the Application level programmers’ model</h4><p>Depending on the implemented architecture extensions, the architecture supports multiple levels of execution<br>privilege, that number upwards from PL0, where PL0 is the lowest privilege level and is often described as<br>unprivileged.</p>
+<p>When an operating system supports execution at both PL1 and PL0, an application usually runs unprivileged. This:<br>• permits the operating system to <strong>allocate system resources</strong> to an application in a unique or shared manner<br>• provides <strong>a degree of protection from other processes and tasks</strong>, and so helps protect the operating system<br>from malfunctioning applications.</p>
+<h4 id="A2-2-ARM-core-data-types-and-arithmetic"><a href="#A2-2-ARM-core-data-types-and-arithmetic" class="headerlink" title="A2.2 ARM core data types and arithmetic"></a>A2.2 ARM core data types and arithmetic</h4><p>All ARMv7-A and ARMv7-R processors support the following data types in memory:<br>Byte           8 bits<br>Halfword       16 bits<br>Word           32 bits<br>Doubleword     64 bits.</p>
+<p>Processor registers are 32 bits in size. The instruction set contains instructions supporting the following data types<br>held in registers:<br>• 32-bit pointers<br>• unsigned or signed 32-bit integers<br>• unsigned 16-bit or 8-bit integers, held in zero-extended form<br>• signed 16-bit or 8-bit integers, held in sign-extended form<br>• two 16-bit integers packed into a register<br>• four 8-bit integers packed into a register<br>• unsigned or signed 64-bit integers held in two registers.</p>
+<h4 id="A2-3-ARM-core-registers"><a href="#A2-3-ARM-core-registers" class="headerlink" title="A2.3 ARM core registers"></a>A2.3 ARM core registers</h4><p>In the application level view, an ARM processor has:<br>• thirteen general-purpose 32-bit registers, R0 to R12<br>• three 32-bit registers with special uses, SP, LR, and PC, that can be described as R13 to R15.<br>The special registers are:<br><strong>SP, the stack pointer</strong><br>The processor uses SP as a pointer to the active stack.<br>In the Thumb instruction set, most instructions cannot access SP. The only instructions that can<br>access SP are those designed to use SP as a stack pointer.<br>The ARM instruction set provides more general access to the SP, and it can be used as a<br>general-purpose register. However, ARM deprecates the use of SP for any purpose other than as a<br>stack pointer.Software can refer to SP as R13.</p>
+<p><strong>LR, the link register</strong><br>The link register is a special register that can hold return link information. Some cases described in<br>this manual require this use of the LR. When software does not require the LR for linking, it can use<br>it for other purposes. It can refer to LR as R14.</p>
+<p><strong>PC, the program counter</strong><br>• When executing an ARM instruction, PC reads as the address of the current instruction plus 8.（PC始终指向你要取的指令的地址。ARM三级流水线，下一条指令是包含了预取指令，执行指令）<br>• When executing a Thumb instruction, PC reads as the address of the current instruction plus 4.<br>• Writing an address to PC causes a branch to that address.<br>Most Thumb instructions cannot access PC.<br>The ARM instruction set provides more general access to the PC, and many ARM instructions can<br>use the PC as a general-purpose register. However, ARM deprecates the use of PC for any purpose<br>other than as the program counter. Software can refer to PC as R15.</p>
+<h5 id="A2-3-1-Writing-to-the-PC"><a href="#A2-3-1-Writing-to-the-PC" class="headerlink" title="A2.3.1 Writing to the PC"></a>A2.3.1 Writing to the PC</h5><p>In ARMv7, many data-processing instructions can write to the PC. Writes to the PC are handled as follows:<br>• The B, BL, CBNZ, CBZ, CHKA, HB, HBL, HBLP, HBP, TBB, and TBH instructions remain in the same instruction set state<br>and branch to the value written to the PC.<br>The definition of each of these instructions ensures that the value written to the PC is correctly aligned for<br>the current instruction set state.</p>
+<p>• The BLX (immediate) instruction switches between ARM and Thumb states and branches to the value written<br>to the PC. Its definition ensures that the value written to the PC is correctly aligned for the new instruction<br>set state.</p>
+<p>• The following instructions write a value to the PC, treating that value as an interworking address to branch<br>to, with low-order bits that determine the new instruction set state:<br>    — BLX (register), BX, and BXJ<br>    — LDR instructions with <rt> equal to the PC<br>    — POP and all forms of LDM except LDM (exception return), when the register list includes the PC<br>    — in ARM state only, ADC, ADD, ADR, AND, ASR (immediate), BIC, EOR, LSL (immediate), LSR (immediate), MOV,<br>        MVN, ORR, ROR (immediate), RRX, RSB, RSC, SBC, and SUB instructions with <rd> equal to the PC and without<br>        flag-setting specified.</rd></rt></p>
+<h4 id="A2-4-The-Application-Program-Status-Register-APSR"><a href="#A2-4-The-Application-Program-Status-Register-APSR" class="headerlink" title="A2.4 The Application Program Status Register (APSR)"></a>A2.4 The Application Program Status Register (APSR)</h4><p>Fixme [APSR] Page49</p>
+<p>• Bits that can be set by many instructions:<br>— The Condition flags:<br>    N, bit[31] Negative condition flag. Set to bit[31] of the result of the instruction. If the result is<br>    regarded as a two’s complement signed integer, then the processor sets N to 1 if the result<br>    is negative, and sets N to 0 if it is positive or zero.<br>    Z, bit[30] Zero condition flag. Set to 1 if the result of the instruction is zero, and to 0 otherwise. A<br>    result of zero often indicates an equal result from a comparison.<br>    C, bit[29] Carry condition flag. Set to 1 if the instruction results in a carry condition, for example an<br>    unsigned overflow on an addition.<br>    V, bit[28] Overflow condition flag. Set to 1 if the instruction results in an overflow condition, for<br>    example a signed overflow on an addition.</p>
+<p>— The Overflow or saturation flag:<br>    Q, bit[27] Set to 1 to indicate overflow or saturation occurred in some instructions, normally related<br>    to digital signal processing (DSP). For more information, see Pseudocode details of<br>    saturation on page A2-44.</p>
+<p>— The Greater than or Equal flags:<br>    GE[3:0], bits[19:16]<br>    The instructions described in Parallel addition and subtraction instructions on<br>    page A4-171 update these flags to indicate the results from individual bytes or halfwords<br>    of the operation. These flags can control a later SEL instruction. For more information, see<br>    SEL on page A8-602.</p>
+<p>In ARMv7-A and ARMv7-R, the APSR is the same register as the CPSR, but the APSR must be used only to access<br>the N, Z, C, V, Q, and GE[3:0] bits.</p>
+<h4 id="A2-5-Execution-state-registers"><a href="#A2-5-Execution-state-registers" class="headerlink" title="A2.5 Execution state registers"></a>A2.5 Execution state registers</h4><p>The execution state registers modify the execution of instructions. They control:<br>• Whether instructions are interpreted as Thumb instructions, ARM instructions, ThumbEE instructions, or<br>Java bytecodes. For more information, see Instruction set state register, ISETSTATE.</p>
+<p>• In Thumb state and ThumbEE state only, the condition codes that apply to the next one to four instructions.<br>For more information, see IT block state register, ITSTATE on page A2-51.</p>
+<p>• Whether data is interpreted as big-endian or little-endian. For more information, see Endianness mapping<br>register, ENDIANSTATE on page A2-53.</p>
+<p>In ARMv7-A and ARMv7-R, the execution state registers are part of the Current Program Status Register. For more<br>information, see Program Status Registers (PSRs) on page B1-1147.</p>
+<h5 id="A2-5-1-Instruction-set-state-register-ISETSTATE"><a href="#A2-5-1-Instruction-set-state-register-ISETSTATE" class="headerlink" title="A2.5.1 Instruction set state register, ISETSTATE"></a>A2.5.1 Instruction set state register, ISETSTATE</h5><p>The instruction set state register, ISETSTATE, format is:<br>The J bit and the T bit determine the current instruction set state for the processor. Table A2-1 shows the encoding<br>of these bits.</p>
+<p>Fixme [Table A2-1 J and T bit encoding in ISETSTATE]Page50</p>
+<h5 id="A2-5-2-IT-block-state-register-ITSTATE"><a href="#A2-5-2-IT-block-state-register-ITSTATE" class="headerlink" title="A2.5.2 IT block state register, ITSTATE"></a>A2.5.2 IT block state register, ITSTATE</h5><p>Fixme [Table A2-2 Effect of IT execution state bits]Page52</p>
+<h5 id="A2-5-3-Endianness-mapping-register-ENDIANSTATE"><a href="#A2-5-3-Endianness-mapping-register-ENDIANSTATE" class="headerlink" title="A2.5.3 Endianness mapping register, ENDIANSTATE"></a>A2.5.3 Endianness mapping register, ENDIANSTATE</h5><p>Fixme [Table A2-3 ENDIANSTATE encoding of endianness]Page53</p>
+<h4 id="A2-6-Advanced-SIMD-and-Floating-point-Extensions"><a href="#A2-6-Advanced-SIMD-and-Floating-point-Extensions" class="headerlink" title="A2.6 Advanced SIMD and Floating-point Extensions"></a>A2.6 Advanced SIMD and Floating-point Extensions</h4><p>Advanced SIMD and Floating-point (VFP) are two OPTIONAL extensions to ARMv7.</p>
+<p>The Advanced SIMD Extension performs packed Single Instruction Multiple Data (SIMD) operations, either<br>integer or single-precision floating-point.</p>
+<p>….</p>
+<h4 id="A2-11-Jazelle-direct-bytecode-execution-support"><a href="#A2-11-Jazelle-direct-bytecode-execution-support" class="headerlink" title="A2.11 Jazelle direct bytecode execution support"></a>A2.11 Jazelle direct bytecode execution support</h4><p>The Jazelle extension provides architectural support for hardware acceleration of bytecode execution by a Java Virtual<br>Machine (JVM).</p>
+<p>These requirements for the Jazelle extension mean a JVM can be written to both:<br>• function correctly on all processors that include a Jazelle extension implementation<br>• automatically take advantage of the accelerated bytecode execution provided by a processor that includes a<br>non-trivial implementation.</p>
+<p>The required features of a non-trivial implementation are:<br>• provision of the Jazelle state<br>• a new instruction, BXJ, to enter Jazelle state<br>• system support that enables an operating system to regulate the use of the Jazelle extension hardware<br>• system support that enables a JVM to configure the Jazelle extension hardware to its specific needs.</p>
+<p>…</p>
+<h3 id="A3-Application-Level-Memory-Model"><a href="#A3-Application-Level-Memory-Model" class="headerlink" title="A3 Application Level Memory Model"></a>A3 Application Level Memory Model</h3><p>…</p>
+<h4 id="A3-2-Alignment-support"><a href="#A3-2-Alignment-support" class="headerlink" title="A3.2 Alignment support"></a>A3.2 Alignment support</h4><p>Instructions in the ARM architecture are aligned as follows:<br>• ARM instructions are word-aligned<br>• Thumb and ThumbEE instructions are halfword-aligned<br>• Java bytecodes are byte-aligned.<br>In the ARMv7 architecture, some load and store instructions support unaligned data accesses, as described in<br>Unaligned data access.</p>
+<h5 id="A3-2-1-Unaligned-data-access"><a href="#A3-2-1-Unaligned-data-access" class="headerlink" title="A3.2.1 Unaligned data access"></a>A3.2.1 Unaligned data access</h5><p>An ARMv7 implementation must support unaligned data accesses to Normal memory by some load and store<br>instructions. <strong>Software can set the SCTLR.A bit to control whether a misaligned access to Normal memory by one of these instructions causes an Alignment fault Data Abort exception.</strong></p>
+<p><strong>Unaligned access operations must not be used for accessing memory-mapped registers in a Device or Strongly-ordered memory region.</strong></p>
+<p>Fixme [Table A3-1 Alignment requirements of load/store instructions]  page108</p>
+<h4 id="A3-3-Endian-support"><a href="#A3-3-Endian-support" class="headerlink" title="A3.3 Endian support"></a>A3.3 Endian support</h4><p>Data support big-endian or little-endian.</p>
+<h5 id="A3-3-1-Instruction-endianness"><a href="#A3-3-1-Instruction-endianness" class="headerlink" title="A3.3.1 Instruction endianness"></a>A3.3.1 Instruction endianness</h5><p><strong>In ARMv7-A, the mapping of instruction memory is always little-endian</strong>. In ARMv7-R, instruction endianness can<br>be controlled at the system level, In ARMv7-A, the mapping of instruction memory is always little-endian. In ARMv7-R, instruction endianness can be controlled at the system level, see Instruction endianness static configuration, ARMv7-R only on page A3-112.</p>
+<h5 id="A3-3-2-Element-size-and-endianness"><a href="#A3-3-2-Element-size-and-endianness" class="headerlink" title="A3.3.2 Element size and endianness"></a>A3.3.2 Element size and endianness</h5><p>Fixme [Table A3-2 Element size of load/store instructions] page112</p>
+<h5 id="A3-3-4-Endianness-in-Advanced-SIMD"><a href="#A3-3-4-Endianness-in-Advanced-SIMD" class="headerlink" title="A3.3.4 Endianness in Advanced SIMD"></a>A3.3.4 Endianness in Advanced SIMD</h5><p>Advanced SIMD element load/store instructions transfer vectors of elements between memory and the Advanced<br>SIMD register bank.An instruction specifies both the length of the transfer and the size of the data elements being<br>transferred. This information is used by the processor to load and store data correctly in both big-endian and<br>little-endian systems.</p>
+<p>处理器根据提供的信息，能保证在Advanced SIMD register bank 中的数据是一样的，不论它是否是大端，小端<br>Fixme [Figure A3-2 Advanced SIMD byte order example] page113</p>
+<h4 id="A3-4-Synchronization-and-semaphores"><a href="#A3-4-Synchronization-and-semaphores" class="headerlink" title="A3.4 Synchronization and semaphores"></a>A3.4 Synchronization and semaphores</h4><p>In architecture versions before ARMv6, support for the synchronization of shared memory depends on the SWP and<br>SWPB instructions.These are read-locked-write operations that swap register contents with memory, and are<br>described in SWP, SWPB on page A8-722. These instructions support basic busy/free semaphore mechanisms, but<br>do not support mechanisms that require calculation to be performed on the semaphore between the read and write<br>phases.</p>
+<p>ARMv7 extends support for<br>this mechanism, and provides the following synchronization primitives in the ARM and Thumb instruction sets:<br>• Load-Exclusives:<br>    — LDREX, see LDREX on page A8-432<br>    — LDREXB, see LDREXB on page A8-434<br>    — LDREXD, see LDREXD on page A8-436<br>    — LDREXH, see LDREXH on page A8-438<br>• Store-Exclusives:<br>    — STREX, see STREX on page A8-690<br>    — STREXB, see STREXB on page A8-692<br>    — STREXD, see STREXD on page A8-694<br>    — STREXH, see STREXH on page A8-696<br>• Clear-Exclusive, CLREX, see CLREX on page A8-360.</p>
+<p>Note<br>• ARM strongly recommends that all software uses the synchronization primitives described in this section,<br>rather than SWP or SWPB.</p>
+<h5 id="A3-4-1-Exclusive-access-instructions-and-Non-shareable-memory-regions"><a href="#A3-4-1-Exclusive-access-instructions-and-Non-shareable-memory-regions" class="headerlink" title="A3.4.1 Exclusive access instructions and Non-shareable memory regions"></a>A3.4.1 Exclusive access instructions and Non-shareable memory regions</h5><p>For memory regions that do not have the Shareable attribute, the exclusive access instructions <strong>rely on a local monitor that tags any address</strong> from which the processor executes a Load-Exclusive. Any non-aborted attempt by the<br>same processor to use a Store-Exclusive to modify any address is guaranteed to clear the tag.</p>
+<p>A Load-Exclusive performs a load from memory, and:<br>• the executing processor tags the physical memory address for exclusive access<br>• the local monitor of the executing processor transitions to the Exclusive Access state.</p>
+<p>A Store-Exclusive performs a conditional store to memory, that depends on the state of the local monitor:<br><strong>If the local monitor is in the Exclusive Access state</strong><br>    • If the address of the Store-Exclusive is the same as the address that has been tagged in the<br>    monitor by an earlier Load-Exclusive, then the store occurs, otherwise it is IMPLEMENTATION<br>    DEFINED whether the store occurs.<br>    • A status value is returned to a register:<br>        — if the store took place the status value is 0<br>        — otherwise, the status value is 1.<br>    • The local monitor of the executing processor transitions to the Open Access state.<br><strong>If the local monitor is in the Open Access state</strong><br>    • no store takes place<br>    • a status value of 1 is returned to a register.<br>    • the local monitor remains in the Open Access state.</p>
+<p>Fixme [Figure A3-3 Local monitor state machine diagram]Page 116    </p>
+<p>Fixme [Table A3-3 Effect of Exclusive instructions and write operations on the local monitor]Page 116</p>
+<h5 id="A3-4-2-Exclusive-access-instructions-and-Shareable-memory-regions"><a href="#A3-4-2-Exclusive-access-instructions-and-Shareable-memory-regions" class="headerlink" title="A3.4.2 Exclusive access instructions and Shareable memory regions"></a>A3.4.2 Exclusive access instructions and Shareable memory regions</h5><p>For memory regions that have the Shareable attribute, exclusive access instructions rely on:<br>• <strong>A local monitor for each processor in the system</strong>, that tags any address from which the processor executes a<br>Load-Exclusive. The local monitor can ignore accesses from other processors in the system.</p>
+<p>• <strong>A global monitor that tags a physical address as exclusive access for a particular processor</strong>. This tag is used<br>later to determine whether a Store-Exclusive to that address that has not been failed by the local monitor can<br>occur. Any successful write to the tagged address by any other observer in the shareability domain of the<br>memory location is guaranteed to clear the tag. For each processor in the system, the global monitor:<br>    — can hold at least one tagged address<br>    — maintains a state machine for each tagged address it can hold.</p>
+<p><strong>Operation of the global monitor</strong><br>A Load-Exclusive from Shareable memory performs a load from memory, and causes the <strong>physical address of the access to be tagged as exclusive access for the requesting processor.</strong> This access also causes the exclusive access tag to be removed from any other physical address that has been tagged by the requesting processor.</p>
+<p>The global monitor only supports a single outstanding exclusive access to Shareable memory per processor. A<br>Load-Exclusive by one processor has no effect on the global monitor state for any other processor.</p>
+<p>Fixme [Table A3-4 Effect of load/store operations on global monitor for processor(n)] Page120</p>
+<h5 id="A3-4-3-Tagging-and-the-size-of-the-tagged-memory-block"><a href="#A3-4-3-Tagging-and-the-size-of-the-tagged-memory-block" class="headerlink" title="A3.4.3 Tagging and the size of the tagged memory block"></a>A3.4.3 Tagging and the size of the tagged memory block</h5><p>Tagged_address = Memory_address[31:a]<br>The value of a in this assignment is IMPLEMENTATION DEFINED, between a minimum value of 3 and a maximum<br>value of 11. For example, in an implementation where a is 4, a successful LDREX of address 0x000341B4 gives a tag<br>value of bits[31:4] of the address, giving 0x000341B. This means that the four words of memory from 0x000341B0 to<br>0x000341BF are tagged for exclusive access.</p>
+<p>The size of the tagged memory block is called the Exclusives Reservation Granule. The Exclusives Reservation<br>Granule is IMPLEMENTATION DEFINED in the range 2-512 words:<br>• 2 words in an implementation where a is 3<br>• 512 words in an implementation where a is 11.</p>
+<h5 id="A3-4-4-Context-switch-support"><a href="#A3-4-4-Context-switch-support" class="headerlink" title="A3.4.4 Context switch support"></a>A3.4.4 Context switch support</h5><p>After a context switch, software must ensure that the local monitor is in the Open Access state. This requires it to<br>either:<br>• execute a CLREX instruction<br>• execute a dummy STREX to a memory address allocated for this purpose.</p>
+<p>Note:<br>Using a dummy STREX for this purpose is backwards-compatible with the ARMv6 implementation of the<br>exclusive operations. The CLREX instruction is introduced in ARMv6K.</p>
+<h5 id="A3-4-5-Load-Exclusive-and-Store-Exclusive-usage-restrictions"><a href="#A3-4-5-Load-Exclusive-and-Store-Exclusive-usage-restrictions" class="headerlink" title="A3.4.5 Load-Exclusive and Store-Exclusive usage restrictions"></a>A3.4.5 Load-Exclusive and Store-Exclusive usage restrictions</h5><p>The Load-Exclusive and Store-Exclusive instructions are intended to work together, as a pair, for example a<br>LDREX/STREX pair or a LDREXB/STREXB pair.</p>
+<p>• An implementation of the Load-Exclusive and Store-Exclusive instructions can require that, in any thread of<br>execution, the transaction size of a Store-Exclusive is the same as the transaction size of the preceding<br>Load-Exclusive executed in that thread.</p>
+<p>• An implementation might clear an exclusive monitor between the LDREX and the STREX, without any<br>application-related cause. Software written for such an implementation must, in any single thread of execution, <strong>avoid having any explicit memory accesses, System control register updates, or cache maintenance operations between the LDREX instruction and the associated STREX instruction.</strong></p>
+<p>• In some implementations, an access to Strongly-ordered or Device memory might clear the exclusive<br>monitor. Therefore, <strong>software must not place a load or a store to Strongly-ordered or Device memory between an LDREX and an STREX in a single thread of execution.</strong></p>
+<p>• Implementations can benefit from keeping the LDREX and STREX operations close together in a single thread of<br>execution. This minimizes the likelihood of the exclusive monitor state being cleared between the LDREX<br>instruction and the STREX instruction. Therefore, <strong>for best performance, ARM strongly recommends a limit of 128 bytes between LDREX and STREX instructions in a single thread of execution.</strong></p>
+<p>• After taking a Data Abort exception, the state of the exclusive monitors is UNKNOWN. Therefore ARM<br>strongly recommends that the abort handling software performs a CLREX instruction, or a dummy STREX<br>instruction, to clear the monitor state.</p>
+<p>• The effect of a data or unified cache invalidate, cache clean, or cache clean and invalidate instruction on a<br>local or global exclusive monitor that is in the Exclusive Access state is UNPREDICTABLE. Execution of the<br>instruction might clear the monitor, or it might leave it in the Exclusive Access state.</p>
+<p>• For the memory location being accessed by a LoadExcl/StoreExcl pair, if the memory attributes for the<br>LoadExcl instruction differ from the memory attributes for the StoreExcl instruction, behavior is<br>UNPREDICTABLE.</p>
+<h5 id="A3-4-6-Semaphores"><a href="#A3-4-6-Semaphores" class="headerlink" title="A3.4.6 Semaphores"></a>A3.4.6 Semaphores</h5><p>The Swap (SWP) and Swap Byte (SWPB) instructions must be used with care to ensure that expected behavior is<br>observed.</p>
+<p>Note<br>From ARMv6, ARM deprecates use of the Swap and Swap Byte instructions, and strongly recommends that all new<br>software uses the Load-Exclusive and Store-Exclusive synchronization primitives</p>
+<h5 id="A3-4-7-Synchronization-primitives-and-the-memory-order-model"><a href="#A3-4-7-Synchronization-primitives-and-the-memory-order-model" class="headerlink" title="A3.4.7 Synchronization primitives and the memory order model"></a>A3.4.7 Synchronization primitives and the memory order model</h5><p>The synchronization primitives follow the memory order model of the memory type accessed by the instructions.<br>For this reason:<br>• Portable software for claiming a spin-lock must include a Data Memory Barrier (DMB) operation, performed<br>by a DMB instruction, between claiming the spin-lock and making any access that makes use of the spin-lock.<br>• Portable software for releasing a spin-lock must include a DMB instruction before writing to clear the spin-lock.<br>This requirement applies to software using:<br>• the Load-Exclusive/Store-Exclusive instruction pairs, for example LDREX/STREX<br>• the deprecated synchronization primitives, SWP/SWPB.</p>
+<p><a href="https://blog.csdn.net/wangbinyantai/article/details/78986974" target="_blank" rel="noopener">ISB &gt; DSB &gt; DMB</a></p>
+<h5 id="A3-4-8-Use-of-WFE-and-SEV-instructions-by-spin-locks"><a href="#A3-4-8-Use-of-WFE-and-SEV-instructions-by-spin-locks" class="headerlink" title="A3.4.8 Use of WFE and SEV instructions by spin-locks"></a>A3.4.8 Use of WFE and SEV instructions by spin-locks</h5><p>ARMv7 and ARMv6K provide Wait For Event and Send Event instructions, WFE and SEV, that can assist with<br>reducing power consumption and bus contention caused by processors repeatedly attempting to obtain a spin-lock.<br>These instructions can be used at the application level, but a complete understanding of what they do depends on<br>system level understanding of exceptions.</p>
+<h4 id="A3-5-Memory-types-and-attributes-and-the-memory-order-model"><a href="#A3-5-Memory-types-and-attributes-and-the-memory-order-model" class="headerlink" title="A3.5 Memory types and attributes and the memory order model"></a>A3.5 Memory types and attributes and the memory order model</h4><h5 id="A3-5-1-Memory-types"><a href="#A3-5-1-Memory-types" class="headerlink" title="A3.5.1 Memory types"></a>A3.5.1 Memory types</h5><p>exclusive memory types:<br>• Normal<br>• Device<br>• Strongly-ordered.</p>
+<h5 id="A3-5-2-Summary-of-ARMv7-memory-attributes"><a href="#A3-5-2-Summary-of-ARMv7-memory-attributes" class="headerlink" title="A3.5.2 Summary of ARMv7 memory attributes"></a>A3.5.2 Summary of ARMv7 memory attributes</h5><p><strong>Shareability</strong><br>Applies only to Normal memory, and <strong>to Device memory in an implementation that does not include the Large Physical Address Extension.</strong> In an implementation that includes the Large Physical<br>Address Extension, Device memory is always Outer Shareable,<br>When it is possible to assign a shareability attribute to Device memory, ARM deprecates assigning<br>any attribute other than Shareable or Outer Shareable, see Shareable attribute for Device memory<br>regions on page A3-137<br>Whether an ARMv7 implementation distinguishes between Inner Shareable and Outer Shareable<br>memory is IMPLEMENTATION DEFINED.</p>
+<p><strong>Cacheability</strong><br>Applies only to Normal memory, and can be defined independently for Inner and Outer cache<br>regions. Some cacheability attributes can be complemented by a cache allocation hint. This is an<br>indication to the memory system of whether allocating a value to a cache is likely to improve<br>performance. </p>
+<p>Fixme [Table A3-5 Memory attribute summary] page127</p>
+<h5 id="A3-5-3-Atomicity-in-the-ARM-architecture"><a href="#A3-5-3-Atomicity-in-the-ARM-architecture" class="headerlink" title="A3.5.3 Atomicity in the ARM architecture"></a>A3.5.3 Atomicity in the ARM architecture</h5><p>Atomicity is a feature of memory accesses, described as atomic accesses. The ARM architecture description refers<br>to two types of atomicity, defined in:<br>• Single-copy atomicity<br>• Multi-copy atomicity on page A3-130.</p>
+<p><strong>Single-copy atomicity</strong><br>In ARMv7, the single-copy atomic processor accesses are:<br>• All byte accesses.<br>• All halfword accesses to halfword-aligned locations.<br>• All word accesses to word-aligned locations.<br>• Memory accesses caused by a LDREXD/STREXD to a doubleword-aligned location for which the STREXD succeeds<br>cause single-copy atomic updates of the doubleword being accessed.<br>Note<br>The way to atomically load two 32-bit quantities is to perform a LDREXD/STREXD sequence, reading and writing<br>the same value, for which the STREXD succeeds, and use the read values</p>
+<p><strong>Multi-copy atomicity</strong><br>In a multiprocessing system, writes to a memory location are multi-copy atomic</p>
+<p>Writes to Normal memory are not multi-copy atomic. (有缓存机制以及SNOOP等)<br>All writes to Device and Strongly-ordered memory that are single-copy atomic are also multi-copy atomic.</p>
+<h5 id="A3-5-4-Concurrent-modification-and-execution-of-instructions"><a href="#A3-5-4-Concurrent-modification-and-execution-of-instructions" class="headerlink" title="A3.5.4 Concurrent modification and execution of instructions"></a>A3.5.4 Concurrent modification and execution of instructions</h5><p>The ARMv7 architecture limits the set of instructions that can be executed by one thread of execution as they are<br>being modified by another thread of execution without requiring explicit synchronization.</p>
+<p>Except for the instructions identified in this section, the effect of the concurrent modification and execution of an<br>instruction is UNPREDICTABLE. （无条件跳转等命令，不受这个限制）</p>
+<p><strong>In the Thumb instruction set</strong><br>The 16-bit encodings of the B, NOP, BKPT, and SVC instructions</p>
+<p><strong>In the ARM instruction set</strong><br>The B, BL, NOP, BKPT, SVC, HVC, and SMC instructions.</p>
+<h5 id="A3-5-5-Normal-memory"><a href="#A3-5-5-Normal-memory" class="headerlink" title="A3.5.5 Normal memory"></a>A3.5.5 Normal memory</h5><p>Accesses to normal memory region are idempotent, meaning that they exhibit the following properties:<br>• read accesses can be repeated with no side-effects<br>• repeated read accesses return the last value written to the resource being read<br>• read accesses can fetch additional memory locations with no side-effects<br>• write accesses can be repeated with no side-effects in the following cases:<br>    — if the contents of the location accessed are unchanged between the repeated writes<br>    — as the result of an exception, as described in this section<br>• unaligned accesses can be supported<br>• accesses can be merged before accessing the target memory system.</p>
+<p>Normal memory can be read/write or read-only, and a Normal memory region is defined as being either Shareable<br>or Non-shareable.</p>
+<p><strong>Non-shareable Normal memory</strong><br>For a Normal memory region, the Non-shareable attribute identifies Normal memory that is likely to be accessed<br>only by a single processor.</p>
+<p><strong>Shareable, Inner Shareable, and Outer Shareable Normal memory</strong><br>For Normal memory, the Shareable and Outer Shareable memory attributes describe Normal memory that is<br>expected to <strong>be accessed by multiple processors or other system masters:</strong><br>• In a VMSA implementation, Normal memory that has the Shareable attribute but not the Outer Shareable<br>attribute assigned is described as having the Inner Shareable attribute.<br>• In a PMSA implementation, no distinction is made between Inner Shareable and Outer Shareable Normal<br>memory.</p>
+<p>VMSA: Virtual Memory System Architecture<br>PMSA: Protected Memory System Architecture</p>
+<p><strong>Write-Through Cacheable, Write-Back Cacheable and Non-cacheable Normal memory</strong><br>The cacheability attributes provide a mechanism of coherency control with observers that lie outside the shareability<br>domain of a region of memory.<br>• Write-Through Cacheable<br>• Write-Back Cacheable<br>• Non-cacheable.</p>
+<p>The cacheability attributes provide a mechanism of coherency control with observers that lie outside the shareability<br>domain of a region of memory. In some cases, the use of Write-Through Cacheable or Non-cacheable regions of<br>memory might provide a better mechanism for controlling coherency than the use of hardware coherency<br>mechanisms or the use of cache maintenance routines.</p>
+<h5 id="A3-5-6-Device-and-Strongly-ordered-memory"><a href="#A3-5-6-Device-and-Strongly-ordered-memory" class="headerlink" title="A3.5.6 Device and Strongly-ordered memory"></a>A3.5.6 Device and Strongly-ordered memory</h5><p>Examples of memory regions normally marked as being Device or Strongly-ordered memory are Memory-mapped<br>peripherals and I/O locations. <strong>Address locations marked as Device or Strongly-ordered are never held in a cache.</strong></p>
+<p>The architecture permits an Advanced SIMD element or structure load instruction to access bytes in Device or<br>Strongly-ordered memory.</p>
+<p><strong>The architecture does not permit unaligned accesses to Strongly-ordered or Device memory.</strong></p>
+<h6 id="Shareable-attribute-for-Device-memory-regions"><a href="#Shareable-attribute-for-Device-memory-regions" class="headerlink" title="Shareable attribute for Device memory regions"></a>Shareable attribute for Device memory regions</h6><p>In an implementation that does not include the Large Physical Address Extension, Device memory regions can be<br>given the Shareable attribute. When a Device memory region is give the Shareable attribute it can also be given the<br>Outer Shareable attribute. This means that a region of Device memory can be described as one of:<br>• Outer Shareable Device memory<br>• Inner Shareable Device memory<br>• Non-shareable Device memory.</p>
+<p>ARM deprecates the marking of Device memory with a shareability attribute other than Outer Shareable or<br>Shareable. This means <strong>ARM strongly recommends that Device memory is never assigned a shareability attribute of Non-shareable or Inner Shareable.</strong></p>
+<h6 id="Device-and-Strongly-ordered-memory-shareability-Large-Physical-Address-Extension"><a href="#Device-and-Strongly-ordered-memory-shareability-Large-Physical-Address-Extension" class="headerlink" title="Device and Strongly-ordered memory shareability, Large Physical Address Extension"></a>Device and Strongly-ordered memory shareability, Large Physical Address Extension</h6><p>In an implementation that includes the Large Physical Address Extension, the Long-descriptor translation table<br>format does not distinguish between Shareable and Non-shareable Device memory.</p>
+<p>In an implementation that includes the Large Physical Address Extension and is using the Short-descriptor<br>translation table format:<br>• An address-based cache maintenance operation for an addresses in a region with the Strongly-ordered or<br>Device memory type applies to all processors in the same Outer Shareable domain, regardless of any<br>shareability attributes applied to the region.<br>• Device memory transactions to a single peripheral must not be reordered, regardless of any shareability<br>attributes that are applied to the corresponding Device memory region.<br>Any single peripheral has an IMPLEMENTATION DEFINED size of not less than 1KB.</p>
+<h5 id="A3-5-7-Memory-access-restrictions"><a href="#A3-5-7-Memory-access-restrictions" class="headerlink" title="A3.5.7 Memory access restrictions"></a>A3.5.7 Memory access restrictions</h5><p>The following restrictions apply to memory accesses:<br>• For accesses to any two bytes, p and q, that are generated by the same instruction:<br>    — The bytes p and q must have the same memory type and shareability attributes<br>    — Except for possible differences in the cache allocation hints, ARM deprecates having different<br>    cacheability attributes for the bytes p and q.</p>
+<p>• Unaligned data access on page A3-108 identifies the instructions that can make an unaligned memory<br>access,If such an access is to Device or Strongly-ordered memory then:<br>    — if the implementation does not include the Virtualization Extensions, the effect is UNPREDICTABLE<br>    — if the implementation includes the Virtualization Extensions, the access generates an Alignment fault</p>
+<p>• <strong>The accesses of an instruction that causes multiple accesses to Device or Strongly-ordered memory must not cross a 4KB address boundary</strong></p>
+<p>• <strong>Any instruction fetch must access only Normal memory.</strong> If it accesses Device or Strongly-ordered memory,<br>the result is UNPREDICTABLE.</p>
+<h5 id="A3-5-8-The-effect-of-the-Security-Extensions"><a href="#A3-5-8-The-effect-of-the-Security-Extensions" class="headerlink" title="A3.5.8 The effect of the Security Extensions"></a>A3.5.8 The effect of the Security Extensions</h5><p>The Security Extensions can be included as part of an ARMv7-A implementation, with a VMSA. They provide two<br>distinct 4GByte virtual memory spaces:<br>• a Secure virtual memory space<br>• a Non-secure virtual memory space.<br>The Secure virtual memory space is accessed by memory accesses in the Secure state, and the Non-secure virtual<br>memory space is accessed by memory accesses in the Non-secure state.<br>By providing different virtual memory spaces, the Security Extensions permit memory accesses made from the<br>Non-secure state to be distinguished from those made from the Secure state.</p>
+<h4 id="A3-6-Access-rights"><a href="#A3-6-Access-rights" class="headerlink" title="A3.6 Access rights"></a>A3.6 Access rights</h4><h5 id="A3-6-1-Processor-privilege-levels-execution-privilege-and-access-privilege"><a href="#A3-6-1-Processor-privilege-levels-execution-privilege-and-access-privilege" class="headerlink" title="A3.6.1 Processor privilege levels, execution privilege, and access privilege"></a>A3.6.1 Processor privilege levels, execution privilege, and access privilege</h5><p>ARMv7 architecture defines different levels of execution privilege:<br>• in Secure state, the privilege levels are PL1 and PL0<br>• in Non-secure state, the privilege levels are PL2, PL1, and PL0.</p>
+<p><strong>PL0</strong><br>The privilege level of application software, that executes in User mode. Therefore, software<br>executed in User mode is described as unprivileged software. This software cannot access some<br>features of the architecture. In particular, it cannot change many of the configuration settings.<br>Software executing at PL0 makes only unprivileged memory accesses.</p>
+<p><strong>PL1</strong><br>Software execution in all modes other than User mode and Hyp mode is at PL1. Normally, operating<br>system software executes at PL1. Software executing at PL1 can access all features of the<br>architecture, and can change the configuration settings for those features, except for some features<br>added by the Virtualization Extensions that are only accessible at PL2.<br>Note<br>In many implementation models, system software is unaware of the PL2 level of privilege, and of<br>whether the implementation includes the Virtualization Extensions.<br>The PL1 modes refers to all the modes other than User mode and Hyp mode.<br>Software executing at PL1 makes privileged memory accesses by default, but can also make<br>unprivileged accesses.</p>
+<p><strong>PL2</strong><br>Software executing in Hyp mode executes at PL2.<br>Software executing at PL2 can perform all of the operations accessible at PL1, and can access some<br>additional functionality.<br>Hyp mode is normally used by a hypervisor, that controls, and can switch between, Guest OSs, that<br>execute at PL1.</p>
+<p>Hyp mode is implemented only as part of the Virtualization Extensions, and only in Non-secure<br>state. This means that:<br>• implementations that do not include the Virtualization Extensions have only two privilege<br>levels, PL0 and PL1<br>• execution in Secure state has only two privilege levels, PL0 and PL1</p>
+<h4 id="A3-8-Memory-access-order"><a href="#A3-8-Memory-access-order" class="headerlink" title="A3.8 Memory access order"></a>A3.8 Memory access order</h4><h5 id="A3-8-1-Reads-and-writes"><a href="#A3-8-1-Reads-and-writes" class="headerlink" title="A3.8.1 Reads and writes"></a>A3.8.1 Reads and writes</h5><p>The following can cause memory accesses that are not explicit:<br>• instruction fetches<br>• cache loads and write-backs<br>• translation table walks.</p>
+<h6 id="Reads"><a href="#Reads" class="headerlink" title="Reads"></a>Reads</h6><p>Reads are defined as memory operations that have the semantics of a load.<br>The memory accesses of the following instructions are reads:<br>• LDR, LDRB, LDRH, LDRSB, and LDRSH.<br>• LDRT, LDRBT, LDRHT, LDRSBT, and LDRSHT.<br>• LDREX, LDREXB, LDREXD, and LDREXH.<br>• LDM, LDRD, POP, and RFE.<br>• LDC, LDC2, VLDM, VLDR, VLD1, VLD2, VLD3, VLD4, and VPOP.<br>• The return of status values by STREX, STREXB, STREXD, and STREXH.<br>• SWP and SWPB. These instructions are available only in the ARM instruction set.<br>• TBB and TBH. These instructions are available only in the Thumb instruction set.<br>Hardware-accelerated opcode execution by the Jazelle extension can cause a number of reads to occur, according<br>to the state of the operand stack and the implementation of the Jazelle hardware acceleration.</p>
+<h6 id="Writes"><a href="#Writes" class="headerlink" title="Writes"></a>Writes</h6><p>Writes are defined as memory operations that have the semantics of a store.<br>The memory accesses of the following instructions are Writes:<br>• STR, STRB, and STRH.<br>• STRT, STRBT, and STRHT.<br>• STREX, STREXB, STREXD, and STREXH.<br>• STM, STRD, PUSH, and SRS.<br>• STC, STC2, VPUSH, VSTM, VSTR, VST1, VST2, VST3, and VST4.<br>• SWP and SWPB. These instructions are available only in the ARM instruction set.<br>Hardware-accelerated opcode execution by the Jazelle extension can cause a number of writes to occur, according<br>to the state of the operand stack and the implementation of the Jazelle hardware acceleration.</p>
+<h6 id="Synchronization-primitives"><a href="#Synchronization-primitives" class="headerlink" title="Synchronization primitives"></a>Synchronization primitives</h6><p>Synchronization primitives must ensure correct operation of system semaphores in the memory order model. They are the following instructions:<br>• LDREX, STREX, LDREXB, STREXB, LDREXD, STREXD, LDREXH, STREXH.<br>• SWP, SWPB. From ARMv6, ARM deprecates the use of these instructions.</p>
+<h5 id="A3-8-3-Memory-barriers"><a href="#A3-8-3-Memory-barriers" class="headerlink" title="A3.8.3 Memory barriers"></a>A3.8.3 Memory barriers</h5><p>Memory barrier is the general term applied to an instruction, or sequence of instructions, that forces synchronization<br>events by a processor with respect to retiring load/store instructions.</p>
+<p>The ARM architecture defines a number of memory barriers that provide a range of functionality, including:<br>• ordering of load/store instructions<br>• completion of load/store instructions<br>• context synchronization.</p>
+<p>In ARMv7 the memory barriers are provided as instructions that are available in the ARM and Thumb<br>instruction sets, and in ARMv6 the memory barriers are performed by CP15 register writes. The three memory<br>barriers are:<br>• Data Memory Barrier, see Data Memory Barrier (DMB) on page A3-152<br>• Data Synchronization Barrier, see Data Synchronization Barrier (DSB) on page A3-153<br>• Instruction Synchronization Barrier, see Instruction Synchronization Barrier (ISB) on page A3-153.</p>
+<h6 id="Data-Memory-Barrier-DMB"><a href="#Data-Memory-Barrier-DMB" class="headerlink" title="Data Memory Barrier (DMB)"></a>Data Memory Barrier (DMB)</h6><p>The DMB instruction is a data memory barrier. <strong>DMB only affects memory accesses and data and unified cache maintenance operations,  It has no effect on the ordering of any other instructions executing on the processor.</strong></p>
+<h6 id="Data-Synchronization-Barrier-DSB"><a href="#Data-Synchronization-Barrier-DSB" class="headerlink" title="Data Synchronization Barrier (DSB)"></a>Data Synchronization Barrier (DSB)</h6><p>The DSB instruction is a special memory barrier, that synchronizes the execution stream with memory accesses. <strong>In addition, no instruction that appears in program order after the DSB instruction can execute until the DSB completes.</strong></p>
+<h6 id="Instruction-Synchronization-Barrier-ISB"><a href="#Instruction-Synchronization-Barrier-ISB" class="headerlink" title="Instruction Synchronization Barrier (ISB)"></a>Instruction Synchronization Barrier (ISB)</h6><p><strong>An ISB instruction flushes the pipeline in the processor, so that all instructions that come after the ISB instruction in program order are fetched from cache or memory only after the ISB instruction has completed.</strong></p>
+<p>Using an ISB ensures that the effects of context-changing operations executed before the ISB are visible to the instructions fetched after the ISB instruction. </p>
+<p>Examples of context-changing operations that require the insertion of an ISB instruction to ensure<br>the effects of the operation are visible to instructions fetched after the ISB instruction are:<br>• completed cache, TLB, and branch predictor maintenance operations<br>• changes to system control registers. </p>
+<h4 id="A3-9-Caches-and-memory-hierarchy"><a href="#A3-9-Caches-and-memory-hierarchy" class="headerlink" title="A3.9 Caches and memory hierarchy"></a>A3.9 Caches and memory hierarchy</h4><h5 id="A3-9-1-Introduction-to-caches"><a href="#A3-9-1-Introduction-to-caches" class="headerlink" title="A3.9.1 Introduction to caches"></a>A3.9.1 Introduction to caches</h5><p>A cache is a block of high-speed memory that contains a number of entries, each consisting of:<br>• main memory address information, commonly called a tag<br>• the associated data</p>
+<h5 id="A3-9-2-Memory-hierarchy"><a href="#A3-9-2-Memory-hierarchy" class="headerlink" title="A3.9.2 Memory hierarchy"></a>A3.9.2 Memory hierarchy</h5><p>Memory close to a processor has very low latency, but is limited in size and expensive to implement.To optimize overall<br>performance, an ARMv7 memory system can include multiple levels of cache in a hierarchical memory system. </p>
+<p>Fixme[Figure A3-6 Multiple levels of cache in a memory hierarchy] page 157</p>
+<h5 id="A3-9-4-Preloading-caches"><a href="#A3-9-4-Preloading-caches" class="headerlink" title="A3.9.4 Preloading caches"></a>A3.9.4 Preloading caches</h5><p>The ARM architecture provides memory system hints PLD (Preload Data), PLDW (Preload Data with intent to write),<br>and PLI (Preload Instruction) to permit software to communicate the expected use of memory locations to the<br>hardware. </p>
+<h3 id="A4-The-Instruction-Sets"><a href="#A4-The-Instruction-Sets" class="headerlink" title="A4. The Instruction Sets"></a>A4. The Instruction Sets</h3><h4 id="A4-1-About-the-instruction-sets"><a href="#A4-1-About-the-instruction-sets" class="headerlink" title="A4.1 About the instruction sets"></a>A4.1 About the instruction sets</h4><p>ARMv7 contains two main instruction sets, the ARM and Thumb instruction sets. </p>
+<p>The ARM and Thumb instruction sets can interwork freely, that is, different procedures can be compiled or assembled to different instruction sets, and still be able to call each other efficiently.</p>
+<p><strong>ThumbEE</strong> is a variant of the Thumb instruction set that is designed as a target for <strong>dynamically generated code.</strong><br>However, it cannot interwork freely with the ARM and Thumb instruction sets.</p>
+<p>The two instruction sets differ in how instructions are encoded:<br>• Thumb instructions are either 16-bit or 32-bit, and are aligned on <strong>a two-byte boundary</strong>. 16-bit and 32-bit<br>instructions can be intermixed freely. Many common operations are most efficiently executed using 16-bit<br>instructions. However:<br>    — Most 16-bit instructions can only access the first eight of the ARM core registers, R0-R7. These are<br>    called the low registers. A small number of 16-bit instructions can also access the high registers,<br>    R8-R15.<br>    — Many operations that would require two or more 16-bit instructions can be more efficiently executed<br>    with a single 32-bit instruction.<br>    — All 32-bit instructions can access all of the ARM core registers, R0-R15.</p>
+<p>• ARM instructions are always 32-bit, and are aligned on a four-byte boundary</p>
+<h5 id="A4-1-1-Changing-between-Thumb-state-and-ARM-state"><a href="#A4-1-1-Changing-between-Thumb-state-and-ARM-state" class="headerlink" title="A4.1.1 Changing between Thumb state and ARM state"></a>A4.1.1 Changing between Thumb state and ARM state</h5><h6 id="Thumb-to-ARM-state"><a href="#Thumb-to-ARM-state" class="headerlink" title="Thumb to ARM state"></a>Thumb to ARM state</h6><p>A processor in Thumb state can enter ARM state by executing any of the following instructions: <strong>BX, BLX, or an LDR or LDM that loads the PC.</strong></p>
+<h6 id="ARM-to-Thumb-state"><a href="#ARM-to-Thumb-state" class="headerlink" title="ARM to Thumb state"></a>ARM to Thumb state</h6><p>A processor in ARM state can enter Thumb state by executing any of the same instructions.</p>
+<p>In ARMv7, a processor in ARM state can also enter Thumb state by executing an ADC, ADD, AND, ASR, BIC, EOR, LSL,<br>LSR, MOV, MVN, ORR, ROR, RRX, RSB, RSC, SBC, or SUB instruction that <strong>has the PC as destination register and does not set the condition flags.</strong></p>
+<h6 id="others"><a href="#others" class="headerlink" title="others"></a>others</h6><p>The target instruction set is either encoded directly in the instruction (for the immediate offset version of BLX), or is<br>held as bit[0] of an interworking address. For details, see the description of the BXWritePC() function in Pseudocode<br>details of operations on ARM core registers on page A2-47.<br>bit[0]    1 thumb      thumb is 2 bytes boundary but ARM some support Jazella extension<br>bit[1:0] 00 arm        arm is 4 bytes boundary<br>bit[1:0] 10 unknown</p>
+<p>Exception entries and returns can also change between ARM and Thumb states. For details see Exception handling<br>on page B1-1165.</p>
+<h5 id="A4-1-2-Conditional-execution"><a href="#A4-1-2-Conditional-execution" class="headerlink" title="A4.1.2 Conditional execution"></a>A4.1.2 Conditional execution</h5><p>In the ARM and Thumb instruction sets, most instructions can be conditionally executed</p>
+<p>In the ARM instruction set,  has its normal effect on the programmers’ model operation, memory and coprocessors if the N, Z, C and V condition flags in the APSR satisfy.</p>
+<p>If the flags do not satisfy this condition, the instruction acts as a NOP.</p>
+<p>In the Thumb instruction set, different mechanisms control conditional execution:<br>• For the following Thumb encodings, conditional execution is controlled in a similar way to the ARM<br>instructions:<br>    — A 16-bit conditional branch instruction encoding, with a branch range of –256 to +254 bytes. Before<br>    ARMv6T2, this was the only mechanism for conditional execution in Thumb code.<br>    — A 32-bit conditional branch instruction encoding, with a branch range of approximately ±1MB.</p>
+<p>• The CBZ and CBNZ instructions, Compare and Branch on Zero and Compare and Branch on Nonzero, are 16-bit<br>conditional instructions with a branch range of +4 to +130 bytes.    </p>
+<p>• The 16-bit If-Then instruction makes up to four following instructions conditional, and can make most other<br>Thumb instructions conditional. For details see IT on page A8-390. </p>
+<h4 id="A4-3-Branch-instructions"><a href="#A4-3-Branch-instructions" class="headerlink" title="A4.3 Branch instructions"></a>A4.3 Branch instructions</h4><p>Fixme [Table A4-1 Branch instructions] Page164</p>
+<h4 id="A4-4-Data-processing-instructions"><a href="#A4-4-Data-processing-instructions" class="headerlink" title="A4.4 Data-processing instructions"></a>A4.4 Data-processing instructions</h4><h5 id="A4-4-1-Standard-data-processing-instructions"><a href="#A4-4-1-Standard-data-processing-instructions" class="headerlink" title="A4.4.1 Standard data-processing instructions"></a>A4.4.1 Standard data-processing instructions</h5><p>Fixme [Table A4-2 Standard data-processing instructions] Page166</p>
+<h5 id="A4-4-2-Shift-instructions"><a href="#A4-4-2-Shift-instructions" class="headerlink" title="A4.4.2 Shift instructions"></a>A4.4.2 Shift instructions</h5><p>Fixme [Table A4-3 Shift instructions] Page167</p>
+<h5 id="A4-4-3-Multiply-instructions"><a href="#A4-4-3-Multiply-instructions" class="headerlink" title="A4.4.3 Multiply instructions"></a>A4.4.3 Multiply instructions</h5><p>These instructions can operate on signed or unsigned quantities. In some types of operation, the results are same<br>whether the operands are signed or unsigned.</p>
+<p>Fixme [Table A4-4 General multiply instructions] Page167</p>
+<p>Fixme [Table A4-5 Signed multiply instructions] Page168</p>
+<p>Fixme [Table A4-6 Unsigned multiply instructions] Page168</p>
+<h5 id="A4-4-4-Saturating-instructions"><a href="#A4-4-4-Saturating-instructions" class="headerlink" title="A4.4.4 Saturating instructions"></a>A4.4.4 Saturating instructions</h5><p>饱和指令： 将超出unsigned, signed 的值限制到本身支持的最大值或最小值</p>
+<h5 id="A4-4-5-Saturating-addition-and-subtraction-instructions"><a href="#A4-4-5-Saturating-addition-and-subtraction-instructions" class="headerlink" title="A4.4.5 Saturating addition and subtraction instructions"></a>A4.4.5 Saturating addition and subtraction instructions</h5><h5 id="A4-4-6-Packing-and-unpacking-instructions"><a href="#A4-4-6-Packing-and-unpacking-instructions" class="headerlink" title="A4.4.6 Packing and unpacking instructions"></a>A4.4.6 Packing and unpacking instructions</h5><p>扩展指令： 将[半]字节扩展到[有/无]32位</p>
+<h5 id="A4-4-7-Parallel-addition-and-subtraction-instructions"><a href="#A4-4-7-Parallel-addition-and-subtraction-instructions" class="headerlink" title="A4.4.7 Parallel addition and subtraction instructions"></a>A4.4.7 Parallel addition and subtraction instructions</h5><p>These instructions perform additions and subtractions on the values of two registers and write the result to a<br>destination register, treating the register values as sets of two halfwords or four bytes. That is, they perform SIMD<br>additions or subtractions on the registers. </p>
+<h5 id="A4-4-8-Divide-instructions"><a href="#A4-4-8-Divide-instructions" class="headerlink" title="A4.4.8 Divide instructions"></a>A4.4.8 Divide instructions</h5><p>For descriptions of the instructions see:<br>• SDIV on page A8-600<br>• UDIV on page A8-760</p>
+<p>In the ARMv7-R profile, the SCTLR.DZ bit enables divide by zero fault detection:<br>SCTLR.DZ == 0 Divide-by-zero returns a zero result.<br>SCTLR.DZ == 1 SDIV and UDIV generate an Undefined Instruction exception on a divide-by-zero.<br>The SCTLR.DZ bit is cleared to zero on reset</p>
+<h5 id="A4-4-9-Miscellaneous-data-processing-instructions"><a href="#A4-4-9-Miscellaneous-data-processing-instructions" class="headerlink" title="A4.4.9 Miscellaneous data-processing instructions"></a>A4.4.9 Miscellaneous data-processing instructions</h5><p>Fixme [Table A4-11 Miscellaneous data-processing instructions] page173</p>
+<h4 id="A4-5-Status-register-access-instructions"><a href="#A4-5-Status-register-access-instructions" class="headerlink" title="A4.5 Status register access instructions"></a>A4.5 Status register access instructions</h4><p>The MRS and MSR instructions move the contents of the Application Program Status Register (APSR) to or from an<br>ARM core register, see:<br>• MRS on page A8-496<br>• MSR (immediate) on page A8-498<br>• MSR (register) on page A8-500.</p>
+<p>At system level, software can also:<br>• use these instructions to access the SPSR of the current mode<br>• use the CPS instruction to change the CPSR.M field and the CPSR.{A, I, F} interrupt mask bits.</p>
+<h4 id="A4-6-Load-store-instructions"><a href="#A4-6-Load-store-instructions" class="headerlink" title="A4.6 Load/store instructions"></a>A4.6 Load/store instructions</h4><p>Fixme [Table A4-12 Load/store instructions] Page175</p>
+<h4 id="A4-7-Load-store-multiple-instructions"><a href="#A4-7-Load-store-multiple-instructions" class="headerlink" title="A4.7 Load/store multiple instructions"></a>A4.7 Load/store multiple instructions</h4><p>Load Multiple instructions load a subset, or possibly all, of the ARM core registers from memory.<br>Store Multiple instructions store a subset, or possibly all, of the ARM core registers to memory.</p>
+<p>Fixme [Table A4-13 Load/store multiple instructions] Page177</p>
+<h4 id="A4-8-Miscellaneous-instructions"><a href="#A4-8-Miscellaneous-instructions" class="headerlink" title="A4.8 Miscellaneous instructions"></a>A4.8 Miscellaneous instructions</h4><p>Fixme [Table A4-14 Miscellaneous instructions] Page178</p>
+<h4 id="A4-9-Exception-generating-and-exception-handling-instructions"><a href="#A4-9-Exception-generating-and-exception-handling-instructions" class="headerlink" title="A4.9 Exception-generating and exception-handling instructions"></a>A4.9 Exception-generating and exception-handling instructions</h4><p>The following instructions are intended specifically to cause a synchronous processor exception to occur:<br>• The SVC instruction generates a Supervisor Call exception. For more information, see Supervisor Call (SVC)<br>exception on page B1-1210.<br>• The Breakpoint instruction BKPT provides software breakpoints. For more information, see About debug<br>events on page C3-2038.<br>• In a processor that implements the Security Extensions, when executing at PL1 or higher, the SMC instruction<br>generates a Secure Monitor Call exception. For more information, see Secure Monitor Call (SMC) exception<br>on page B1-1211.<br>• In a processor that implements the Virtualization Extensions, in software executing in a Non-secure PL1<br>mode, the HVC instruction generates a Hypervisor Call exception. For more information, see Hypervisor Call<br>(HVC) exception on page B1-1212.</p>
+<p>Fixme [Table A4-15 Exception-generating and exception-handling instructions] Page179</p>
+<h4 id="A4-10-Coprocessor-instructions"><a href="#A4-10-Coprocessor-instructions" class="headerlink" title="A4.10 Coprocessor instructions"></a>A4.10 Coprocessor instructions</h4><p>There are three types of instruction for communicating with coprocessors. These permit the processor to:<br>• Initiate a coprocessor data-processing operation. For details see CDP, CDP2 on page A8-358.<br>• Transfer ARM core registers to and from coprocessor registers. For details, see:<br>    — MCR, MCR2 on page A8-476<br>    — MCRR, MCRR2 on page A8-478<br>    — MRC, MRC2 on page A8-492<br>    — MRRC, MRRC2 on page A8-494.<br>• Load or store the values of coprocessor registers. For details, see:<br>    — LDC, LDC2 (immediate) on page A8-392<br>    — LDC, LDC2 (literal) on page A8-394<br>    — STC, STC2 on page A8-662.</p>
+<h4 id="A4-11-Advanced-SIMD-and-Floating-point-load-store-instructions"><a href="#A4-11-Advanced-SIMD-and-Floating-point-load-store-instructions" class="headerlink" title="A4.11 Advanced SIMD and Floating-point load/store instructions"></a>A4.11 Advanced SIMD and Floating-point load/store instructions</h4><p>Fixme [Table A4-16 Extension register load/store instructions] Page181<br>Fixme [Table A4-17 Element and structure load/store instructions] Page181</p>
+<h4 id="A4-12-Advanced-SIMD-and-Floating-point-register-transfer-instructions"><a href="#A4-12-Advanced-SIMD-and-Floating-point-register-transfer-instructions" class="headerlink" title="A4.12 Advanced SIMD and Floating-point register transfer instructions"></a>A4.12 Advanced SIMD and Floating-point register transfer instructions</h4><p>Fixme [Table A4-18 Extension register transfer instructions] Page183</p>
+<h4 id="A4-13-Advanced-SIMD-data-processing-instructions"><a href="#A4-13-Advanced-SIMD-data-processing-instructions" class="headerlink" title="A4.13 Advanced SIMD data-processing instructions"></a>A4.13 Advanced SIMD data-processing instructions</h4><p>Advanced SIMD data-processing instructions process registers containing vectors of elements of the same type<br>packed together, enabling the same operation to be performed on multiple items in parallel.</p>
+<p>Fixme [Figure A4-2 Advanced SIMD instruction operating on 64-bit registers] Page184</p>
+<h5 id="A4-13-1-Advanced-SIMD-parallel-addition-and-subtraction"><a href="#A4-13-1-Advanced-SIMD-parallel-addition-and-subtraction" class="headerlink" title="A4.13.1 Advanced SIMD parallel addition and subtraction"></a>A4.13.1 Advanced SIMD parallel addition and subtraction</h5><p>Fixme [Table A4-19 Advanced SIMD parallel add and subtract instructions] Page185</p>
+<h5 id="A4-13-2-Bitwise-Advanced-SIMD-data-processing-instructions"><a href="#A4-13-2-Bitwise-Advanced-SIMD-data-processing-instructions" class="headerlink" title="A4.13.2 Bitwise Advanced SIMD data-processing instructions"></a>A4.13.2 Bitwise Advanced SIMD data-processing instructions</h5><p>Fixme [Table A4-20 Bitwise Advanced SIMD data-processing instructions] Page186</p>
+<h5 id="A4-13-3-Advanced-SIMD-comparison-instructions"><a href="#A4-13-3-Advanced-SIMD-comparison-instructions" class="headerlink" title="A4.13.3 Advanced SIMD comparison instructions"></a>A4.13.3 Advanced SIMD comparison instructions</h5><p>Fixme [Table A4-21 Advanced SIMD comparison instructions] Page186</p>
+<h5 id="A4-13-4-Advanced-SIMD-shift-instructions"><a href="#A4-13-4-Advanced-SIMD-shift-instructions" class="headerlink" title="A4.13.4 Advanced SIMD shift instructions"></a>A4.13.4 Advanced SIMD shift instructions</h5><p>Fixme [Table A4-22 Advanced SIMD shift instructions] Page187</p>
+<h5 id="A4-13-5-Advanced-SIMD-multiply-instructions"><a href="#A4-13-5-Advanced-SIMD-multiply-instructions" class="headerlink" title="A4.13.5 Advanced SIMD multiply instructions"></a>A4.13.5 Advanced SIMD multiply instructions</h5><p>Fixme [Table A4-23 Advanced SIMD multiply instructions] Page188</p>
+<h5 id="A4-13-6-Miscellaneous-Advanced-SIMD-data-processing-instructions"><a href="#A4-13-6-Miscellaneous-Advanced-SIMD-data-processing-instructions" class="headerlink" title="A4.13.6 Miscellaneous Advanced SIMD data-processing instructions"></a>A4.13.6 Miscellaneous Advanced SIMD data-processing instructions</h5><p>Fixme [Table A4-24 Miscellaneous Advanced SIMD data-processing instructions] Page189</p>
+<h4 id="A4-14-Floating-point-data-processing-instruction"><a href="#A4-14-Floating-point-data-processing-instruction" class="headerlink" title="A4.14 Floating-point data-processing instruction"></a>A4.14 Floating-point data-processing instruction</h4><p>Fixme [Table A4-25 Floating-point data-processing instructions] Page191</p>
+<h3 id="A5-ARM-Instruction-Set-Encoding"><a href="#A5-ARM-Instruction-Set-Encoding" class="headerlink" title="A5. ARM Instruction Set Encoding"></a>A5. ARM Instruction Set Encoding</h3><h4 id="A5-1-ARM-instruction-set-encoding"><a href="#A5-1-ARM-instruction-set-encoding" class="headerlink" title="A5.1 ARM instruction set encoding"></a>A5.1 ARM instruction set encoding</h4><p><strong>The ARM instruction stream is a sequence of word-aligned words. Each ARM instruction is a single 32-bit word</strong> in<br>that stream. The encoding of an ARM instruction is:</p>
+<p>Fixme [32 bits instruction structure] page194</p>
+<p>Fixme [Table A5-1 ARM instruction encoding] page194</p>
+<h5 id="A5-1-1-The-condition-code-field"><a href="#A5-1-1-The-condition-code-field" class="headerlink" title="A5.1.1 The condition code field"></a>A5.1.1 The condition code field</h5><p>This field contains one of the values 0b0000-0b1110, as shown in Table A8-1 on page A8-288.<br>Fixme [Table A8-1 Condition codes]page288</p>
+<h4 id="A5-2-Data-processing-and-miscellaneous-instructions"><a href="#A5-2-Data-processing-and-miscellaneous-instructions" class="headerlink" title="A5.2 Data-processing and miscellaneous instructions"></a>A5.2 Data-processing and miscellaneous instructions</h4><p>Fixme [data process instructions structure]page196</p>
+<p>Fixme [Table A5-2 Data-processing and miscellaneous instructions]page196</p>
+<p>其余指令可参照此命令，只是op 的不同。</p>
+<h3 id="A6-Thumb-Instruction-Set-Encoding"><a href="#A6-Thumb-Instruction-Set-Encoding" class="headerlink" title="A6. Thumb Instruction Set Encoding"></a>A6. Thumb Instruction Set Encoding</h3><h4 id="A6-1-Thumb-instruction-set-encoding"><a href="#A6-1-Thumb-instruction-set-encoding" class="headerlink" title="A6.1 Thumb instruction set encoding"></a>A6.1 Thumb instruction set encoding</h4><p>The Thumb instruction stream is a sequence of halfword-aligned halfwords. Each Thumb instruction is either a<br>single 16-bit halfword in that stream, or a 32-bit instruction consisting of two consecutive halfwords in that stream.<br>If the value of bits[15:11] of the halfword being decoded is one of the following, the halfword is the first halfword<br>of a 32-bit instruction:<br>• 0b11101<br>• 0b11110<br>• 0b11111.<br>Otherwise, the halfword is a 16-bit instruction</p>
+<p>疑问点：thumb 是16bit 或32bit对齐，那怎么与32 bit的ARM 指令集怎么区分？<br>当ARM 处于ARM state，CPU 将会按照32 bit ARM指令集去取指并执行，反之使用16、32bit 的thumb 指令集解析。</p>
+<h4 id="A6-2-16-bit-Thumb-instruction-encoding"><a href="#A6-2-16-bit-Thumb-instruction-encoding" class="headerlink" title="A6.2 16-bit Thumb instruction encoding"></a>A6.2 16-bit Thumb instruction encoding</h4><p>Fixme [16-bit thumb instruction encoding]page223</p>
+<p>Fixme [Table A6-1 16-bit Thumb instruction encoding]page223</p>
+<h4 id="A6-3-32-bit-Thumb-instruction-encoding"><a href="#A6-3-32-bit-Thumb-instruction-encoding" class="headerlink" title="A6.3 32-bit Thumb instruction encoding"></a>A6.3 32-bit Thumb instruction encoding</h4><p>Fixme [ 32-bit Thumb instruction encoding]page230</p>
+<p>Fixme [Table A6-9 32-bit Thumb instruction encoding]page230</p>
+<h3 id="A7-Advanced-SIMD-and-Floating-point-Instruction-Encoding"><a href="#A7-Advanced-SIMD-and-Floating-point-Instruction-Encoding" class="headerlink" title="A7 Advanced SIMD and Floating-point Instruction Encoding"></a>A7 Advanced SIMD and Floating-point Instruction Encoding</h3><p>skip</p>
+<h3 id="A9-The-ThumbEE-Instruction-Set"><a href="#A9-The-ThumbEE-Instruction-Set" class="headerlink" title="A9 The ThumbEE Instruction Set"></a>A9 The ThumbEE Instruction Set</h3><h4 id="A9-1-About-the-ThumbEE-instruction-set"><a href="#A9-1-About-the-ThumbEE-instruction-set" class="headerlink" title="A9.1 About the ThumbEE instruction set"></a>A9.1 About the ThumbEE instruction set</h4><p>In general, <strong>instructions in ThumbEE are identical to Thumb instructions</strong>, with the following exceptions:<br>• A small number of instructions are affected by modifications to transitions from ThumbEE state. For more<br>information, see ThumbEE state transitions.</p>
+<p>• <strong>A substantial number of instructions have a null check on the base register before any other operation takes</strong><br>place, but are identical (or almost identical) in all other respects. For more information, see Null checking on<br>page A9-1113.</p>
+<p>• A small number of instructions are modified in additional ways. See Instructions with modifications on<br>page A9-1113.</p>
+<p>• Three Thumb instructions, BLX (immediate), 16-bit LDM, and 16-bit STM, are removed in ThumbEE state.<br>The encoding corresponding to BLX (immediate) in Thumb is UNDEFINED in ThumbEE state.<br>16-bit LDM and STM are replaced by new instructions, for details see Additional ThumbEE instructions on<br>page A9-1123.</p>
+<p>• Two new 32-bit instructions, ENTERX and LEAVEX, are introduced in both the Thumb instruction set and the<br>ThumbEE instruction set. See Additional instructions in Thumb and ThumbEE instruction sets on<br>page A9-1116. These instructions use previously UNDEFINED encodings.</p>
+<p><strong>Attempting to execute ThumbEE instructions at PL2 is UNPREDICTABLE.</strong></p>
+<h5 id="A9-1-1-ThumbEE-state-transitions"><a href="#A9-1-1-ThumbEE-state-transitions" class="headerlink" title="A9.1.1 ThumbEE state transitions"></a>A9.1.1 ThumbEE state transitions</h5><p>Instruction set state transitions to ThumbEE state can occur implicitly as part of a return from exception, or<br>explicitly on execution of an <strong>ENTERX instruction.</strong></p>
+<p>Instruction set state transitions from ThumbEE state can only occur due to an exception, or due to a transition to<br>Thumb state using the <strong>LEAVEX instruction.</strong> Return from exception instructions (RFE and SUBS PC, LR, #imm) are<br>UNPREDICTABLE in ThumbEE state.</p>
+<h5 id="A9-1-2-Null-checking"><a href="#A9-1-2-Null-checking" class="headerlink" title="A9.1.2 Null checking"></a>A9.1.2 Null checking</h5><p>A null check is performed for all load/store instructions when they are executed in ThumbEE state. If the value in<br>the base register is zero, execution branches to the NullCheck handler at HandlerBase – 4.</p>
+<h4 id="A9-2-ThumbEE-instruction-set-encoding"><a href="#A9-2-ThumbEE-instruction-set-encoding" class="headerlink" title="A9.2 ThumbEE instruction set encoding"></a>A9.2 ThumbEE instruction set encoding</h4><p>In general, instructions in the ThumbEE instruction set are encoded in exactly the same way as Thumb instructions<br>described in Chapter A6 Thumb Instruction Set Encoding. The differences are as follows:<br>• There are no 16-bit LDM or STM instructions in the ThumbEE instruction set.<br>• The 16-bit encodings used for LDM and STM in the Thumb instruction set are used for different 16-bit<br>instructions in the ThumbEE instruction set. For details, see 16-bit ThumbEE instructions.<br>• There are two new 32-bit instructions in both Thumb state and ThumbEE state. For details, see Additional<br>instructions in Thumb and ThumbEE instruction sets on page A9-1116.</p>
+<h5 id="A9-2-1-16-bit-ThumbEE-instructions"><a href="#A9-2-1-16-bit-ThumbEE-instructions" class="headerlink" title="A9.2.1 16-bit ThumbEE instructions"></a>A9.2.1 16-bit ThumbEE instructions</h5><p>Fixme [Table A9-2 16-bit ThumbEE instructions]page1115</p>
+<h4 id="A9-3-Additional-instructions-in-Thumb-and-ThumbEE-instruction-sets"><a href="#A9-3-Additional-instructions-in-Thumb-and-ThumbEE-instruction-sets" class="headerlink" title="A9.3 Additional instructions in Thumb and ThumbEE instruction sets"></a>A9.3 Additional instructions in Thumb and ThumbEE instruction sets</h4><p>On a processor with the ThumbEE Extension, there are two additional 32-bit instructions, ENTERX and LEAVEX. These<br>are available in both Thumb state and ThumbEE state.</p>
+<h5 id="A9-3-1-ENTERX-LEAVEX"><a href="#A9-3-1-ENTERX-LEAVEX" class="headerlink" title="A9.3.1 ENTERX, LEAVEX"></a>A9.3.1 ENTERX, LEAVEX</h5><p>ENTERX causes a change from Thumb state to ThumbEE state, or has no effect in ThumbEE state.<br>ENTERX is UNDEFINED in Hyp mode.<br>LEAVEX causes a change from ThumbEE state to Thumb state, or has no effect in Thumb state.</p>
+<h3 id="A8-Instruction-Descriptions"><a href="#A8-Instruction-Descriptions" class="headerlink" title="A8 Instruction Descriptions"></a>A8 Instruction Descriptions</h3><h4 id="A8-2-Standard-assembler-syntax-fields"><a href="#A8-2-Standard-assembler-syntax-fields" class="headerlink" title="A8.2 Standard assembler syntax fields"></a>A8.2 Standard assembler syntax fields</h4><p>The following assembler syntax fields are standard across all or most instructions:</p>
+<p><c> Is an optional field. It specifies the condition under which the instruction is executed. See<br>    Conditional execution on page A8-288 for the range of available conditions and their encoding. If<br>    <c> is omitted, it defaults to always (AL).</c></c></p>
+<p><q> Specifies optional assembler qualifiers on the instruction. The following qualifiers are defined:<br>    .N Meaning narrow, specifies that the assembler must select a 16-bit encoding for the<br>    instruction. If this is not possible, an assembler error is produced.<br>    .W Meaning wide, specifies that the assembler must select a 32-bit encoding for the<br>    instruction. If this is not possible, an assembler error is produced.</q></p>
+<h4 id="A8-3-Conditional-execution"><a href="#A8-3-Conditional-execution" class="headerlink" title="A8.3 Conditional execution"></a>A8.3 Conditional execution</h4><p>Most ARM instructions, and most Thumb instructions from ARMv6T2 onwards, can be executed conditionally,<br>based on the values of the APSR condition flags.</p>
+<p>Fixme [Table A8-1 Condition codes]page288</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/arm/" rel="tag"># arm</a>
+          
+            <a href="/blog/tags/spec/" rel="tag"># spec</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/05/12/钱：7步创造终生收入/" rel="next" title="钱:7步创造终生收入">
+                <i class="fa fa-chevron-left"></i> 钱:7步创造终生收入
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/05/30/arm_arm_part_B/" rel="prev" title="arm arm part B">
+                arm arm part B <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Part-A-Application-Level-Architecture"><span class="nav-text">Part A. Application Level Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#A1-Introduction-to-the-ARM-Architecture"><span class="nav-text">A1. Introduction to the ARM Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A1-4-Architecture-extensions"><span class="nav-text">A1.4 Architecture extensions</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A1-4-2-Architecture-extensions"><span class="nav-text">A1.4.2 Architecture extensions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A2-Application-Level-Programmers’-Model"><span class="nav-text">A2. Application Level Programmers’ Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-1-About-the-Application-level-programmers’-model"><span class="nav-text">A2.1 About the Application level programmers’ model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-2-ARM-core-data-types-and-arithmetic"><span class="nav-text">A2.2 ARM core data types and arithmetic</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-3-ARM-core-registers"><span class="nav-text">A2.3 ARM core registers</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A2-3-1-Writing-to-the-PC"><span class="nav-text">A2.3.1 Writing to the PC</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-4-The-Application-Program-Status-Register-APSR"><span class="nav-text">A2.4 The Application Program Status Register (APSR)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-5-Execution-state-registers"><span class="nav-text">A2.5 Execution state registers</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A2-5-1-Instruction-set-state-register-ISETSTATE"><span class="nav-text">A2.5.1 Instruction set state register, ISETSTATE</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A2-5-2-IT-block-state-register-ITSTATE"><span class="nav-text">A2.5.2 IT block state register, ITSTATE</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A2-5-3-Endianness-mapping-register-ENDIANSTATE"><span class="nav-text">A2.5.3 Endianness mapping register, ENDIANSTATE</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-6-Advanced-SIMD-and-Floating-point-Extensions"><span class="nav-text">A2.6 Advanced SIMD and Floating-point Extensions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A2-11-Jazelle-direct-bytecode-execution-support"><span class="nav-text">A2.11 Jazelle direct bytecode execution support</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A3-Application-Level-Memory-Model"><span class="nav-text">A3 Application Level Memory Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-2-Alignment-support"><span class="nav-text">A3.2 Alignment support</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-2-1-Unaligned-data-access"><span class="nav-text">A3.2.1 Unaligned data access</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-3-Endian-support"><span class="nav-text">A3.3 Endian support</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-3-1-Instruction-endianness"><span class="nav-text">A3.3.1 Instruction endianness</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-3-2-Element-size-and-endianness"><span class="nav-text">A3.3.2 Element size and endianness</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-3-4-Endianness-in-Advanced-SIMD"><span class="nav-text">A3.3.4 Endianness in Advanced SIMD</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-4-Synchronization-and-semaphores"><span class="nav-text">A3.4 Synchronization and semaphores</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-1-Exclusive-access-instructions-and-Non-shareable-memory-regions"><span class="nav-text">A3.4.1 Exclusive access instructions and Non-shareable memory regions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-2-Exclusive-access-instructions-and-Shareable-memory-regions"><span class="nav-text">A3.4.2 Exclusive access instructions and Shareable memory regions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-3-Tagging-and-the-size-of-the-tagged-memory-block"><span class="nav-text">A3.4.3 Tagging and the size of the tagged memory block</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-4-Context-switch-support"><span class="nav-text">A3.4.4 Context switch support</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-5-Load-Exclusive-and-Store-Exclusive-usage-restrictions"><span class="nav-text">A3.4.5 Load-Exclusive and Store-Exclusive usage restrictions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-6-Semaphores"><span class="nav-text">A3.4.6 Semaphores</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-7-Synchronization-primitives-and-the-memory-order-model"><span class="nav-text">A3.4.7 Synchronization primitives and the memory order model</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-4-8-Use-of-WFE-and-SEV-instructions-by-spin-locks"><span class="nav-text">A3.4.8 Use of WFE and SEV instructions by spin-locks</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-5-Memory-types-and-attributes-and-the-memory-order-model"><span class="nav-text">A3.5 Memory types and attributes and the memory order model</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-1-Memory-types"><span class="nav-text">A3.5.1 Memory types</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-2-Summary-of-ARMv7-memory-attributes"><span class="nav-text">A3.5.2 Summary of ARMv7 memory attributes</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-3-Atomicity-in-the-ARM-architecture"><span class="nav-text">A3.5.3 Atomicity in the ARM architecture</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-4-Concurrent-modification-and-execution-of-instructions"><span class="nav-text">A3.5.4 Concurrent modification and execution of instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-5-Normal-memory"><span class="nav-text">A3.5.5 Normal memory</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-6-Device-and-Strongly-ordered-memory"><span class="nav-text">A3.5.6 Device and Strongly-ordered memory</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Shareable-attribute-for-Device-memory-regions"><span class="nav-text">Shareable attribute for Device memory regions</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Device-and-Strongly-ordered-memory-shareability-Large-Physical-Address-Extension"><span class="nav-text">Device and Strongly-ordered memory shareability, Large Physical Address Extension</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-7-Memory-access-restrictions"><span class="nav-text">A3.5.7 Memory access restrictions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-5-8-The-effect-of-the-Security-Extensions"><span class="nav-text">A3.5.8 The effect of the Security Extensions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-6-Access-rights"><span class="nav-text">A3.6 Access rights</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-6-1-Processor-privilege-levels-execution-privilege-and-access-privilege"><span class="nav-text">A3.6.1 Processor privilege levels, execution privilege, and access privilege</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-8-Memory-access-order"><span class="nav-text">A3.8 Memory access order</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-8-1-Reads-and-writes"><span class="nav-text">A3.8.1 Reads and writes</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Reads"><span class="nav-text">Reads</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Writes"><span class="nav-text">Writes</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Synchronization-primitives"><span class="nav-text">Synchronization primitives</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-8-3-Memory-barriers"><span class="nav-text">A3.8.3 Memory barriers</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Data-Memory-Barrier-DMB"><span class="nav-text">Data Memory Barrier (DMB)</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Data-Synchronization-Barrier-DSB"><span class="nav-text">Data Synchronization Barrier (DSB)</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Instruction-Synchronization-Barrier-ISB"><span class="nav-text">Instruction Synchronization Barrier (ISB)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A3-9-Caches-and-memory-hierarchy"><span class="nav-text">A3.9 Caches and memory hierarchy</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-9-1-Introduction-to-caches"><span class="nav-text">A3.9.1 Introduction to caches</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-9-2-Memory-hierarchy"><span class="nav-text">A3.9.2 Memory hierarchy</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A3-9-4-Preloading-caches"><span class="nav-text">A3.9.4 Preloading caches</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A4-The-Instruction-Sets"><span class="nav-text">A4. The Instruction Sets</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-1-About-the-instruction-sets"><span class="nav-text">A4.1 About the instruction sets</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-1-1-Changing-between-Thumb-state-and-ARM-state"><span class="nav-text">A4.1.1 Changing between Thumb state and ARM state</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Thumb-to-ARM-state"><span class="nav-text">Thumb to ARM state</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#ARM-to-Thumb-state"><span class="nav-text">ARM to Thumb state</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#others"><span class="nav-text">others</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-1-2-Conditional-execution"><span class="nav-text">A4.1.2 Conditional execution</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-3-Branch-instructions"><span class="nav-text">A4.3 Branch instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-4-Data-processing-instructions"><span class="nav-text">A4.4 Data-processing instructions</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-1-Standard-data-processing-instructions"><span class="nav-text">A4.4.1 Standard data-processing instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-2-Shift-instructions"><span class="nav-text">A4.4.2 Shift instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-3-Multiply-instructions"><span class="nav-text">A4.4.3 Multiply instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-4-Saturating-instructions"><span class="nav-text">A4.4.4 Saturating instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-5-Saturating-addition-and-subtraction-instructions"><span class="nav-text">A4.4.5 Saturating addition and subtraction instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-6-Packing-and-unpacking-instructions"><span class="nav-text">A4.4.6 Packing and unpacking instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-7-Parallel-addition-and-subtraction-instructions"><span class="nav-text">A4.4.7 Parallel addition and subtraction instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-8-Divide-instructions"><span class="nav-text">A4.4.8 Divide instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-4-9-Miscellaneous-data-processing-instructions"><span class="nav-text">A4.4.9 Miscellaneous data-processing instructions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-5-Status-register-access-instructions"><span class="nav-text">A4.5 Status register access instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-6-Load-store-instructions"><span class="nav-text">A4.6 Load/store instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-7-Load-store-multiple-instructions"><span class="nav-text">A4.7 Load/store multiple instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-8-Miscellaneous-instructions"><span class="nav-text">A4.8 Miscellaneous instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-9-Exception-generating-and-exception-handling-instructions"><span class="nav-text">A4.9 Exception-generating and exception-handling instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-10-Coprocessor-instructions"><span class="nav-text">A4.10 Coprocessor instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-11-Advanced-SIMD-and-Floating-point-load-store-instructions"><span class="nav-text">A4.11 Advanced SIMD and Floating-point load/store instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-12-Advanced-SIMD-and-Floating-point-register-transfer-instructions"><span class="nav-text">A4.12 Advanced SIMD and Floating-point register transfer instructions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-13-Advanced-SIMD-data-processing-instructions"><span class="nav-text">A4.13 Advanced SIMD data-processing instructions</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-1-Advanced-SIMD-parallel-addition-and-subtraction"><span class="nav-text">A4.13.1 Advanced SIMD parallel addition and subtraction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-2-Bitwise-Advanced-SIMD-data-processing-instructions"><span class="nav-text">A4.13.2 Bitwise Advanced SIMD data-processing instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-3-Advanced-SIMD-comparison-instructions"><span class="nav-text">A4.13.3 Advanced SIMD comparison instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-4-Advanced-SIMD-shift-instructions"><span class="nav-text">A4.13.4 Advanced SIMD shift instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-5-Advanced-SIMD-multiply-instructions"><span class="nav-text">A4.13.5 Advanced SIMD multiply instructions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A4-13-6-Miscellaneous-Advanced-SIMD-data-processing-instructions"><span class="nav-text">A4.13.6 Miscellaneous Advanced SIMD data-processing instructions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A4-14-Floating-point-data-processing-instruction"><span class="nav-text">A4.14 Floating-point data-processing instruction</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A5-ARM-Instruction-Set-Encoding"><span class="nav-text">A5. ARM Instruction Set Encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A5-1-ARM-instruction-set-encoding"><span class="nav-text">A5.1 ARM instruction set encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A5-1-1-The-condition-code-field"><span class="nav-text">A5.1.1 The condition code field</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A5-2-Data-processing-and-miscellaneous-instructions"><span class="nav-text">A5.2 Data-processing and miscellaneous instructions</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A6-Thumb-Instruction-Set-Encoding"><span class="nav-text">A6. Thumb Instruction Set Encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A6-1-Thumb-instruction-set-encoding"><span class="nav-text">A6.1 Thumb instruction set encoding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A6-2-16-bit-Thumb-instruction-encoding"><span class="nav-text">A6.2 16-bit Thumb instruction encoding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A6-3-32-bit-Thumb-instruction-encoding"><span class="nav-text">A6.3 32-bit Thumb instruction encoding</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A7-Advanced-SIMD-and-Floating-point-Instruction-Encoding"><span class="nav-text">A7 Advanced SIMD and Floating-point Instruction Encoding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A9-The-ThumbEE-Instruction-Set"><span class="nav-text">A9 The ThumbEE Instruction Set</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A9-1-About-the-ThumbEE-instruction-set"><span class="nav-text">A9.1 About the ThumbEE instruction set</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A9-1-1-ThumbEE-state-transitions"><span class="nav-text">A9.1.1 ThumbEE state transitions</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#A9-1-2-Null-checking"><span class="nav-text">A9.1.2 Null checking</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A9-2-ThumbEE-instruction-set-encoding"><span class="nav-text">A9.2 ThumbEE instruction set encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A9-2-1-16-bit-ThumbEE-instructions"><span class="nav-text">A9.2.1 16-bit ThumbEE instructions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A9-3-Additional-instructions-in-Thumb-and-ThumbEE-instruction-sets"><span class="nav-text">A9.3 Additional instructions in Thumb and ThumbEE instruction sets</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A9-3-1-ENTERX-LEAVEX"><span class="nav-text">A9.3.1 ENTERX, LEAVEX</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A8-Instruction-Descriptions"><span class="nav-text">A8 Instruction Descriptions</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A8-2-Standard-assembler-syntax-fields"><span class="nav-text">A8.2 Standard assembler syntax fields</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A8-3-Conditional-execution"><span class="nav-text">A8.3 Conditional execution</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

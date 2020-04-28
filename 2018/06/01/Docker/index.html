@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Docker1. Docker 背景 1.1. Docker 是什么Docker 是 PaaS 提供商 dotCloud 开源的一个基于 LXC (LXC 其并不是一套硬件虚拟化方法 无法归属到全虚拟化、部分虚拟化和半虚拟化中的任意一个，而是一个操作系统级虚拟化方)的高级容器引擎，源代码托管在 Github 上, 基于go语言并遵从Apache2.0协议开源。 Docker 属于 Linux 容器">
+<meta name="keywords" content="Docker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker 简单介绍">
+<meta property="og:url" content="https://jshell07.github.io/2018/06/01/Docker/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="Docker1. Docker 背景 1.1. Docker 是什么Docker 是 PaaS 提供商 dotCloud 开源的一个基于 LXC (LXC 其并不是一套硬件虚拟化方法 无法归属到全虚拟化、部分虚拟化和半虚拟化中的任意一个，而是一个操作系统级虚拟化方)的高级容器引擎，源代码托管在 Github 上, 基于go语言并遵从Apache2.0协议开源。 Docker 属于 Linux 容器">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://gss3.bdstatic.com/7Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=2dc9b7759a8fa0ec6bca6c5f47fe328b/2cf5e0fe9925bc31137974de55df8db1cb13704b.jpg">
+<meta property="og:image" content="https://gss3.bdstatic.com/7Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=f451b09fa38b87d6444fa34d6661435d/203fb80e7bec54e7719c18b0bb389b504fc26a2f.jpg">
+<meta property="og:image" content="https://hub.docker.com/public/images/official/nginx.png">
+<meta property="og:image" content="https://hub.docker.com/public/images/official/httpd.png">
+<meta property="og:image" content="https://hub.docker.com/public/images/official/ubuntu.png">
+<meta property="og:image" content="https://gss2.bdstatic.com/9fo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=9f1b2701eddde711f3df4ba4c686a57e/a50f4bfbfbedab644936dac4ff36afc379311e69.jpg">
+<meta property="og:image" content="https://gss3.bdstatic.com/-Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike92%2C5%2C5%2C92%2C30/sign=fb52a2bc700e0cf3b4fa46a96b2f997a/9358d109b3de9c82ba58f6216e81800a19d8435a.jpg">
+<meta property="og:image" content="https://gss0.bdstatic.com/-4o3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike92%2C5%2C5%2C92%2C30/sign=2a7eeea18594a4c21e2eef796f9d70b0/54fbb2fb43166d22b3bc1a3a442309f79152d251.jpg">
+<meta property="og:updated_time" content="2020-04-26T02:48:26.491Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Docker 简单介绍">
+<meta name="twitter:description" content="Docker1. Docker 背景 1.1. Docker 是什么Docker 是 PaaS 提供商 dotCloud 开源的一个基于 LXC (LXC 其并不是一套硬件虚拟化方法 无法归属到全虚拟化、部分虚拟化和半虚拟化中的任意一个，而是一个操作系统级虚拟化方)的高级容器引擎，源代码托管在 Github 上, 基于go语言并遵从Apache2.0协议开源。 Docker 属于 Linux 容器">
+<meta name="twitter:image" content="https://gss3.bdstatic.com/7Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=2dc9b7759a8fa0ec6bca6c5f47fe328b/2cf5e0fe9925bc31137974de55df8db1cb13704b.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2018/06/01/Docker/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Docker 简单介绍 | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2018/06/01/Docker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Docker 简单介绍
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2018-06-01 19:59:25" itemprop="dateCreated datePublished" datetime="2018-06-01T19:59:25+08:00">2018-06-01</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-26 10:48:26" itemprop="dateModified" datetime="2020-04-26T10:48:26+08:00">2020-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/tools/" itemprop="url" rel="index"><span itemprop="name">tools</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h1><h2 id="1-Docker-背景"><a href="#1-Docker-背景" class="headerlink" title="1. Docker 背景"></a>1. Docker 背景</h2><p><img src="https://gss3.bdstatic.com/7Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=2dc9b7759a8fa0ec6bca6c5f47fe328b/2cf5e0fe9925bc31137974de55df8db1cb13704b.jpg" alt=""></p>
+<h3 id="1-1-Docker-是什么"><a href="#1-1-Docker-是什么" class="headerlink" title="1.1. Docker 是什么"></a>1.1. Docker 是什么</h3><p>Docker 是 <a href="https://baike.baidu.com/item/PaaS" target="_blank" rel="noopener">PaaS</a> 提供商 dotCloud 开源的一个基于 <a href="https://baike.baidu.com/item/LXC" target="_blank" rel="noopener">LXC</a> (LXC 其并不是一套<a href="http://en.wikipedia.org/wiki/Platform_virtualization" target="_blank" rel="noopener">硬件虚拟化方法</a> 无法归属到全虚拟化、部分虚拟化和半虚拟化中的任意一个，而是一个<a href="http://en.wikipedia.org/wiki/Operating_system-level_virtualization" target="_blank" rel="noopener">操作系统级虚拟化</a>方)的<strong>高级容器引擎</strong>，源代码托管在 <a href="https://baike.baidu.com/item/Github" target="_blank" rel="noopener">Github</a> 上, 基于<a href="https://baike.baidu.com/item/go%E8%AF%AD%E8%A8%80" target="_blank" rel="noopener">go语言</a>并遵从Apache2.0协议开源。</p>
+<p><strong>Docker</strong> 属于 Linux 容器的一种封装，提供简单易用的容器使用接口。**它是目前最流行的 Linux 容器解决方案。</p>
+<p><img src="https://gss3.bdstatic.com/7Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=f451b09fa38b87d6444fa34d6661435d/203fb80e7bec54e7719c18b0bb389b504fc26a2f.jpg" alt=""></p>
+<a id="more"></a>
+<p>有人以通俗的方式说明:</p>
+<blockquote>
+<p>Docker的思想来自于集装箱，集装箱解决了什么问题？在一艘大船上，可以把货物规整的摆放起来。并且各种各样的货物被集装箱标准化了，集装箱和集装箱之间不会互相影响。那么我就不需要专门运送水果的船和专门运送化学品的船了。只要这些货物在集装箱里封装的好好的，那我就可以用一艘大船把他们都运走。  </p>
+<p>Docker就是类似的理念。现在都流行云计算了，云计算就好比大货轮。Docker就是集装箱。</p>
+</blockquote>
+<h3 id="1-2-Docker-的用途"><a href="#1-2-Docker-的用途" class="headerlink" title="1.2. Docker 的用途"></a>1.2. Docker 的用途</h3><ul>
+<li><p>快捷部署软件环境</p>
+</li>
+<li><p>以低效耗实现应用资源隔离</p>
+</li>
+<li><p>微服务架构组建（多个Docker 镜像之间组合使用）</p>
+</li>
+<li><p>web应用的自动化打包和发布</p>
+</li>
+</ul>
+<p>国内有应用于Docker技术的公司<a href="http://www.daocloud.io" target="_blank" rel="noopener">DaoCloud</a> , <a href="http://www.alauda.cn" target="_blank" rel="noopener">云雀</a>等</p>
+<h2 id="2-Docker-基础"><a href="#2-Docker-基础" class="headerlink" title="2. Docker 基础"></a>2. Docker 基础</h2><h2 id="2-1-术语"><a href="#2-1-术语" class="headerlink" title="2.1. 术语"></a>2.1. 术语</h2><ul>
+<li><p>Docker镜像</p>
+<blockquote>
+<p>镜像是Docker 容器运行时的只读模板，每一个镜像由一系列的层（layers）组成。当我们修改镜像时，新的层被创建并透明覆盖之前的层，Docker使用UnionFS 来将这些层连贯到文件系统。</p>
+</blockquote>
+</li>
+<li><p>Docker仓库</p>
+<blockquote>
+<p>类似github， Docker 镜像管理库，Docker官方<a href="https://hub.docker.com/explore/" target="_blank" rel="noopener">Docker Hub</a>, 上面有很火镜像资源，如：</p>
+<p><img src="https://hub.docker.com/public/images/official/nginx.png" alt="Nginx"></p>
+<p><img src="https://hub.docker.com/public/images/official/httpd.png" alt=""></p>
+<p><img src="https://hub.docker.com/public/images/official/ubuntu.png" alt=""></p>
+</blockquote>
+</li>
+<li><p>Docker容器</p>
+<blockquote>
+<p>容器都是从镜像建立的，Docker容器和文件夹类似，容器包含了应用运行所需的环境和数据等。Docker容器可以运行、开始、停止、移动和删除。镜像是只读的，当Docker 运行容器时，它会在镜像顶层添加一个可读写的层。</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="2-2-组件"><a href="#2-2-组件" class="headerlink" title="2.2. 组件"></a>2.2. 组件</h1><p>Docker 采用的是客户端/服务端(C/S)架构模式。Docker客户端和守护进程之间通过socket或者RESTful API进行通信。</p>
+<p><img src="https://gss2.bdstatic.com/9fo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=9f1b2701eddde711f3df4ba4c686a57e/a50f4bfbfbedab644936dac4ff36afc379311e69.jpg" alt=""></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">子项</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Docker守护进程</td>
+<td>建立、运行、发布你的Docker容器，处理所有的Docker 请求，管理所有容器。</td>
+</tr>
+<tr>
+<td style="text-align:left">Docker客服端</td>
+<td>Docker客户端，实际上是<code>docker</code>的二进制程序，是主要的用户与Docker交互方式。它接收用户指令并且与背后的Docker守护进程通信</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-3-技术基础"><a href="#2-3-技术基础" class="headerlink" title="2.3. 技术基础"></a>2.3. 技术基础</h2><h3 id="2-3-1-namespace"><a href="#2-3-1-namespace" class="headerlink" title="2.3.1. namespace"></a>2.3.1. namespace</h3><p>LXC所实现的隔离性主要是来自kernel的namespace, 其中<code>pid</code>, <code>net</code>, <code>ipc</code>, <code>mnt</code>, <code>uts</code> 等namespace将container的进程, 网络, 消息, 文件系统和hostname 隔离开。</p>
+<table>
+<thead>
+<tr>
+<th>NameSpace(ns)</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pid namespace</td>
+<td>具有如下特征： <br><ul><li> 每个namespace中的pid是有自己的pid=1的进程(类似<code>/sbin/init</code>进程) </li><li>个namespace中的进程只能影响自己的同一个namespace或子namespace中的进程 </li><li>因为<code>/proc</code>包含正在运行的进程，因此在container中的<code>pseudo-filesystem</code>的/proc目录只能看到自己namespace中的进程</li><li>因为namespace允许嵌套，父namespace可以影响子namespace的进程，所以子namespace的进程可以在父namespace中看到，但是具有不同的pid </li></ul></td>
+</tr>
+<tr>
+<td>net namespace</td>
+<td>有了 <code>pid</code> namespace, 每个namespace中的pid能够相互隔离，但是网络端口还是共享host的端口。网络隔离是通过<code>net</code>namespace实现的， 每个<code>net</code> namespace有独立的 network devices, IP addresses, IP routing tables, <code>/proc/net</code> 目录。这样每个container的网络就能隔离开来。 LXC在此基础上有5种网络类型，docker默认采用veth的方式将container中的虚拟网卡同host上的一个docker bridge连接在一起。</td>
+</tr>
+<tr>
+<td>ipc namespace</td>
+<td>container中进程交互还是采用linux常见的进程间交互方法(interprocess communication - IPC), 包括常见的信号量、消息队列和共享内存。然而同VM不同，container 的进程间交互实际上还是host上具有相同pid namespace中的进程间交互，因此需要在IPC资源申请时加入namespace信息 - 每个IPC资源有一个唯一的 32bit ID。</td>
+</tr>
+<tr>
+<td>mnt namespace</td>
+<td>类似<code>chroot</code>，将一个进程放到一个特定的目录执行。<code>mnt</code> namespace允许不同namespace的进程看到的文件结构不同，这样每个 namespace 中的进程所看到的文件目录就被隔离开了。同<code>chroot</code>不同，每个namespace中的container在<code>/proc/mounts</code>的信息只包含所在namespace的mount point。</td>
+</tr>
+<tr>
+<td>uts namespace</td>
+<td>UTS(“UNIX Time-sharing System”) namespace允许每个container拥有独立的hostname和domain name, 使其在网络上可以被视作一个独立的节点而非Host上的一个进程。</td>
+</tr>
+<tr>
+<td>user namespace</td>
+<td>每个container可以有不同的 user 和 group id, 也就是说可以以container内部的用户在container内部执行程序而非Host上的用户</td>
+</tr>
+</tbody>
+</table>
+<p>有了以上6种namespace从进程、网络、IPC、文件系统、UTS和用户角度的隔离，一个container就可以对外展现出一个独立计算机的能力，并且不同container从OS层面实现了隔离。 然而不同namespace之间资源还是相互竞争的，仍然需要类似<code>ulimit</code>来管理每个container所能使用的资源 - LXC 采用的是<code>cgroup</code>。</p>
+<h3 id="2-3-2-Control-Groups-cgroups"><a href="#2-3-2-Control-Groups-cgroups" class="headerlink" title="2.3.2. Control Groups(cgroups)"></a>2.3.2. Control Groups(cgroups)</h3><p><strong>cgroups</strong> 实现了对资源的配额和度量。 <strong>cgroups</strong>  的使用非常简单，提供类似文件的接口，在 <code>/cgroup</code>目录下新建一个文件夹即可新建一个group，在此文件夹中新建<strong>task</strong>文件，并将pid写入该文件，即可实现对该进程的资源控制。<br>我们主要关心cgroups可以限制哪些资源，即有哪些subsystem是我们关心。</p>
+<p><strong><code>cpu</code></strong>: 在cgroup中，并不能像硬件虚拟化方案一样能够定义CPU能力，但是能够定义CPU轮转的优先级，因此具有较高CPU优先级的进程会更可能得到CPU运算。 通过将参数写入<strong>cpu.shares</strong>,即可定义改cgroup的CPU优先级 - 这里是一个相对权重，而非绝对值。当然在cpu这个subsystem中还有其他可配置项，手册中有详细说明。</p>
+<p><strong><code>cpusets</code></strong> : cpusets 定义了有几个CPU可以被这个group使用，或者哪几个CPU可以供这个group使用。在某些场景下，单CPU绑定可以防止多核间缓存切换，从而提高效率</p>
+<p><strong><code>memory</code></strong> : 内存相关的限制</p>
+<p><strong><code>blkio</code></strong> : block IO相关的统计和限制，byte/operation统计和限制(IOPS等)，读写速度限制等，但是这里主要统计的都是同步IO</p>
+<p><strong><code>net_cls</code></strong>， <strong><code>cpuacct</code></strong> , <strong><code>devices</code></strong> , <strong><code>freezer</code></strong> 等其他可管理项。</p>
+<h3 id="2-3-3-LinuX-Containers-LXC"><a href="#2-3-3-LinuX-Containers-LXC" class="headerlink" title="2.3.3. LinuX Containers(LXC)"></a>2.3.3. LinuX Containers(LXC)</h3><p>借助于namespace的隔离机制和cgroup限额功能，LXC提供了一套统一的API和工具来建立和管理container, LXC利用了如下 kernel 的features:</p>
+<ul>
+<li>Kernel namespaces (ipc, uts, mount, pid, network and user)</li>
+<li>Apparmor and SELinux profiles</li>
+<li>Seccomp policies</li>
+<li>Chroots (using pivot_root)</li>
+<li>Kernel capabilities</li>
+<li>Control groups (cgroups)</li>
+</ul>
+<p>LXC 向用户屏蔽了以上 kernel 接口的细节, 提供了如下的组件大大简化了用户的开发和使用工作:</p>
+<ul>
+<li>The liblxc library</li>
+<li>Several language bindings (python3, lua and Go)</li>
+<li>A set of standard tools to control the containers</li>
+<li>Container templates</li>
+</ul>
+<h3 id="2-3-4-AUFS"><a href="#2-3-4-AUFS" class="headerlink" title="2.3.4. AUFS"></a>2.3.4. AUFS</h3><p>Docker对container的使用基本是建立在LXC基础之上的，然而LXC存在的问题是难以通过标准化的模板制作、重建、复制和移动 container。VM虚拟化可以采用image和snapshot 实现复制、重建以及移动的功能。docker0.7中引入了storage driver, 支持AUFS, VFS, device mapper, 也为BTRFS以及ZFS引入提供了可能。 但除了AUFS都未经过dotcloud的线上使用。</p>
+<p>AUFS (AnotherUnionFS) 是一种 <code>Union FS</code>。AUFS支持为每一个成员目录(AKA branch)设定’readonly’, ‘readwrite’ 和 ‘whiteout-able’ 权限,</p>
+<p>典型的Linux启动到运行需要两个FS - bootfs + rootfs。</p>
+<p><img src="https://gss3.bdstatic.com/-Po3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike92%2C5%2C5%2C92%2C30/sign=fb52a2bc700e0cf3b4fa46a96b2f997a/9358d109b3de9c82ba58f6216e81800a19d8435a.jpg" alt=""></p>
+<p>典型的Linux在启动后，首先将 rootfs 置为 readonly, 进行一系列检查, 然后将其切换为 “readwrite” 供用户使用。在docker中，起初也是将 rootfs 以readonly方式加载并检查，然而接下来利用 union mount 的将一个 readwrite 文件系统挂载在 readonly 的rootfs之上，并且允许再次将下层的 file system设定为readonly 并且向上叠加, 这样一组readonly和一个writeable的结构构成一个container的运行目录, 每一个被称作一个Layer。如下图:</p>
+<p><img src="https://gss0.bdstatic.com/-4o3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike92%2C5%2C5%2C92%2C30/sign=2a7eeea18594a4c21e2eef796f9d70b0/54fbb2fb43166d22b3bc1a3a442309f79152d251.jpg" alt="">得益于AUFS的特性, 每一个对readonly层文件/目录的修改都只会存在于上层的writeable层中。这样由于不存在竞争, 多个container可以共享readonly的layer。 所以docker将readonly的层称作”<strong>image</strong>“`- 对于container而言整个rootfs都是read-write的，但事实上所有的修改都写入最上层的writeable层中, image不保存用户状态，可以用于模板、重建和复制。</p>
+<p>由此可见，采用AUFS作为docker的container的文件系统，能够提供如下好处:</p>
+<ol>
+<li><p>节省存储空间 - 多个container可以共享base image存储</p>
+</li>
+<li><p>快速部署 - 如果要部署多个container，base image可以避免多次拷贝</p>
+</li>
+<li><p>内存更省 - 因为多个container共享base image, 以及OS的disk缓存机制，多个container中的进程命中缓存内容的几率大大增加</p>
+</li>
+<li><p>升级更方便 - 相比于 copy-on-write 类型的FS，base-image也是可以挂载为可writeable的，可以通过更新base image而一次性更新其之上的container</p>
+</li>
+<li><p>允许在不更改base-image的同时修改其目录中的文件 - 所有写操作都发生在最上层的writeable层中，这样可以大大增加base image能共享的文件内容。</p>
+</li>
+</ol>
+<h3 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源:"></a>参考资源:</h3><p><a href="https://baike.baidu.com/item/Docker/13344470?fr=aladdin" target="_blank" rel="noopener">Docker 百度百科</a></p>
+<p><a href="https://docs.docker.com/" target="_blank" rel="noopener">Docker Org Docs</a></p>
+<p><a href="http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html" target="_blank" rel="noopener">Docker 入门教程</a><br><a href="http://www.ruanyifeng.com/blog/2018/02/docker-wordpress-tutorial.html" target="_blank" rel="noopener">Docker 微服务教程</a></p>
+<p><a href="https://blog.csphere.cn/archives/22" target="_blank" rel="noopener">一小时Docker教程</a></p>
+<p><a href="http://tiewei.github.io/cloud/Docker-Getting-Start/" target="_blank" rel="noopener">Docker Getting Start: Related Knowledge</a></p>
+<p><a href="https://blog.csdn.net/zjin_hua/article/details/52041757" target="_blank" rel="noopener">非常详细的 Docker 学习笔记</a></p>
+<p><a href="http://www.docker.org.cn/book/Docker/what-is-Docker-16.html" target="_blank" rel="noopener">docker 中文</a></p>
+<p><a href="http://www.docker.org.cn/page/resources.html" target="_blank" rel="noopener">Docker资源</a></p>
+<p><a href="https://www.zhihu.com/question/28300645" target="_blank" rel="noopener">如何通俗解释Docker是什么？</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/Docker/" rel="tag"># Docker</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2018/05/26/Debug-high-cpu-loading/" rel="next" title="Debug_high_cpu_loading">
+                <i class="fa fa-chevron-left"></i> Debug_high_cpu_loading
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2018/06/03/WebRTC 如何避免拥塞/" rel="prev" title="WebRTC 如何避免拥塞？">
+                WebRTC 如何避免拥塞？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker"><span class="nav-text">Docker</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Docker-背景"><span class="nav-text">1. Docker 背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-Docker-是什么"><span class="nav-text">1.1. Docker 是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-Docker-的用途"><span class="nav-text">1.2. Docker 的用途</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Docker-基础"><span class="nav-text">2. Docker 基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-术语"><span class="nav-text">2.1. 术语</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-2-组件"><span class="nav-text">2.2. 组件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-技术基础"><span class="nav-text">2.3. 技术基础</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-1-namespace"><span class="nav-text">2.3.1. namespace</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-2-Control-Groups-cgroups"><span class="nav-text">2.3.2. Control Groups(cgroups)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-3-LinuX-Containers-LXC"><span class="nav-text">2.3.3. LinuX Containers(LXC)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-4-AUFS"><span class="nav-text">2.3.4. AUFS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资源"><span class="nav-text">参考资源:</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

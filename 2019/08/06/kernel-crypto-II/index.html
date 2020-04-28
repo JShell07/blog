@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. cipher 基础在Kernel crytographic 的cipher 还有如下几类：  ablkcipher_tfm(asynchronous multi-block cipher transform)   blkcipher_tfm(synchronous multi-block cipher transform)    cipher_tfm(Single block cipher">
+<meta name="keywords" content="cryptographic">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_crypto_II">
+<meta property="og:url" content="https://jshell07.github.io/2019/08/06/kernel-crypto-II/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. cipher 基础在Kernel crytographic 的cipher 还有如下几类：  ablkcipher_tfm(asynchronous multi-block cipher transform)   blkcipher_tfm(synchronous multi-block cipher transform)    cipher_tfm(Single block cipher">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-init-flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-hw-encrypt-flow.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:50.818Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_crypto_II">
+<meta name="twitter:description" content="1. cipher 基础在Kernel crytographic 的cipher 还有如下几类：  ablkcipher_tfm(asynchronous multi-block cipher transform)   blkcipher_tfm(synchronous multi-block cipher transform)    cipher_tfm(Single block cipher">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-init-flow.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2019/08/06/kernel-crypto-II/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_crypto_II | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2019/08/06/kernel-crypto-II/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_crypto_II
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-08-06 20:04:59" itemprop="dateCreated datePublished" datetime="2019-08-06T20:04:59+08:00">2019-08-06</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:50" itemprop="dateModified" datetime="2020-04-28T11:16:50+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1-cipher-基础"><a href="#1-cipher-基础" class="headerlink" title="1. cipher 基础"></a>1. cipher 基础</h3><p>在Kernel crytographic 的cipher 还有如下几类：</p>
+<ul>
+<li>ablkcipher_tfm(asynchronous multi-block cipher transform)  </li>
+<li>blkcipher_tfm(synchronous multi-block cipher transform)   </li>
+<li>cipher_tfm(Single block cipher transform)</li>
+</ul>
+<p>更为安全的是使用ahead 加密形式， 可以见此篇文章。<a href="https://zhuanlan.zhihu.com/p/28566058" target="_blank" rel="noopener">什么是AEAD加密</a></p>
+<a id="more"></a>
+<p>在kernel中cipher 都为skcipher(Symmetric Key cipher, 对称性加密算法)</p>
+<p>后面我们以kernel/drivers/crypto/atmel-aes.c 进行分析ablkcipher 的驱动。</p>
+<h3 id="2-cipher-alg-register"><a href="#2-cipher-alg-register" class="headerlink" title="2. cipher alg register"></a>2. cipher alg register</h3><p>atmel aes 驱动初始流程可见下图：<br><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-init-flow.png" alt="driver init flow"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">crypto_alg</span> <span class="title">aes_algs</span>[] = &#123;</span></span><br><span class="line">&#123;</span><br><span class="line">	.cra_name		= <span class="string">"ecb(aes)"</span>,</span><br><span class="line">	.cra_driver_name	= <span class="string">"atmel-ecb-aes"</span>,</span><br><span class="line">	.cra_priority		= <span class="number">100</span>,</span><br><span class="line">	.cra_flags		= CRYPTO_ALG_TYPE_ABLKCIPHER | CRYPTO_ALG_ASYNC,</span><br><span class="line">	.cra_blocksize		= AES_BLOCK_SIZE,</span><br><span class="line">	.cra_ctxsize		= <span class="keyword">sizeof</span>(struct atmel_aes_ctx),</span><br><span class="line">	.cra_alignmask		= <span class="number">0xf</span>,</span><br><span class="line">	.cra_type		= &amp;crypto_ablkcipher_type,</span><br><span class="line">	.cra_module		= THIS_MODULE,</span><br><span class="line">	.cra_init		= atmel_aes_cra_init,</span><br><span class="line">	.cra_exit		= atmel_aes_cra_exit,</span><br><span class="line">	.cra_u.ablkcipher = &#123;</span><br><span class="line">		.min_keysize	= AES_MIN_KEY_SIZE,</span><br><span class="line">		.max_keysize	= AES_MAX_KEY_SIZE,</span><br><span class="line">		.setkey		= atmel_aes_setkey,</span><br><span class="line">		.encrypt	= atmel_aes_ecb_encrypt,</span><br><span class="line">		.decrypt	= atmel_aes_ecb_decrypt,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;,</span><br><span class="line">&#123;</span><br><span class="line">	.cra_name		= <span class="string">"cbc(aes)"</span>,</span><br><span class="line">	.cra_driver_name	= <span class="string">"atmel-cbc-aes"</span>,</span><br><span class="line">	.cra_priority		= <span class="number">100</span>,</span><br><span class="line">	.cra_flags		= CRYPTO_ALG_TYPE_ABLKCIPHER | CRYPTO_ALG_ASYNC,</span><br><span class="line">	.cra_blocksize		= AES_BLOCK_SIZE,</span><br><span class="line">	.cra_ctxsize		= <span class="keyword">sizeof</span>(struct atmel_aes_ctx),</span><br><span class="line">	.cra_alignmask		= <span class="number">0xf</span>,</span><br><span class="line">	.cra_type		= &amp;crypto_ablkcipher_type,</span><br><span class="line">	.cra_module		= THIS_MODULE,</span><br><span class="line">	.cra_init		= atmel_aes_cra_init,</span><br><span class="line">	.cra_exit		= atmel_aes_cra_exit,</span><br><span class="line">	.cra_u.ablkcipher = &#123;</span><br><span class="line">		.min_keysize	= AES_MIN_KEY_SIZE,</span><br><span class="line">		.max_keysize	= AES_MAX_KEY_SIZE,</span><br><span class="line">		.ivsize		= AES_BLOCK_SIZE,</span><br><span class="line">		.setkey		= atmel_aes_setkey,</span><br><span class="line">		.encrypt	= atmel_aes_cbc_encrypt,</span><br><span class="line">		.decrypt	= atmel_aes_cbc_decrypt,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="2-encrypt-flow"><a href="#2-encrypt-flow" class="headerlink" title="2. encrypt flow"></a>2. encrypt flow</h3><p>每当encryp 时， 我们将使用ablkcipher_enqueue_request()<br>把<code>ablkcipher_request *req</code> 添加到队列上。在判断HW engine 是空闲可用时，再从queue 上取出并进行HW 的加解密操作。decrypt 的流程如此类似，区别在于设定HW 的mode 设定。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_crypto/aes-hw-encrypt-flow.png" alt="hw encrypt flow"></p>
+<h3 id="2-1-data-structure"><a href="#2-1-data-structure" class="headerlink" title="2.1. data structure"></a>2.1. data structure</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">crypto_queue</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> *<span class="title">backlog</span>;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> qlen;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> max_qlen;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ablkcipher_request</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">crypto_async_request</span> <span class="title">base</span>;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> nbytes;</span><br><span class="line">	<span class="keyword">void</span> *info;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">scatterlist</span> *<span class="title">src</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">scatterlist</span> *<span class="title">dst</span>;</span></span><br><span class="line">	<span class="keyword">void</span> *__ctx[] CRYPTO_MINALIGN_ATTR;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在中断完成后，atmel_aes_done_task（）-&gt; atmel_aes_finish_req() -&gt; req-&gt;base.complete(&amp;req-&gt;base, err) 这样会调用到complete（） 完成函数，实现了异步的通知行为。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">atmel_aes_done_task</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">long</span> data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">atmel_aes_dev</span> *<span class="title">dd</span> = (<span class="title">struct</span> <span class="title">atmel_aes_dev</span> *) <span class="title">data</span>;</span></span><br><span class="line">	<span class="keyword">int</span> err;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!(dd-&gt;flags &amp; AES_FLAGS_DMA)) &#123;</span><br><span class="line">		atmel_aes_read_n(dd, AES_ODATAR(<span class="number">0</span>), (u32 *) dd-&gt;buf_out,</span><br><span class="line">				dd-&gt;bufcnt &gt;&gt; <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (sg_copy_from_buffer(dd-&gt;out_sg, dd-&gt;nb_out_sg,</span><br><span class="line">			dd-&gt;buf_out, dd-&gt;bufcnt))</span><br><span class="line">			err = <span class="number">0</span>;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			err = -EINVAL;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">goto</span> cpu_end;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	err = atmel_aes_crypt_dma_stop(dd);</span><br><span class="line"></span><br><span class="line">	err = dd-&gt;err ? : err;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (dd-&gt;total &amp;&amp; !err) &#123;</span><br><span class="line">		<span class="keyword">if</span> (dd-&gt;flags &amp; AES_FLAGS_FAST) &#123;</span><br><span class="line">			dd-&gt;in_sg = sg_next(dd-&gt;in_sg);</span><br><span class="line">			dd-&gt;out_sg = sg_next(dd-&gt;out_sg);</span><br><span class="line">			<span class="keyword">if</span> (!dd-&gt;in_sg || !dd-&gt;out_sg)</span><br><span class="line">				err = -EINVAL;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (!err)</span><br><span class="line">			err = atmel_aes_crypt_dma_start(dd);</span><br><span class="line">		<span class="keyword">if</span> (!err)</span><br><span class="line">			<span class="keyword">return</span>; <span class="comment">/* DMA started. Not fininishing. */</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">cpu_end:</span><br><span class="line">	atmel_aes_finish_req(dd, err);</span><br><span class="line">	atmel_aes_handle_queue(dd, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">atmel_aes_finish_req</span><span class="params">(struct atmel_aes_dev *dd, <span class="keyword">int</span> err)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ablkcipher_request</span> *<span class="title">req</span> = <span class="title">dd</span>-&gt;<span class="title">req</span>;</span></span><br><span class="line"></span><br><span class="line">	clk_disable_unprepare(dd-&gt;iclk);</span><br><span class="line">	dd-&gt;flags &amp;= ~AES_FLAGS_BUSY;</span><br><span class="line"></span><br><span class="line">	req-&gt;base.complete(&amp;req-&gt;base, err);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以参看kernel/crypto/testmgr.c 中的测试代码，它的使用案例。</p>
+<blockquote>
+<p>init_completion(&amp;result.completion);<br>ablkcipher_request_alloc(tfm, GFP_KERNEL);<br>ablkcipher_request_set_callback(req,CRYPTO_TFM_REQ_MAY_BACKLOG, tcrypt_complete, &amp;result);<br>crypto_ablkcipher_clear_flags(tfm, ~0);<br>crypto_ablkcipher_setkey(tfm, template[i].key, template[i].klen);<br>ablkcipher_request_set_crypt(req, sg, sgout, template[i].ilen, iv);<br>crypto_ablkcipher_encrypt(req);<br>crypto_ablkcipher_decrypt(req);</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">tcrypt_complete</span><span class="params">(struct crypto_async_request *req, <span class="keyword">int</span> err)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tcrypt_result</span> *<span class="title">res</span> = <span class="title">req</span>-&gt;<span class="title">data</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (err == -EINPROGRESS)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	res-&gt;err = err;</span><br><span class="line">	complete(&amp;res-&gt;completion);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> __test_skcipher(struct crypto_ablkcipher *tfm, <span class="keyword">int</span> enc,</span><br><span class="line">			   struct cipher_testvec *<span class="keyword">template</span>, <span class="keyword">unsigned</span> <span class="keyword">int</span> tcount,</span><br><span class="line">			   <span class="keyword">const</span> <span class="keyword">bool</span> diff_dst, <span class="keyword">const</span> <span class="keyword">int</span> align_offset)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *algo =</span><br><span class="line">		crypto_tfm_alg_driver_name(crypto_ablkcipher_tfm(tfm));</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> i, j, k, n, temp;</span><br><span class="line">	<span class="keyword">char</span> *q;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ablkcipher_request</span> *<span class="title">req</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">scatterlist</span> <span class="title">sg</span>[8];</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">scatterlist</span> <span class="title">sgout</span>[8];</span></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *e, *d;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tcrypt_result</span> <span class="title">result</span>;</span></span><br><span class="line">	<span class="keyword">void</span> *data;</span><br><span class="line">	<span class="keyword">char</span> iv[MAX_IVLEN];</span><br><span class="line">	<span class="keyword">char</span> *xbuf[XBUFSIZE];</span><br><span class="line">	<span class="keyword">char</span> *xoutbuf[XBUFSIZE];</span><br><span class="line">	<span class="keyword">int</span> ret = -ENOMEM;</span><br><span class="line"></span><br><span class="line">	init_completion(&amp;result.completion);</span><br><span class="line"></span><br><span class="line">	req = ablkcipher_request_alloc(tfm, GFP_KERNEL);</span><br><span class="line">	</span><br><span class="line">	ablkcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,</span><br><span class="line">					tcrypt_complete, &amp;result);</span><br><span class="line"></span><br><span class="line">	j = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tcount; i++) &#123;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">template</span>[i].np &amp;&amp; !<span class="keyword">template</span>[i].also_non_np)</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">template</span>[i].iv)</span><br><span class="line">			<span class="built_in">memcpy</span>(iv, <span class="keyword">template</span>[i].iv, MAX_IVLEN);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			<span class="built_in">memset</span>(iv, <span class="number">0</span>, MAX_IVLEN);</span><br><span class="line"></span><br><span class="line">		j++;</span><br><span class="line">		</span><br><span class="line"></span><br><span class="line">		data = xbuf[<span class="number">0</span>];</span><br><span class="line">		data += align_offset;</span><br><span class="line">		<span class="built_in">memcpy</span>(data, <span class="keyword">template</span>[i].input, <span class="keyword">template</span>[i].ilen);</span><br><span class="line">		crypto_ablkcipher_clear_flags(tfm, ~<span class="number">0</span>);</span><br><span class="line">		ret = crypto_ablkcipher_setkey(tfm, <span class="keyword">template</span>[i].key,</span><br><span class="line">					       <span class="keyword">template</span>[i].klen);</span><br><span class="line"></span><br><span class="line">		sg_init_one(&amp;sg[<span class="number">0</span>], data, <span class="keyword">template</span>[i].ilen);</span><br><span class="line"></span><br><span class="line">		ablkcipher_request_set_crypt(req, sg, (diff_dst) ? sgout : sg,</span><br><span class="line">					     <span class="keyword">template</span>[i].ilen, iv);</span><br><span class="line">		ret = enc ? crypto_ablkcipher_encrypt(req) :</span><br><span class="line">			    crypto_ablkcipher_decrypt(req);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">switch</span> (ret) &#123;</span><br><span class="line">		<span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> -EINPROGRESS:</span><br><span class="line">		<span class="keyword">case</span> -EBUSY:</span><br><span class="line">			ret = wait_for_completion_interruptible(</span><br><span class="line">				&amp;result.completion);</span><br><span class="line">			<span class="keyword">if</span> (!ret &amp;&amp; !((ret = result.err))) &#123;</span><br><span class="line">				reinit_completion(&amp;result.completion);</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">/* fall through */</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			pr_err(<span class="string">"alg: skcipher%s: %s failed on test %d for %s: ret=%d\n"</span>,</span><br><span class="line">			       d, e, j, algo, -ret);</span><br><span class="line">			<span class="keyword">goto</span> out;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		q = data;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">memcmp</span>(q, <span class="keyword">template</span>[i].result, <span class="keyword">template</span>[i].rlen)) &#123;</span><br><span class="line">			pr_err(<span class="string">"alg: skcipher%s: Test %d failed on %s for %s\n"</span>,</span><br><span class="line">			       d, j, e, algo);</span><br><span class="line">			hexdump(q, <span class="keyword">template</span>[i].rlen);</span><br><span class="line">			ret = -EINVAL;</span><br><span class="line">			<span class="keyword">goto</span> out;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	ret = <span class="number">0</span>;</span><br><span class="line">out:</span><br><span class="line">	ablkcipher_request_free(req);</span><br><span class="line">	<span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="参看资料"><a href="#参看资料" class="headerlink" title="参看资料"></a>参看资料</h3><p><a href="https://elixir.bootlin.com/linux/v3.18.11/source/drivers/crypto/atmel-aes.c" target="_blank" rel="noopener">3.18.11/drivers/crypto/atmel-aes.c</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/cryptographic/" rel="tag"># cryptographic</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/08/06/kernel-crypto-I/" rel="next" title="kernel_crypto_I">
+                <i class="fa fa-chevron-left"></i> kernel_crypto_I
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2019/08/07/kernel-crypto-III/" rel="prev" title="kernel_crypto_III">
+                kernel_crypto_III <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-cipher-基础"><span class="nav-text">1. cipher 基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-cipher-alg-register"><span class="nav-text">2. cipher alg register</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-encrypt-flow"><span class="nav-text">2. encrypt flow</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-data-structure"><span class="nav-text">2.1. data structure</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参看资料"><span class="nav-text">参看资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

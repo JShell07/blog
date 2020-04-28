@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/blog/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/blog/lib/pace/pace-theme-bounce.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1. Base1.1. 常见术语   术语 解释     Terminal 终端，是一个电子（或电气）人机交互设备   serial Terminal TTY 设备的一种，通过串口线连接   console 控制台，早期PC的键盘显示器，比TTY 终端拥有更多的权限，系统的运行日志、错误信息通常会输出到控制台     第一个Unix终端是一个名字为ASR33的电传打字机，而电传打字机的英文单词为T">
+<meta name="keywords" content="tty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kernel_tty">
+<meta property="og:url" content="https://jshell07.github.io/2020/02/17/kernel-tty/index.html">
+<meta property="og:site_name" content="JShell07&#39;s Blog">
+<meta property="og:description" content="1. Base1.1. 常见术语   术语 解释     Terminal 终端，是一个电子（或电气）人机交互设备   serial Terminal TTY 设备的一种，通过串口线连接   console 控制台，早期PC的键盘显示器，比TTY 终端拥有更多的权限，系统的运行日志、错误信息通常会输出到控制台     第一个Unix终端是一个名字为ASR33的电传打字机，而电传打字机的英文单词为T">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/linux_tty_framework_structure.png">
+<meta property="og:image" content="https://github.com/JShell07/jshell07.github.io/blob/master/images/kernel_tty/tty_data_structure.png?raw=true">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_data_structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_initial_flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_open_flow.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_consumer.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_provider.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_write_flow.png">
+<meta property="og:updated_time" content="2020-04-28T03:16:55.966Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kernel_tty">
+<meta name="twitter:description" content="1. Base1.1. 常见术语   术语 解释     Terminal 终端，是一个电子（或电气）人机交互设备   serial Terminal TTY 设备的一种，通过串口线连接   console 控制台，早期PC的键盘显示器，比TTY 终端拥有更多的权限，系统的运行日志、错误信息通常会输出到控制台     第一个Unix终端是一个名字为ASR33的电传打字机，而电传打字机的英文单词为T">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/linux_tty_framework_structure.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://jshell07.github.io/2020/02/17/kernel-tty/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>kernel_tty | JShell07's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JShell07's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/blog/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/blog/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags<span class="badge">48</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/blog/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories<span class="badge">18</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/blog/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives<span class="badge">76</span></a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://jshell07.github.io/blog/2020/02/17/kernel-tty/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JShell07">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JShell07's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">kernel_tty
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+	  
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-02-17 18:12:19" itemprop="dateCreated datePublished" datetime="2020-02-17T18:12:19+08:00">2020-02-17</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-04-28 11:16:55" itemprop="dateModified" datetime="2020-04-28T11:16:55+08:00">2020-04-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/blog/categories/drivers/" itemprop="url" rel="index"><span itemprop="name">drivers</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-Base"><a href="#1-Base" class="headerlink" title="1. Base"></a>1. Base</h2><h3 id="1-1-常见术语"><a href="#1-1-常见术语" class="headerlink" title="1.1. 常见术语"></a>1.1. 常见术语</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">术语</th>
+<th style="text-align:left">解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Terminal</td>
+<td style="text-align:left">终端，是一个电子（或电气）人机交互设备</td>
+</tr>
+<tr>
+<td style="text-align:center">serial Terminal</td>
+<td style="text-align:left">TTY 设备的一种，通过串口线连接</td>
+</tr>
+<tr>
+<td style="text-align:center">console</td>
+<td style="text-align:left">控制台，早期PC的键盘显示器，比TTY 终端拥有更多的权限，系统的运行日志、错误信息通常会输出到控制台</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>第一个Unix终端是一个名字为ASR33的电传打字机，而电传打字机的英文单词为Teletype（或Teletypewritter），缩写为TTY。</p>
+</blockquote>
+<a id="more"></a>
+<h3 id="1-2-TTY-分类"><a href="#1-2-TTY-分类" class="headerlink" title="1.2. TTY 分类"></a>1.2. TTY 分类</h3><p>tty 设备有几个分类：  </p>
+<ul>
+<li>console(通常指键盘，显示器)  </li>
+<li>serial tty(传统意义的HW，输入输出都在一个独立的硬件上，如peripheral uart)</li>
+<li>VT(virtual tty，传统控制台同一时刻，只能有一个终端使用，为满足多用户、应用，Unix/linux又虚拟出6个终端，可以通过键盘的组合键（CTRL+ALT+ F1~F6）将某一个虚拟终端调出来在屏幕上显示)</li>
+<li>PTY(Pseudo TTY) 伪终端由pts(pseudo terminal slave)和ptm(pseudo terminal master)组成。</li>
+</ul>
+<blockquote>
+<p>PTS: 模拟终端完成与shell等应用的TTY 输入、输出需求<br>PTM: 将数据通过socket 等形式与真实设备之间进行通行</p>
+<p>shell <->  PTS <-> PTM <-> SSHD,XTERM</-></-></-></p>
+</blockquote>
+<p>如果从应用上讲还有如下：</p>
+<ul>
+<li>软件终端（PUTTY, SecureCRT, mobalxterm, xshell等， 由软件模拟终端） </li>
+<li>USB, Ethernet终端（通过其他通信协议模拟终端，例如USB CDC的uart）   </li>
+<li>图形终端（GUI图形也可以说成终端的一种，只是不再是TTY框架中了，TTY主要在字符设备范围）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">设备号(主, 次)        字符设备                            备注</span><br><span class="line">(5, 0)               /dev/tty                            控制终端（Controlling Terminal）</span><br><span class="line">(5, 1)               /dev/console                        控制台终端（Console Terminal）</span><br><span class="line">(4, 0)               /dev/vc/0 or /dev/tty0              虚拟终端（Virtual Terminal）</span><br><span class="line">(4, 1)               /dev/vc/1 or /dev/tty1              同上</span><br><span class="line">…                    …                                   …</span><br><span class="line">(x, x)               /dev/ttyS0                          串口终端（名称和设备号由驱动自行决定）</span><br><span class="line">…                    …                                   …</span><br><span class="line">(x, x)               /dev/ttyUSB0                        USB转串口终端</span><br></pre></td></tr></table></figure>
+<h2 id="2-软件架构"><a href="#2-软件架构" class="headerlink" title="2. 软件架构"></a>2. 软件架构</h2><p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/linux_tty_framework_structure.png" alt="tty framework structure"></p>
+<h3 id="TTY-Line-Disciplines"><a href="#TTY-Line-Disciplines" class="headerlink" title="TTY Line Disciplines"></a>TTY Line Disciplines</h3><p>line disciplines(线路规程), 可以把它看成设备驱动和应用接口之间的一个适配层, 按照一些定义的标准进行某些字符的转换。例如”\n”, “\r” 之间的转换。在Linux 4.9.x中有这些：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* include/linux/tty.h, line disciplines */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_TTY		0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_SLIP		1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_MOUSE		2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_PPP		3</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_STRIP		4</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_AX25		5</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_X25		6	<span class="comment">/* X.25 async */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_6PACK		7</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_MASC		8	<span class="comment">/* Reserved for Mobitex module &lt;kaz@cafe.net&gt; */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_R3964		9	<span class="comment">/* Reserved for Simatic R3964 module */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_PROFIBUS_FDL	10	<span class="comment">/* Reserved for Profibus */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_IRDA		11	<span class="comment">/* Linux IrDa - http://irda.sourceforge.net/ */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_SMSBLOCK	12	<span class="comment">/* SMS block mode - for talking to GSM data */</span></span></span><br><span class="line">				<span class="comment">/* cards about SMS messages */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_HDLC		13	<span class="comment">/* synchronous HDLC */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_SYNC_PPP	14	<span class="comment">/* synchronous PPP */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_HCI		15	<span class="comment">/* Bluetooth HCI UART */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_GIGASET_M101	16	<span class="comment">/* Siemens Gigaset M101 serial DECT adapter */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_SLCAN		17	<span class="comment">/* Serial / USB serial CAN Adaptors */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_PPS		18	<span class="comment">/* Pulse per Second */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_V253		19	<span class="comment">/* Codec control over voice modem */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_CAIF		20      <span class="comment">/* CAIF protocol for talking to modems */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_GSM0710	21	<span class="comment">/* GSM 0710 Mux */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_TI_WL		22	<span class="comment">/* for TI's WL BT, FM, GPS combo chips */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_TRACESINK	23	<span class="comment">/* Trace data routing for MIPI P1149.7 */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_TRACEROUTER	24	<span class="comment">/* Trace data routing for MIPI P1149.7 */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_NCI		25	<span class="comment">/* NFC NCI UART */</span></span></span><br></pre></td></tr></table></figure></p>
+<h2 id="3-Data-Structure"><a href="#3-Data-Structure" class="headerlink" title="3. Data Structure"></a>3. Data Structure</h2><h3 id="3-1-TTY-Core-Data-Structure"><a href="#3-1-TTY-Core-Data-Structure" class="headerlink" title="3.1. TTY Core Data Structure"></a>3.1. TTY Core Data Structure</h3><p><img src="https://github.com/JShell07/jshell07.github.io/blob/master/images/kernel_tty/tty_data_structure.png?raw=true" alt="tty data structure"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tty_struct</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">device</span> *<span class="title">dev</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_driver</span> *<span class="title">driver</span>;</span></span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">tty_operations</span> *<span class="title">ops</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tty_ldisc</span> *<span class="title">ldisc</span>;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span> *write_buf;</span><br><span class="line">    ...</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_port</span> *<span class="title">port</span>;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ktermios</span> &#123;</span></span><br><span class="line">	<span class="keyword">tcflag_t</span> c_iflag;		<span class="comment">/* input mode flags */</span></span><br><span class="line">	<span class="keyword">tcflag_t</span> c_oflag;		<span class="comment">/* output mode flags */</span></span><br><span class="line">	<span class="keyword">tcflag_t</span> c_cflag;		<span class="comment">/* control mode flags */</span></span><br><span class="line">	<span class="keyword">tcflag_t</span> c_lflag;		<span class="comment">/* local mode flags */</span></span><br><span class="line">	<span class="keyword">cc_t</span> c_line;			<span class="comment">/* line discipline */</span></span><br><span class="line">	<span class="keyword">cc_t</span> c_cc[NCCS];		<span class="comment">/* control characters */</span></span><br><span class="line">	<span class="keyword">speed_t</span> c_ispeed;		<span class="comment">/* input speed */</span></span><br><span class="line">	<span class="keyword">speed_t</span> c_ospeed;		<span class="comment">/* output speed */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tty_ldisc</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_ldisc_ops</span> *<span class="title">ops</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_struct</span> *<span class="title">tty</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tty_port</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_bufhead</span>	<span class="title">buf</span>;</span>		<span class="comment">/* Locked internally */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_struct</span>	*<span class="title">tty</span>;</span>		<span class="comment">/* Back pointer */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_struct</span>	*<span class="title">itty</span>;</span>		<span class="comment">/* internal back ptr */</span></span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">tty_port_operations</span> *<span class="title">ops</span>;</span>	<span class="comment">/* Port operations */</span></span><br><span class="line">	<span class="keyword">int</span>			count;		<span class="comment">/* Usage count */</span></span><br><span class="line">    ...</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span>		*xmit_buf;	<span class="comment">/* Optional buffer */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tty_driver</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> **<span class="title">cdevs</span>;</span></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>	*driver_name;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>	*name;</span><br><span class="line">	<span class="keyword">int</span>	major;		<span class="comment">/* major device number */</span></span><br><span class="line">	<span class="keyword">int</span>	minor_start;	<span class="comment">/* start of minor device number */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>	num;	<span class="comment">/* number of devices allocated */</span></span><br><span class="line">	<span class="keyword">short</span>	type;		<span class="comment">/* type of tty driver */</span></span><br><span class="line">	<span class="keyword">short</span>	subtype;	<span class="comment">/* subtype of tty driver */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ktermios</span> <span class="title">init_termios</span>;</span> <span class="comment">/* Initial termios */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>	flags;		<span class="comment">/* tty driver flags */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">proc_dir_entry</span> *<span class="title">proc_entry</span>;</span> <span class="comment">/* /proc fs entry */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Pointer to the tty data structures */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_struct</span> **<span class="title">ttys</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_port</span> **<span class="title">ports</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ktermios</span> **<span class="title">termios</span>;</span></span><br><span class="line">    ...</span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">tty_operations</span> *<span class="title">ops</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-Serial-Driver-Data-Structure"><a href="#3-2-Serial-Driver-Data-Structure" class="headerlink" title="3.2. Serial Driver Data Structure"></a>3.2. Serial Driver Data Structure</h3><p>相关数据结构， <code>struct uart_driver</code> 用来联系<code>struct tty_driver</code>, <code>uart_port</code> 则包含了uart 的一些callback(其中大部分参数都是使用struct uart_port) 和固有属性例如:irq, baudrate, fifosize等。 </p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_data_structure.png" alt="serial data structure"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">uart_state</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_port</span>		<span class="title">port</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">circ_buf</span>		<span class="title">xmit</span>;</span></span><br><span class="line">    ...</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">uart_port</span>	*<span class="title">uart_port</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">uart_port</span> &#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>	iobase;	<span class="comment">/* in/out[bwl] */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span> __iomem	*membase; <span class="comment">/* read/write[bwl] */</span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>	irq;	<span class="comment">/* irq number */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>	irqflags;	<span class="comment">/* irq flags  */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>	uartclk; <span class="comment">/* base uart clock */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>	fifosize; <span class="comment">/* tx fifo size */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span>	x_char;	<span class="comment">/* xon/xoff char */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span>	regshift; <span class="comment">/* reg offset shift */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span>	iotype;	<span class="comment">/* io access style */</span></span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">uart_state</span>	*<span class="title">state</span>;</span>	<span class="comment">/* pointer to parent state */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">uart_icount</span>	<span class="title">icount</span>;</span>	<span class="comment">/* statistics */</span></span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">console</span>	*<span class="title">cons</span>;</span>	<span class="comment">/* struct console, if any */</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span>	type;	<span class="comment">/* port type */</span></span><br><span class="line">	<span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">uart</span> <span class="title">ops</span>	*<span class="title">ops</span>;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> line;	<span class="comment">/* port index */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">device</span>	*<span class="title">dev</span>;</span>	<span class="comment">/* parent device */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">uart_driver</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">module</span>	*<span class="title">owner</span>;</span></span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>	*driver_name;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>	*dev_name;</span><br><span class="line">	<span class="keyword">int</span>	major;</span><br><span class="line">	<span class="keyword">int</span>	minor;</span><br><span class="line">	<span class="keyword">int</span> nr;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">console</span> *<span class="title">cons</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">uart_state</span> *<span class="title">state</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_driver</span> *<span class="title">tty_driver</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="4-Flow"><a href="#4-Flow" class="headerlink" title="4. Flow"></a>4. Flow</h2><h3 id="4-1-serial-驱动初始化"><a href="#4-1-serial-驱动初始化" class="headerlink" title="4.1. serial 驱动初始化"></a>4.1. serial 驱动初始化</h3><p>串口驱动初始化，主要涉及两个函数:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">uart_register_driver</span><span class="params">(struct uart_driver *drv)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">uart_add_one_port</span><span class="params">(struct uart_driver *drv, struct uart_port *uport)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p><code>uart_register_driver()</code>将uart_driver 透过<code>serial_core</code>中调用<code>tty_register_driver()</code>函数注册<code>tty_driver</code>结构体，同时根据Major, Minor 注册char设备。 </p>
+<p>之后调用<code>uart_add_one_port()</code> 将uart_port 绑定到uart_state上，并注册device_attribute,并最终调用<code>device_register()</code>,完成设备模型的注册，最终才会产生”/dev/ttyS0”等设备。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/serial_initial_flow.png" alt="serial initial flow"></p>
+<h3 id="4-1-serial-Open-Flow"><a href="#4-1-serial-Open-Flow" class="headerlink" title="4.1. serial Open Flow"></a>4.1. serial Open Flow</h3><p>在<code>uart_add_one_port()</code>-&gt;<code>tty_port_register_device_attr()</code>-&gt;<code>tty_cdev_add()</code>中注册了cdev设备的R/W/Open。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">tty_fops</span> = &#123;</span></span><br><span class="line">	.read		= tty_read,</span><br><span class="line">	.write		= tty_write,</span><br><span class="line">	.unlocked_ioctl	= tty_ioctl,</span><br><span class="line">	.open		= tty_open,</span><br><span class="line">	.release	= tty_release,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>因此，从数据结构上观察<code>struct file_operation</code>-&gt; <code>struct tty_operation</code> -&gt; <code>struct tty_port_operation</code> -&gt; <code>struct uart_ops</code>，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_open_flow.png" alt="linux_tty_open"></p>
+<h3 id="4-2-serial-Read-Flow"><a href="#4-2-serial-Read-Flow" class="headerlink" title="4.2. serial Read Flow"></a>4.2. serial Read Flow</h3><p>Read 流程可以分为两个部分， 用户空间与硬件的RX 中断函数。可以理解成消费者与生产者的关系。</p>
+<h4 id="4-2-1-Consumer"><a href="#4-2-1-Consumer" class="headerlink" title="4.2.1. Consumer"></a>4.2.1. Consumer</h4><p>用户空间调用下来的read， 可以看作是消费者。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_consumer.png" alt="read flow consumer"></p>
+<h4 id="4-2-2-Provider"><a href="#4-2-2-Provider" class="headerlink" title="4.2.2. Provider"></a>4.2.2. Provider</h4><p>在中断服务程序中将收到的ch，扮演生产者的角色，放置到tty_port.tty_buffer, 如果空间不够则调用<code>__tty_buffer_request_room()</code> 最小分配256 Bytes.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> __tty_insert_flip_char(struct tty_port *port, <span class="keyword">unsigned</span> <span class="keyword">char</span> ch, <span class="keyword">char</span> flag)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">tty_buffer</span> *<span class="title">tb</span>;</span></span><br><span class="line">	<span class="keyword">int</span> flags = (flag == TTY_NORMAL) ? TTYB_NORMAL : <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!__tty_buffer_request_room(port, <span class="number">1</span>, flags))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	tb = port-&gt;buf.tail;</span><br><span class="line">	<span class="keyword">if</span> (~tb-&gt;flags &amp; TTYB_NORMAL)</span><br><span class="line">		*flag_buf_ptr(tb, tb-&gt;used) = flag;</span><br><span class="line">	*char_buf_ptr(tb, tb-&gt;used++) = ch;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">tty_flip_buffer_push</span><span class="params">(struct tty_port *port)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	tty_schedule_flip(port);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后调用，<code>tty_flip_buffer_push()</code>唤醒work 即<code>tty_flip_buffer_push()</code>, 调用到<code>flush_to_ldisc()</code>工作队列函数，将tty_buf的数据拷贝到<code>struct n_tty_data.read_buf</code>，<br><code>kill_fasync()</code>负责唤醒用户空间的异步进程，<code>wake_up_interruptible_poll()</code>唤醒在discipline read 时的读等待队列。</p>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_read_flow_provider.png" alt="read flow provider"></p>
+<h3 id="4-3-serial-Write-Flow"><a href="#4-3-serial-Write-Flow" class="headerlink" title="4.3. serial Write Flow"></a>4.3. serial Write Flow</h3><p>数据流向是userspace data -&gt; <code>tty_struct.write_buf</code>-&gt; <code>uart_state.xmit</code>。并且在n_tty.c 中的line routine（discipline）中做了回显的操作。</p>
+<p>在Write 的流程中涉及到了如下缓冲区域：</p>
+<ul>
+<li>tty_struct.write_buf (char *)</li>
+<li>uart_state.xmit (circ_buf)</li>
+<li>HW 的TX-FIFO</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/JShell07/images/master/kernel_tty/tty_write_flow.png" alt="tty write flow"></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="http://www.wowotech.net/tty_framework/tty_concept.html" target="_blank" rel="noopener">Linux TTY framework(1)_基本概念</a></p>
+<p><a href="http://www.wowotech.net/tty_framework/tty_architecture.html" target="_blank" rel="noopener">Linux TTY framework(2)_软件架构</a></p>
+<p><a href="http://www.wowotech.net/tty_framework/application_view.html" target="_blank" rel="noopener">Linux TTY framework(3)_从应用的角度看TTY设备</a></p>
+<p><a href="http://www.wowotech.net/tty_framework/435.html" target="_blank" rel="noopener">tty驱动分析</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/tty/" rel="tag"># tty</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2019/11/28/kernel-timer-system/" rel="next" title="kernel-timer-system">
+                <i class="fa fa-chevron-left"></i> kernel-timer-system
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2020/02/20/我的读书/" rel="prev" title="我的读书">
+                我的读书 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/blog/images/avatar.png"
+                alt="JShell07" />
+            
+              <p class="site-author-name" itemprop="name">JShell07</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/blog/archives/">
+                
+                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/blog/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/blog/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/JShell07" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:jshell07@163.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Base"><span class="nav-text">1. Base</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-常见术语"><span class="nav-text">1.1. 常见术语</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-TTY-分类"><span class="nav-text">1.2. TTY 分类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-软件架构"><span class="nav-text">2. 软件架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TTY-Line-Disciplines"><span class="nav-text">TTY Line Disciplines</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Data-Structure"><span class="nav-text">3. Data Structure</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-TTY-Core-Data-Structure"><span class="nav-text">3.1. TTY Core Data Structure</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Serial-Driver-Data-Structure"><span class="nav-text">3.2. Serial Driver Data Structure</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Flow"><span class="nav-text">4. Flow</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-serial-驱动初始化"><span class="nav-text">4.1. serial 驱动初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-serial-Open-Flow"><span class="nav-text">4.1. serial Open Flow</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-serial-Read-Flow"><span class="nav-text">4.2. serial Read Flow</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-1-Consumer"><span class="nav-text">4.2.1. Consumer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-2-Provider"><span class="nav-text">4.2.2. Provider</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-serial-Write-Flow"><span class="nav-text">4.3. serial Write Flow</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JShell07</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/three.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/three/canvas_lines.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/reading_progress/reading_progress.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/blog/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/blog/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
