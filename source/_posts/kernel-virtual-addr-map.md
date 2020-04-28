@@ -510,7 +510,7 @@ io_remap_page_range() 如果没有定义，则该函数是等效于**remap_pfn_r
 ```
 
 #### 2.3.4. dma memory mapping
-参见之前文章 -> [DMA memory mapping](https://jshell07.github.io/2019/06/28/kernel-dma-mem/)
+参见之前文章 -> [DMA memory mapping](https://jshell07.github.io/blog/2019/06/28/kernel-dma-mem/)
 
 ## 参看资料
 __basic__

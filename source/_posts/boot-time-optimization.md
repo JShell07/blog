@@ -21,7 +21,7 @@ kernel 启动优化的建议, 主要是：越少的模块，打印更少。
 - slim down useless driers file system
 - slim down device tree by removing hardware interfaces that not used
 
-[bootgraph](https://jshell07.github.io/2020/04/09/bootgraph/)
+[bootgraph](https://jshell07.github.io/blog/2020/04/09/bootgraph/)
 
 ## 3. user-space processes optimization
 用户空间优化建议：
@@ -29,7 +29,7 @@ kernel 启动优化的建议, 主要是：越少的模块，打印更少。
 - build optimization e.g. compile flags
 - library optimizations to reduce load time
 
-[bootchart](https://jshell07.github.io/2020/04/09/bootchart/)
+[bootchart](https://jshell07.github.io/blog/2020/04/09/bootchart/)
 
 ## Reference
 [A Pragmatic Guide to Boot-Time Optimization - Chris Simmonds, Consultant](https://www.bilibili.com/video/BV1y4411X7e2)

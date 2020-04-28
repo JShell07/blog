@@ -8,7 +8,7 @@ subtitle:
 description:
 author: JShell07
 language: en
-timezone:
+timezone: Asia/Shanghai
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
@@ -78,9 +78,9 @@ theme: next
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-#  type: git
-#  repo: https://github.com/JShell07/jshell07.github.io
-#  branch: test
+  type: git
+  repo: https://github.com/JShell07/blog
+  branch: gh-pages
 
 search:
         path: search.xml
