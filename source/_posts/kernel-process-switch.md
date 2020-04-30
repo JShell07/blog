@@ -107,8 +107,60 @@ static void __sched notrace __schedule(bool preempt)
 ### 2.1. pick next task
 在另一篇中讲解进程调度算法。
 
-FixMe
-[kernel_process_management]()
+[kernel_process_management](https://jshell07.github.io/blog/2020/04/23/kernel-process-scheduler/)
+
+`pick_next_task()`会按照sched_class 优先级进行pick_next_task callback， sched_class 优先级如下：
+```c
+sched_class_hightest(stop_sched_class) -> 
+dl_sched_class -> 
+rt_sched_class ->
+fair_sched_class ->
+idle_sched_class ->
+NULL
+```
+
+```c
+/* linux-4.9.198/kernel/sched/core.c */
+#define sched_class_highest (&stop_sched_class)
+#define for_each_class(class) \
+   for (class = sched_class_highest; class; class = class->next)
+
+static inline struct task_struct *
+pick_next_task(struct rq *rq, struct task_struct *prev, struct pin_cookie cookie)
+{
+	const struct sched_class *class = &fair_sched_class;
+	struct task_struct *p;
+
+	/*
+	 * Optimization: we know that if all tasks are in
+	 * the fair class we can call that function directly:
+	 */
+	if (likely(prev->sched_class == class &&
+		   rq->nr_running == rq->cfs.h_nr_running)) {
+		p = fair_sched_class.pick_next_task(rq, prev, cookie);
+		if (unlikely(p == RETRY_TASK))
+			goto again;
+
+		/* assumes fair_sched_class->next == idle_sched_class */
+		if (unlikely(!p))
+			p = idle_sched_class.pick_next_task(rq, prev, cookie);
+
+		return p;
+	}
+
+again:
+	for_each_class(class) {
+		p = class->pick_next_task(rq, prev, cookie);
+		if (p) {
+			if (unlikely(p == RETRY_TASK))
+				goto again;
+			return p;
+		}
+	}
+
+	BUG(); /* the idle class will always have a runnable task */
+}
+```
 
 ### 2.2. context_switch
 
